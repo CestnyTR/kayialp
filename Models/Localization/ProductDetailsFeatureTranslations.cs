@@ -9,9 +9,10 @@ namespace kayialp.Models
         public int LangCodeId { get; set; }
         public string KeyName { get; set; } = string.Empty;
         public string ValueText { get; set; } = string.Empty;
+
         [ForeignKey("ProductDetailsFeatureId")]
-        public ProductDetailsFeatures productDetailsFeature { get; set; } = new ProductDetailsFeatures();
+        public ProductDetailsFeatures productDetailsFeature { get; set; } //= new ProductDetailsFeatures();
         [ForeignKey("LangCodeId")]
-        public Langs LangCode { get; set; } = new Langs();
+        public Langs LangCode { get; set; } //= new Langs();
     }
 }

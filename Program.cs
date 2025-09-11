@@ -15,6 +15,13 @@ builder.Services.AddHttpContextAccessor(); // HttpContext için gerekli
 builder.Services.AddDbContext<kayialpDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
+// HttpClient + servis kaydı
+builder.Services.AddHttpClient<DeepLTranslationService>();
+builder.Services.AddScoped<ITranslationService, DeepLTranslationService>();
+
+builder.Services.AddMemoryCache();
+builder.Services.AddScoped<ILangResolver, LangResolver>();  
+
 var app = builder.Build();
 
 // Veritabanı bağlantısını kurup, dilleri veritabanından çekme

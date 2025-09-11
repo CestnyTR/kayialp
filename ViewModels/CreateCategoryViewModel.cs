@@ -4,14 +4,10 @@ namespace kayialp.ViewModels
 {
     public class CreateCategoryViewModel
     {
-        [Required(ErrorMessage = "Kategori adı zorunludur")]
-        [StringLength(200, ErrorMessage = "Kategori adı 200 karakteri geçmemelidir.")]
-        public string Name { get; set; } = string.Empty;
+        [Required, MinLength(3), MaxLength(80)]
+        public string NameTr { get; set; } = string.Empty;
 
-        [Range(0, int.MaxValue, ErrorMessage = "Sıra 0 veya daha büyük olmalıdır")]
-        public int Order { get; set; }
-
-        [Required]
-        public int LangCodeId { get; set; } = 2;
+        [Range(0, int.MaxValue)]
+        public int Order { get; set; } = 0;
     }
 }

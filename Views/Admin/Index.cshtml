@@ -15,7 +15,7 @@
         <div class="table-responsive">
             <div class="d-flex justify-content-between align-items-center mb-4">
                 <h1 class="h3 mb-0 text-gray-800">Ürünler</h1>
-                <a href="/Admin/CreateProduct" class="btn btn-success btn-icon-split">
+                <a href="/Admin/create-category" class="btn btn-success btn-icon-split">
                     <span class="icon text-white-50">
                         <i class="fas fa-check"></i>
                     </span>
@@ -82,7 +82,7 @@
         <div class="table-responsive">
             <div class="d-flex justify-content-between align-items-center mb-4">
                 <h1 class="h3 mb-0 text-gray-800">Kategori Listesi</h1>
-                <a href="/Admin/CreateCategory" class="btn btn-success btn-icon-split">
+                <a href="/Admin/create-category" class="btn btn-success btn-icon-split">
                     <span class="icon text-white-50">
                         <i class="fas fa-check"></i>
                     </span>
@@ -91,7 +91,7 @@
             </div>
 
 
-            <table class="table table-bordered" id="Category" width="100%" cellspacing="0">
+            <table class="table table-bordered" id="CategoryTable" width="100%" cellspacing="0">
                 <thead>
                     <tr>
                         <th>#</th>
@@ -118,13 +118,17 @@
                                 <td>@item.Id</td>
                                 <td>@item.Name</td>
                                 <td>
-                                    <a href="/Admin/UpdateProduct?id=" class="btn btn-info btn-circle ">
+                                    <a href="/admin/update-category/@item.Id" class="btn btn-info btn-circle ">
                                         <i class="fas fa-edit"></i>
                                 </td>
                                 <td>
-                                    <a href="/Admin/delete?id=" class="btn btn-danger btn-circle ">
-                                        <i class="fas fa-trash"></i>
-                                    </a>
+                                    <form asp-action="DeleteCategory" asp-route-id="@item.Id" method="post"
+                                        onsubmit="return confirm('Bu kategoriyi silmek istediğinize emin misiniz?');">
+                                        @Html.AntiForgeryToken()
+                                        <button type="submit" class="btn btn-danger btn-circle">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </form>
                                 </td>
                             </tr>
                         }
@@ -143,14 +147,14 @@
 </div>
 <!-- kategori tablosu   son-->
 @section Scripts {
-    <script src="~/js/jquery.dataTables.min.js"></script>
-    <script src="~/js/dataTables.bootstrap4.min.js"></script>
-    <script src="~/js/admin-product-tables.js"></script>
+    <script src="~/js/admin/jquery.dataTables.min.js"></script>
+    <script src="~/js/admin/dataTables.bootstrap4.min.js"></script>
+    <script src="~/js/admin/admin-product-tables.js"></script>
 
     <script>
         $(document).ready(function () {
             $('#Product').DataTable(); // Admin tablosu için
-            $('#Category').DataTable(); // Admin tablosu için
+            $('#CategoryTable').DataTable(); // Admin tablosu için
         });
     </script>
 }

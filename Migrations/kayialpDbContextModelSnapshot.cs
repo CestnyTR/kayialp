@@ -55,6 +55,10 @@ namespace kayialp.Migrations
                     b.Property<int>("LangCodeId")
                         .HasColumnType("int");
 
+                    b.Property<string>("Slug")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("ValueText")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -87,6 +91,10 @@ namespace kayialp.Migrations
                         .HasColumnType("int");
 
                     b.Property<string>("Question")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Slug")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
@@ -132,31 +140,6 @@ namespace kayialp.Migrations
                     b.ToTable("Langs");
                 });
 
-            modelBuilder.Entity("kayialp.Models.Localization.LayoutPage", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Culture")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("KeyName")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("ValueText")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("LayoutPage");
-                });
-
             modelBuilder.Entity("kayialp.Models.PageTranslations", b =>
                 {
                     b.Property<int>("Id")
@@ -174,6 +157,10 @@ namespace kayialp.Migrations
 
                     b.Property<int>("PageId")
                         .HasColumnType("int");
+
+                    b.Property<string>("Slug")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("ValueText")
                         .IsRequired()
@@ -355,6 +342,10 @@ namespace kayialp.Migrations
                     b.Property<int>("ProductId")
                         .HasColumnType("int");
 
+                    b.Property<string>("Slug")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("ValueText")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -411,8 +402,9 @@ namespace kayialp.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<int>("ImageUrl")
-                        .HasColumnType("int");
+                    b.Property<string>("ImageUrl")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<int>("Order")
                         .HasColumnType("int");

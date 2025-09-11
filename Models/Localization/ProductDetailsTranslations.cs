@@ -12,8 +12,8 @@ namespace kayialp.Models
 
 
         [ForeignKey("ProductDetailsId")]
-        public ProductDetails productDetail { get; set; } = new ProductDetails();
+        public ProductDetails productDetail { get; set; } //= new ProductDetails();
         [ForeignKey("LangCodeId")]
-        public Langs LangCode { get; set; } = new Langs();
+        public Langs LangCode { get; set; } //= new Langs();
     }
 }

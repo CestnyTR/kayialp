@@ -1,5 +1,4 @@
 ﻿using kayialp.Models;
-using kayialp.Models.Localization;
 using Microsoft.EntityFrameworkCore;
 
 namespace kayialp.Context
@@ -11,7 +10,6 @@ namespace kayialp.Context
         }
 
         // Localization start
-        public DbSet<LayoutPage> LayoutPage { get; set; }
         public DbSet<CategoriesTranslations> CategoriesTranslations { get; set; }
         public DbSet<FaqTranslations> FaqTranslations { get; set; }
         public DbSet<PageTranslations> PageTranslations { get; set; }

@@ -11,10 +11,9 @@ namespace kayialp.Models
         public string Title { get; set; } = string.Empty;
         public string ShortContent { get; set; } = string.Empty;
 
-
         [ForeignKey("SliderId")]
-        public Sliders slider { get; set; } = new Sliders();
+        public Sliders slider { get; set; } //= new Sliders();
         [ForeignKey("LangCodeId")]
-        public Langs LangCode { get; set; } = new Langs();
+        public Langs LangCode { get; set; } //= new Langs();
     }
 }
