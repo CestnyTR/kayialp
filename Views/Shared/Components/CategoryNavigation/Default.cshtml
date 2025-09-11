@@ -1,0 +1,20 @@
+@model IEnumerable<kayialp.ViewModels.CategoryViewModel>
+
+<li class="menu-item-has-children">
+    <a asp-controller="Products" asp-action="Index" asp-route-culture="@ViewData["Culture"]"
+        class="@(ViewContext.RouteData.Values["controller"]?.ToString() == "Products" ? "active" : "")">
+        @Html.Localize("pages.layout.products")
+    </a>
+    <ul class="sub-menu">
+        @foreach (var category in Model)
+        {
+            <li>
+                <a asp-controller="Products" asp-action="CategoryProducts" asp-route-culture="@ViewData["Culture"]"
+                    asp-route-categoryId="@category.Id"
+                    class="@(ViewContext.RouteData.Values["controller"]?.ToString() == "Products" ? "active" : "")">
+                    @Html.Localize($"Categories.{category.Name}")
+                </a>
+            </li>
+        }
+    </ul>
+</li>

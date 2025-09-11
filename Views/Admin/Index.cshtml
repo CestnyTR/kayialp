@@ -1,0 +1,156 @@
+﻿﻿@{
+    Layout = "/Views/Shared/_AdminLayout.cshtml";
+}
+@model IEnumerable<kayialp.ViewModels.CategoryViewModel>
+
+<!-- Page Heading -->
+<h1 class="h3 mb-2 text-gray-800">Admin Paneli</h1>
+<!-- Ürünler tablosu  başlangıç-->
+<div class="card shadow mb-4">
+    <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">Ürünler</h6>
+
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h3 mb-0 text-gray-800">Ürünler</h1>
+                <a href="/Admin/CreateProduct" class="btn btn-success btn-icon-split">
+                    <span class="icon text-white-50">
+                        <i class="fas fa-check"></i>
+                    </span>
+                    <span class="text">Ürün ekle</span>
+                </a>
+            </div>
+
+
+            <table class="table table-bordered" id="Product" width="100%" cellspacing="0">
+                <thead>
+                    <tr>
+                        <th>Ürün adı</th>
+                        <th>Kısa açıklama</th>
+                        <th>İçerik</th>
+                        <th>Resim</th>
+                        <th>Kategori</th>
+                        <th>Alt Kategori</th>
+                        <th>Aktif mi ?</th>
+                        <th>Güncelle</th>
+                        <th>Sil</th>
+                    </tr>
+                </thead>
+                <tfoot>
+                    <tr>
+                        <th>Ürün adı</th>
+                        <th>Kısa açıklama</th>
+                        <th>İçerik</th>
+                        <th>Resim</th>
+                        <th>Kategori</th>
+                        <th>Alt Kategori</th>
+                        <th>Aktif mi ?</th>
+                        <th>Güncelle</th>
+                        <th>Sil</th>
+                    </tr>
+                </tfoot>
+                <tbody>
+
+                    <td>
+                        <a href="/Admin/UpdateProduct?id=" class="btn btn-info btn-circle ">
+                            <i class="fas fa-edit"></i>
+                    </td>
+                    <td>
+                        <a href="/Admin/delete?id=" class="btn btn-danger btn-circle ">
+                            <i class="fas fa-trash"></i>
+                        </a>
+                    </td>
+
+                    </tr>
+
+
+                </tbody>
+            </table>
+
+        </div>
+    </div>
+</div>
+<!-- Ürünler tablosu   son-->
+<!-- kategori tablosu  başlangıç -->
+<div class="card shadow mb-4">
+    <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">Kategoriler</h6>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h3 mb-0 text-gray-800">Kategori Listesi</h1>
+                <a href="/Admin/CreateCategory" class="btn btn-success btn-icon-split">
+                    <span class="icon text-white-50">
+                        <i class="fas fa-check"></i>
+                    </span>
+                    <span class="text">Yeni Kategori Ekle</span>
+                </a>
+            </div>
+
+
+            <table class="table table-bordered" id="Category" width="100%" cellspacing="0">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Kategori Adı</th>
+                        <th>Güncelle</th>
+                        <th>Sil</th>
+                    </tr>
+                </thead>
+                <tfoot>
+                    <tr>
+                        <th>#</th>
+                        <th>Kategori Adı</th>
+                        <th>Güncelle</th>
+                        <th>Sil</th>
+                    </tr>
+                </tfoot>
+                <tbody>
+
+                    @if (Model != null)
+                    {
+                        @foreach (var item in Model)
+                        {
+                            <tr>
+                                <td>@item.Id</td>
+                                <td>@item.Name</td>
+                                <td>
+                                    <a href="/Admin/UpdateProduct?id=" class="btn btn-info btn-circle ">
+                                        <i class="fas fa-edit"></i>
+                                </td>
+                                <td>
+                                    <a href="/Admin/delete?id=" class="btn btn-danger btn-circle ">
+                                        <i class="fas fa-trash"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+
+                        <tr>
+                            <td colspan="4">@Model Kategori bulunamadı.</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+<!-- kategori tablosu   son-->
+@section Scripts {
+    <script src="~/js/jquery.dataTables.min.js"></script>
+    <script src="~/js/dataTables.bootstrap4.min.js"></script>
+    <script src="~/js/admin-product-tables.js"></script>
+
+    <script>
+        $(document).ready(function () {
+            $('#Product').DataTable(); // Admin tablosu için
+            $('#Category').DataTable(); // Admin tablosu için
+        });
+    </script>
+}

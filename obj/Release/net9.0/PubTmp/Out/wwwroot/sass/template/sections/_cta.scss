@@ -1,0 +1,544 @@
+@use 'base/variable' as *;
+@use 'base/mixin' as *;
+
+.cta-area {
+    padding: 145px 0;
+}
+
+.newsletter-form {
+    &.style3 {
+        display: block;
+
+        input {
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(5px);
+            border-radius: 32px;
+            border: none;
+            margin-bottom: 16px;
+
+            @media(max-width: 480px) {
+                margin-bottom: 0;
+            }
+
+            @include inputPlaceholder {
+                color: $white-color;
+            }
+
+        }
+    }
+
+    &.style4 {
+        & input {
+            color: $title-color;
+            background: $white-color;
+
+            &::placeholder {
+                color: $body-color;
+            }
+        }
+
+        & .th-btn {
+            color: $white-color;
+            background-color: $title-color;
+
+            &:hover {
+                color: $white-color;
+                background-color: $theme-color;
+
+                @include xs {
+                    color: $title-color;
+                }
+
+                &::before {
+                    background-color: $theme-color;
+
+                    @include xs {
+                        background-color: $white-color;
+                    }
+                }
+            }
+        }
+    }
+}
+
+.newsletter10 {
+    &-content {
+        @include lg {
+            padding-right: 40px;
+            margin-bottom: 40px;
+        }
+
+        @include xs {
+            padding: 0;
+        }
+    }
+}
+
+.newsletter-image {
+    position: relative;
+    top: -16px;
+    margin-left: 0;
+    overflow: visible;
+
+    @include lg {
+        margin-bottom: 60px;
+    }
+
+    @include xs {
+        margin-left: 75px;
+        margin-bottom: 40px;
+    }
+
+    &::before {
+        position: absolute;
+        width: 403.8px;
+        height: 403.8px;
+        left: 40px;
+        bottom: -45px;
+        content: "";
+        border-radius: 50%;
+        background: $title-color;
+
+        @include xxl {
+            left: -40px;
+        }
+
+        @include xl {
+            left: -60px;
+            bottom: -65px;
+            transform: scale(.9);
+        }
+
+        @include lg {
+            left: 23.5%;
+            bottom: -50px;
+            transform: scale(1);
+        }
+
+        @include md {
+            left: -20px;
+            bottom: -45px;
+        }
+
+        @include sm {
+            left: -80px;
+            bottom: -80px;
+            transform: scale(.7);
+        }
+
+        @include xs {
+            left: auto;
+            bottom: auto;
+            transform: scale(0.4);
+            right: -45px;
+            top: -95px;
+        }
+    }
+
+    & img {
+        position: relative;
+    }
+}
+
+.newsletter-sec {
+    padding: 15px 0 30px 120px;
+
+    @include xl {
+        padding: 15px 0 30px 40px;
+    }
+
+    @include xs {
+        padding: 15px;
+    }
+}
+
+.cta-title {
+    font-weight: 800;
+    font-size: 100px;
+    line-height: 96px;
+    text-transform: uppercase;
+    margin-bottom: 15px !important;
+
+    @include xl {
+        font-size: 80px;
+        line-height: 96px;
+    }
+
+    @include md {
+        font-size: 70px;
+        line-height: 86px;
+    }
+
+    @include sm {
+        font-size: 60px;
+        line-height: 76px;
+    }
+
+    @include vxs {
+        font-size: 50px;
+        line-height: 66px;
+    }
+
+    @media(max-width: 350px) {
+        font-size: 40px;
+        line-height: 50px;
+    }
+
+}
+
+.app-mockup {
+    position: relative;
+    margin-bottom: -170px;
+    z-index: 2;
+
+    @include md {
+        margin-bottom: -40px;
+    }
+
+    &:before {
+        content: "";
+        position: absolute;
+        left: 0;
+        bottom: 0;
+        width: 315.67px;
+        height: 7.89px;
+        background: rgba(0, 0, 0, 0.8);
+        filter: blur(13.15px);
+
+    }
+}
+
+.sec-title2 {
+    color: #F8BC22;
+}
+
+.cta-area2 {
+    background-color: #405749;
+}
+
+.cta-discount {
+    color: #F8BC22;
+}
+
+// cta3 area start
+.cta-wrap3 {
+    max-width: 1760px;
+    margin-left: auto;
+    margin-right: auto;
+    border-radius: 30px;
+}
+.cta-img3-1 {
+    margin-left: -107px;
+    @include xxl {
+        margin-left: 0;
+    }
+}
+.cta-img3-2 {
+    margin-right: -107px;
+    @include xxl {
+        margin-right: 0;
+    }
+}
+// cta3 area end
+
+// cta4 area start
+.cta-4 {
+    &_title-box {
+        & .sec-title {
+            text-transform: uppercase;
+            line-height: 1.3;
+        }
+
+        & .duration-title {
+            font-weight: 700;
+            font-size: 24px;
+            margin-bottom: 25px;
+        }
+    }
+
+    &-action {
+        & .th-btn {
+            padding: 19px 34.5px;
+            border-radius: 50px;
+
+            &.style6{
+                &:hover{
+                    color: $white-color;
+                    border-color: $title-color;
+                    &::before{
+                        background-color: $title-color;
+                    }
+                }
+            }
+        }
+    }
+}
+
+// cta4 area end
+
+// cta5 area start
+.cta-bg-shape5-1 {
+    width: 427px;
+    height: 854px;
+    background: $brand-color;
+    border-radius: 0 100% 100% 0/0 50% 50% 0;
+}
+.cta-wrap5 {
+    .sec-title {
+        font-size: 80px;
+        font-weight: 700;
+        line-height: 1.2em;
+        margin-top: -0.12em;
+        @include ml {
+            font-size: 70px;
+        }
+        @include xl {
+            font-size: 60px;
+        }
+        @include lg {
+            font-size: 50px;
+        }
+        @include md {
+            font-size: 40px;
+        }
+        @include sm {
+            font-size: 36px;
+        }
+        @include xs {
+            font-size: 30px;
+        }
+    }
+    .img1 {
+        display: inline-flex;
+        position: relative;
+        top: 10px;
+        @include sm {
+            top: 7px;
+        }
+        img {
+            border-radius: 8px;
+            height: 80px;
+            width: 169px;
+            object-fit: cover;
+            @include xl {
+                height: 60px;
+            }
+            @include lg {
+                height: 50px;
+                width: 150px;
+            }
+            @include sm {
+                height: 40px;
+                width: 100px;
+            }
+        }
+    }
+    .img2 {
+        position: relative;
+        display: inline-flex;
+        position: relative;
+        top: 10px;
+        @include sm {
+            top: 7px;
+        }
+        img {
+            border-radius: 8px;
+            height: 80px;
+            width: 169px;
+            object-fit: cover;
+            @include xl {
+                height: 60px;
+            }
+            @include lg {
+                height: 50px;
+                width: 150px;
+            }
+            @include sm {
+                height: 40px;
+                width: 100px;
+            }
+        }
+        .play-btn {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            display: inline-flex;
+            --icon-size: 20px;
+            --icon-font-size: 8px;
+            > i {
+                background: $theme-color;
+                color: $white-color;
+            }
+        }
+    }
+    .cta-tag {
+        font-size: 16px;
+        font-weight: 500;
+        background: $title-color;
+        padding: 6.5px 16px 8.5px;
+        color: $white-color;
+        border-radius: 16px 0 16px 16px;
+        position: relative;
+        margin-right: 40px;
+        top: -15px;
+        &:after {
+            content: '';
+            position: absolute;
+            clip-path: path("M1.49405 6.4218C0.793503 7.09244 0.733839 8.16468 1.36066 8.78277L14.6036 21.8414C15.4607 22.6865 17.0008 22.1723 17.3529 20.922L22.6408 2.14541C22.9836 0.928278 21.9478 -0.0930564 20.7466 0.2776L2.21569 5.99561C1.94928 6.07779 1.70083 6.22384 1.49405 6.4218Z");
+            width: 23px;
+            height: 21px;
+            background: $title-color;
+            top: -15px;
+            right: -25px;
+        }
+        @include lg {
+            top: -5px;
+            margin-left: 20px;
+        }
+        @include sm {
+            top: 5px;
+        }
+        @include vxs {
+            display: block;
+            padding: 3.5px 16px 5.5px;
+            margin: 10px 25px;
+        }
+    }
+    .btn-wrap {
+        justify-content: center;
+        .cta-link {
+            font-size: 48px;
+            font-weight: 700;
+            font-family: $title-font;
+            color: $title-color;
+            letter-spacing: 0.02em;
+            text-decoration-line: underline;
+            line-height: 0.8;
+            &:hover {
+                color: $theme-color;
+            }
+            @include ml {
+                font-size: 40px;
+            }
+            @include lg {
+                font-size: 30px;
+            }
+            @include md {
+                font-size: 28px;
+            }
+            @include sm {
+                font-size: 24px;
+            }
+            @include xs {
+                font-size: 20px;
+            }
+        }
+        .icon-btn {
+            --btn-size: 64px;
+            --btn-font-size: 24px;
+            border: 2px solid $gray-color;
+            &:hover {
+                border-color: $theme-color;
+            }
+            @include md {
+                --btn-size: 56px;
+                --btn-font-size: 24px;
+            }
+        }
+    }
+}
+// cta5 area end
+
+
+// cta6 area start
+.cta-sec6 {
+    position: relative;
+    max-width: 1560px;
+    display: block;
+    margin: auto;
+    border-radius: 60px;
+    z-index: 2;
+
+    @include md {
+        border-radius: 40px;
+    }
+
+    .shape-mockup {
+        display: block !important;
+        z-index: -1;
+        width: 50%;
+        height: 100%;
+
+        @include sm {
+            display: none !important;
+        }
+
+        img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+    }
+
+    @include xxl {
+        max-width: 100%;
+    }
+
+    .discount-text {
+        display: block;
+        font-weight: 700;
+        font-size: 30px;
+        margin-bottom: 15px;
+    }
+}
+
+.cta-area6 {
+    position: relative;
+    z-index: 2;
+
+    .sec-title {
+        text-transform: capitalize;
+        margin-bottom: 26px;
+        line-height: 1.3;
+    }
+
+    .cta-shape {
+        position: absolute;
+        top: 0;
+        right: -87px;
+        height: 100%;
+        width: 60px;
+        background-color: $title-color;
+        mask-image: url("../img/normal/shape.svg");
+        mask-size: 100%;
+        mask-repeat: no-repeat;
+
+        @include md {
+            display: none;
+        }
+    }
+
+    .th-btn {
+        &:hover {
+            color: $title-color;
+
+            &:before {
+                background-color: $white-color;
+            }
+
+            &:after {
+                background-color: $title-color;
+            }
+
+        }
+    }
+}
+
+.cta6-shape {
+    position: absolute;
+    right: -45px;
+    top: 0;
+}
+
+// cta6 area end

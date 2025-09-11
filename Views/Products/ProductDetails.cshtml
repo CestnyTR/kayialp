@@ -1,0 +1,121 @@
+@{
+    ViewData["Title"] = "Products Details";
+    Layout = "/Views/Shared/_Layout.cshtml";
+
+}
+<!--==============================
+    Breadcumb
+============================== -->
+<div class="breadcumb-area ">
+    <div class="breadcumb-wrapper" data-bg-src="/img/bg/breadcumb-bg.jpg">
+        <div class="container">
+            <div class="breadcumb-content">
+                <h1 class="breadcumb-title">ÜRÜNLER DETAYLARI</h1>
+                <ul class="breadcumb-menu">
+                    <li><a href="/">ANASAYFA</a></li>
+                    <li>ÜRÜNLER DETAYLARI</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!--==============================
+    Product Details
+    ==============================-->
+<section class="product-details space-top space-extra-bottom">
+    <div class="container">
+        <div class="row gx-60">
+            <div class="col-lg-6">
+                <div class="product-big-img">
+                    <div class="img"><img src="/img/product/product_details_1_1.png" alt="Product Image">
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-6 align-self-center">
+                <div class="product-about">
+                    <h2 class="product-title">[ÜRÜN ADI]</h2>
+                    <p class="text">Lorem ipsum, dolor sit amet consectetur adipisicing elit. Corporis, odio vel.
+                        Accusamus deleniti quos, voluptatibus molestias, eaque eum ratione ut fuga minima distinctio
+                        facere modi sit quam omnis sint? Excepturi sit optio consectetur eum culpa suscipit officia
+                        quibusdam voluptatem delectus!</p>
+                    <div class="mt-2 link-inherit">
+                        <p>
+                            <strong class="text-title me-3">Stokta :</strong>
+                            <span class="stock in-stock"><i class="far fa-check-square me-2 ms-1"></i>var</span>
+                        </p>
+                    </div>
+                    <div class="actions">
+
+                        <a class="th-btn" href="http://wa.me/903325012218" target="_blank">İLETİŞİM</a>
+                    </div>
+                    <div class="product_meta">
+                        <span class="sku_wrapper">SKU: <span class="sku">BH-1001-BT</span></span>
+                        <span class="posted_in">Kategori : Lorem ipsum dolor sit amet.</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <ul class="nav product-tab-style2" id="productTab" role="tablist">
+            <li class="nav-item" role="presentation">
+                <a class="nav-link" id="description-tab" data-bs-toggle="tab" href="#description" role="tab"
+                    aria-controls="description" aria-selected="false">Açıklama</a>
+            </li>
+            <li class="nav-item" role="presentation">
+                <a class="nav-link" id="additional-tab" data-bs-toggle="tab" href="#additional" role="tab"
+                    aria-controls="additional" aria-selected="false">Ürün hakkında</a>
+            </li>
+        </ul>
+        <div class="tab-content" id="productTabContent">
+            <div class="tab-pane fade" id="description" role="tabpanel" aria-labelledby="description-tab">
+                <p>Lorem, ipsum dolor sit amet consectetur adipisicing elit. Asperiores est obcaecati praesentium a
+                    consectetur non, rem blanditiis laudantium quos fugit. Quidem sequi temporibus cupiditate officia,
+                    magnam asperiores perferendis qui dolor!</p>
+                <p>Lorem, ipsum dolor sit amet consectetur adipisicing elit. Asperiores est obcaecati praesentium a
+                    consectetur non, rem blanditiis laudantium quos fugit. Quidem sequi temporibus cupiditate officia,
+                    magnam asperiores perferendis qui dolor!</p>
+                <p>Lorem, ipsum dolor sit amet consectetur adipisicing elit. Asperiores est obcaecati praesentium a
+                    consectetur non, rem blanditiis laudantium quos fugit. Quidem sequi temporibus cupiditate officia,
+                    magnam asperiores perferendis qui dolor!</p>
+                    
+            </div>
+            <div class="tab-pane fade" id="additional" role="tabpanel" aria-labelledby="additional-tab">
+                <p>Lorem ipsum dolor sit amet consectetur, adipisicing elit. Cupiditate repellendus distinctio aliquid
+                    totam rem id voluptatibus tempora nulla earum voluptatem hic debitis commodi beatae natus, eligendi,
+                    praesentium necessitatibus, accusamus exercitationem ad iure quidem blanditiis dicta vel. Impedit,
+                    laboriosam aut exercitationem tempora, delectus ipsa iusto cupiditate illo pariatur temporibus
+                    nesciunt esse vel ea ad libero accusamus blanditiis deleniti dolorum! Deserunt distinctio quibusdam
+                    ipsa laborum! Odit architecto commodi vero laudantium facilis dolor aperiam minima sunt? Voluptates
+                    labore eligendi recusandae, itaque rerum odio maiores atque quam nostrum possimus sed eos quasi,
+                    vero eaque. Eligendi quae beatae neque voluptatibus recusandae, sit amet deleniti facere praesentium
+                    fuga molestiae quas vel nostrum illum corporis tempora molestias. Odit accusantium magni id nisi
+                    maiores et repellendus nesciunt corporis consectetur alias maxime tenetur unde tempore expedita
+                    recusandae minima incidunt, dignissimos quaerat laborum harum ipsum! Quibusdam, quas, a neque
+                    pariatur rerum id porro reprehenderit magnam consequatur sunt eum, laudantium amet?</p>
+                <p>Lorem ipsum dolor sit amet consectetur, adipisicing elit. Cupiditate repellendus distinctio aliquid
+                    totam rem id voluptatibus tempora nulla earum voluptatem hic debitis commodi beatae natus, eligendi,
+                    praesentium necessitatibus, accusamus exercitationem ad iure quidem blanditiis dicta vel. Impedit,
+                    laboriosam aut exercitationem tempora, delectus ipsa iusto cupiditate illo pariatur temporibus
+                    nesciunt esse vel ea ad libero accusamus blanditiis deleniti dolorum! Deserunt distinctio quibusdam
+                    ipsa laborum! Odit architecto commodi vero laudantium facilis dolor aperiam minima sunt? Voluptates
+                    labore eligendi recusandae, itaque rerum odio maiores atque quam nostrum possimus sed eos quasi,
+                    vero eaque. Eligendi quae beatae neque voluptatibus recusandae, sit amet deleniti facere praesentium
+                    fuga molestiae quas vel nostrum illum corporis tempora molestias. Odit accusantium magni id nisi
+                    maiores et repellendus nesciunt corporis consectetur alias maxime tenetur unde tempore expedita
+                    recusandae minima incidunt, dignissimos quaerat laborum harum ipsum! Quibusdam, quas, a neque
+                    pariatur rerum id porro reprehenderit magnam consequatur sunt eum, laudantium amet?</p>
+                <p>Lorem ipsum dolor sit amet consectetur, adipisicing elit. Cupiditate repellendus distinctio aliquid
+                    totam rem id voluptatibus tempora nulla earum voluptatem hic debitis commodi beatae natus, eligendi,
+                    praesentium necessitatibus, accusamus exercitationem ad iure quidem blanditiis dicta vel. Impedit,
+                    laboriosam aut exercitationem tempora, delectus ipsa iusto cupiditate illo pariatur temporibus
+                    nesciunt esse vel ea ad libero accusamus blanditiis deleniti dolorum! Deserunt distinctio quibusdam
+                    ipsa laborum! Odit architecto commodi vero laudantium facilis dolor aperiam minima sunt? Voluptates
+                    labore eligendi recusandae, itaque rerum odio maiores atque quam nostrum possimus sed eos quasi,
+                    vero eaque. Eligendi quae beatae neque voluptatibus recusandae, sit amet deleniti facere praesentium
+                    fuga molestiae quas vel nostrum illum corporis tempora molestias. Odit accusantium magni id nisi
+                    maiores et repellendus nesciunt corporis consectetur alias maxime tenetur unde tempore expedita
+                    recusandae minima incidunt, dignissimos quaerat laborum harum ipsum! Quibusdam, quas, a neque
+                    pariatur rerum id porro reprehenderit magnam consequatur sunt eum, laudantium amet?</p>
+            </div>
+
+        </div>

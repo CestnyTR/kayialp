@@ -1,0 +1,381 @@
+﻿@using Microsoft.AspNetCore.Localization
+@using Microsoft.AspNetCore.Mvc.Localization
+@using kayialp.Helpers
+@{
+    var currentCulture = System.Globalization.CultureInfo.CurrentCulture.TwoLetterISOLanguageName;
+    var currentController = ViewContext.RouteData.Values["controller"]?.ToString();
+    var bodyClass = ViewBag.BodyClass != null ? $" class=\"{ViewBag.BodyClass}\"" : "";
+
+}
+
+<!doctype html>
+<html class="no-js"  lang=@ViewData["Culture"] style="--theme-color: #182129;">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="x-ua-compatible" content="ie=edge">
+    <title>Kayi Alp </title>
+    <meta name="author" content="KayiAlp">
+    <meta name="description" content="kayialp">
+    <meta name="keywords" content="kayialp">
+    <meta name="robots" content="INDEX,FOLLOW">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <link rel="apple-touch-icon" sizes="57x57" href="/img/favicons/apple-icon-57x57.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="/img/logo_icon.png">
+    <link rel="manifest" href="/img/favicons/manifest.json">
+    <meta name="msapplication-TileColor" content="#ffffff">
+    <meta name="msapplication-TileImage" content="/img/favicons/ms-icon-144x144.png">
+    <meta name="theme-color" content="#ffffff">
+
+    <!-- Preconnect for Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+    <!-- Google Fonts (Inter and Plus Jakarta Sans) -->
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&family=Plus+Jakarta+Sans:wght@200..800&display=swap"
+        rel="stylesheet">
+
+    <!-- Stylesheets -->
+    <link rel="stylesheet" href="~/css/bootstrap.min.css">
+    <link rel="stylesheet" href="~/css/fontawesome.min.css">
+    <link rel="stylesheet" href="~/css/magnific-popup.min.css">
+    <link rel="stylesheet" href="~/css/swiper-bundle.min.css">
+    <link rel="stylesheet" href="~/css/style.css">
+    <link rel="stylesheet" href="~/css/custom.css">
+
+</head>
+
+<body class="@ViewBag.BodyClass" lang="@ViewData["Culture"]">
+
+    <div class="preloader ">
+        <button class="th-btn preloaderCls">Ön yüklemeyi iptal et</button>
+        <div class="preloader-inner">
+            <img src="/img/logo.webp" alt="img">
+        </div>
+    </div>
+
+    <div class="sidemenu-wrapper sidemenu-info ">
+    </div>
+
+    <div class="popup-search-box">
+        <button class="searchClose"><i class="fal fa-times"></i></button>
+        <form action="#">
+            <input type="text" placeholder="What are you looking for?">
+            <button type="submit"><i class="fal fa-search"></i></button>
+        </form>
+    </div>
+
+    <div class="th-menu-wrapper onepage-nav">
+        <div class="th-menu-area text-center">
+            <button class="th-menu-toggle"><i class="fal fa-times"></i></button>
+            <div class="mobile-logo">
+                <a href="index.html"><img src="~/img/logo-mobile.png" alt="Atek"></a>
+            </div>
+            <div class="th-mobile-menu allow-natural-scroll">
+                <ul>
+                    <li><a class="@(currentController == "Home" ? "active" : "")"
+                            href="/">@Html.Localize("pages.layout.index")</a></li>
+                    <li><a asp-controller="About" asp-action="Index" asp-route-culture="@ViewData["Culture"]"
+                            class="@(currentController == "About" ? "active" : "")">
+                            @Html.Localize("pages.layout.about")
+                        </a>
+                    </li>
+                    @await Component.InvokeAsync("CategoryNavigation")
+                    <li><a asp-controller="Fair" asp-action="Index" asp-route-culture="@ViewData["Culture"]"
+                            class="@(currentController == "Fair" ? "active" : "")">@Html.Localize("pages.layout.fairs")</a>
+                    </li>
+                    <li><a asp-controller="Contact" asp-action="Index" asp-route-culture="@ViewData["Culture"]"
+                            class="@(currentController == "Contact" ? "active" : "")">@Html.Localize("pages.layout.communication")</a>
+                    </li>
+                </ul>
+                <div class="sticky-bottom">
+                    <form asp-controller="Language" asp-action="SetLanguage" method="post" id="langForm">
+                        <select name="culture" onchange="document.getElementById('langForm').submit();">
+                            @foreach (var lang in new[] {
+                                                        new { Code = "en", Name = "English" },
+                                                        new { Code = "tr", Name = "Türkçe" },
+                                                        new { Code = "ru", Name = "Русский" },
+                                                        new { Code = "ar", Name = "العربية" }
+                                                        })
+                            {
+                                <option value="@lang.Code" selected="@(currentCulture == lang.Code ? "selected" : null)">
+                                    @lang.Name
+                                </option>
+                            }
+                        </select>
+
+                        <input type="hidden" name="returnUrl" value="@Context.Request.Path" />
+                    </form>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <header class="th-header header-layout1">
+        <div class="header-top d-none d-md-block">
+            <div class="container th-container">
+                <div class="row justify-content-center justify-content-xl-between align-items-center">
+                    <div class="col-auto d-none d-md-block">
+                        <div class="header-links">
+                            <ul>
+                                <li class="d-none d-xl-inline-block">
+                                    <i class="fa-sharp fa-regular fa-location-dot"></i>
+                                    <span>FEVZİÇAKMAK MAH. ŞEHİT ATİLLA DEMİRELLİ CAD. B.BLOK NO: 2B KARATAY /
+                                        KONYA
+                                    </span>
+                                </li>
+                                <li class="d-none d-xl-inline-block">
+                                    <i class="fa-regular fa-clock"></i>
+                                    <span>Pazartesi - Cuma : 09.00 - 18.00 </span>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="col-auto ">
+                        <div class="header-right style2">
+                            <div>
+
+                                <div>
+                                    <form asp-controller="Language" asp-action="SetLanguage" method="post"
+                                        id="langForm2">
+                                        <div class="language-selector">
+                                            @foreach (var lang in new[] {
+                                                                                        new { Code = "en", Name = "English", FlagUrl = "/img/flags/en.svg" },
+                                                                                        new { Code = "tr", Name = "Türkçe", FlagUrl = "/img/flags/tr.svg" },
+                                                                                        new { Code = "ru", Name = "Русский", FlagUrl = "/img/flags/ru.svg" },
+                                                                                        new { Code = "ar", Name = "العربية", FlagUrl = "/img/flags/ar.svg" }
+                                                                                        })
+                                            {
+                                                <button type="submit" name="culture" class="language-option @if(currentCulture == lang.Code) {
+                                                                                        <text>selected</text>
+                                                }
+" value="@lang.Code" id="@lang.Code">
+                                                <img src="@lang.FlagUrl" alt="@lang.Name" class="flag-img" />
+                                            </button>
+                                                                                        }
+                                        </div>
+                                        <input type="hidden" name="returnUrl" value="@Context.Request.Path" />
+                                    </form>
+
+                                </div>
+
+                            </div>
+                            <div class="header-links">
+                                <ul>
+                                    <li class="d-none d-md-inline-block"><a href="/sss">S.S.S</a></li>
+                                    <li class="d-none d-md-inline-block"><a href="/contact">İLETİŞİM</a></li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="sticky-wrapper">
+            <div class="menu-area">
+                <div class="container th-container">
+                    <div class="row align-items-center justify-content-between">
+                        <div class="col-auto">
+                            <div class="th-widget-about">
+                                <div class="header-logo">
+                                    <a href="/">
+                                        <img src="~/img/logo.webp" alt="KayiAlp">
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-auto me-xxl-auto">
+                            <nav class="main-menu d-none d-xl-inline-block">
+                                <ul>
+                                    <li><a class="@(currentController == "Home" ? "active" : "")"
+                                            href="/">@Html.Localize("pages.layout.index")</a></li>
+                                    <li><a asp-controller="About" asp-action="Index"
+                                            asp-route-culture="@ViewData["Culture"]"
+                                            class="@(currentController == "About" ? "active" : "")">
+                                            @Html.Localize("pages.layout.about")
+                                        </a>
+                                    </li>
+                                    @await Component.InvokeAsync("CategoryNavigation")
+
+                                    <li><a asp-controller="Fair" asp-action="Index"
+                                            asp-route-culture="@ViewData["Culture"]"
+                                            class="@(currentController == "Fair" ? "active" : "")">@Html.Localize("pages.layout.fairs")</a>
+                                    </li>
+                                    <li><a asp-controller="Contact" asp-action="Index"
+                                            asp-route-culture="@ViewData["Culture"]"
+                                            class="@(currentController == "Contact" ? "active" : "")">@Html.Localize("pages.layout.communication")</a>
+                                    </li>
+                                </ul>
+
+                            </nav>
+
+                            <button type="button" class="th-menu-toggle d-block d-xl-none"><i
+                                    class="far fa-bars"></i></button>
+                        </div>
+                        <div class="col-auto d-none d-xl-block">
+                            <div class="header-button">
+                                <button type="button" class="icon-btn searchBoxToggler">
+                                    <img src="~/img/icon/search.svg" alt="icon">
+                                </button>
+                                <a asp-controller="Contact" asp-action="Index" asp-route-culture="@ViewData["Culture"]"
+                                    class="th-btn th-icon">
+                                    @Html.Localize("pages.layout.contact_us") <i class="fa-light fa-arrow-right-long"></i></a>
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </div>
+                <div class="logo-bg" data-mask-src="@Url.Content("~/img/logo_bg_mask.png")"></div>
+            </div>
+        </div>
+    </header>
+
+    <main role="main" class="pb-3">
+        @RenderBody()
+    </main>
+
+    <footer class="footer-wrapper footer-layout1 black-bg space-top">
+        <div class="widget-area">
+            <div class="container">
+                <div class="newsletter-area">
+                    <div class="newsletter-top">
+                        <div class="row gy-4 align-items-center">
+                            <div class="col-lg-5">
+                                <h2 class="newsletter-title text-white text-capitalize mb-0">E-Bülten Aboneliği</h2>
+                            </div>
+                            <div class="col-lg-7">
+                                <form class="newsletter-form">
+                                    <input class="form-control" type="email" placeholder="Mail Adresinizi Giriniz."
+                                        required="">
+                                    <button type="submit" class="th-btn style3">Şimdi Abone Ol <img
+                                            src="/img/icon/plane.svg" alt=""></button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row justify-content-between">
+                    <div class="col-md-6 col-xl-3">
+                        <div class="widget footer-widget">
+                            <div class="th-widget-about">
+                                <div class="about-logo">
+                                    <a href="/"><img src="/img/logo.webp" alt="KayiAlp" width="148px" height="46px"></a>
+                                </div>
+                                <p class="about-text">Hakkımızda texti. Contrary to popular belief, Lorem Ipsum is not
+                                    simply random text. It has roots in a piece of classical Latin literature from 45
+                                    BC, making it over 2000 years old. Richard McClintock</p>
+                                <div class="th-social">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 col-xl-auto">
+                        <div class="widget widget_nav_menu footer-widget">
+                            <h3 class="widget_title">Faydalı Linkler</h3>
+                            <div class="menu-all-pages-container">
+                                <ul class="menu">
+                                    <li><a href="/Home">Anasayfa</a></li>
+                                    <li><a href="/About">Hakımızda</a></li>
+                                    <li><a href="/">Ürünler</a></li>
+                                    <li><a href="/">Fuarlar</a></li>
+                                    <li><a href="/">İletişim</a></li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 col-xl-auto">
+                        <div class="widget footer-widget">
+                            <h3 class="widget_title">İletşimde kal</h3>
+                            <div class="th-widget-contact">
+                                <div class="info-box_text">
+                                    <div class="icon">
+                                        <img src="~/img/icon/phone.svg" alt="img">
+                                    </div>
+                                    <div class="details">
+                                        <p><a href="tel:+903325012218" class="info-box_link">+90 332 501 22 18</a></p>
+                                    </div>
+                                </div>
+                                <div class="info-box_text">
+                                    <div class="icon">
+                                        <img src="~/img/icon/envelope.svg" alt="img">
+                                    </div>
+                                    <div class="details">
+                                        <p><a href="mailto:info@kayialp.com" class="info-box_link">info@kayialp.com</a>
+                                        </p>
+                                    </div>
+                                </div>
+                                <div class="info-box_text">
+                                    <div class="icon"><img src="~/img/icon/location-dot.svg" alt="img"></div>
+                                    <div class="details">
+                                        <p>FEVZİÇAKMAK MAH. ŞEHİT ATİLLA DEMİRELLİ CAD. B.BLOK NO: 2B KARATAY/KONYA</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 col-xl-auto">
+                        <div class="widget footer-widget">
+                            <h3 class="widget_title">Instagram Post</h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="copyright-wrap">
+            <div class="container">
+                <div class="row justify-content-lg-between align-items-center">
+                    <div class="col-lg-6">
+                        <p class="copyright-text">Copyright © 2025 <a href="/">KayiAlp</a>. All Rights Reserved.</p>
+                    </div>
+                    <div class="col-lg-6 text-center text-lg-end">
+                        <div class="footer-links">
+                            <ul>
+                                <li><a href="/">Yasal bilgilendirme için tıklayınız</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <div class="scroll-top">
+        <svg class="progress-circle svg-content" width="100%" height="100%" viewBox="-1 -1 102 102">
+            <path d="M50,1 a49,49 0 0,1 0,98 a49,49 0 0,1 0,-98"
+                style="transition: stroke-dashoffset 10ms linear 0s; stroke-dasharray: 307.919, 307.919; stroke-dashoffset: 307.919;">
+            </path>
+        </svg>
+    </div>
+    <!-- GSAP ve SplitText'in doğru sıralama ile yüklendiğinden emin olun -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.11.1/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.11.1/ScrollTrigger.min.js"></script>
+
+    <!-- Diğer scriptler -->
+    <script src="~/js/vendor/jquery-3.7.1.min.js"></script>
+    <script src="~/js/swiper-bundle.min.js"></script>
+    <script src="~/js/bootstrap.min.js"></script>
+    <script src="~/js/jquery.magnific-popup.min.js"></script>
+    <script src="~/js/jquery.counterup.min.js"></script>
+    <script src="~/js/circle-progress.js"></script>
+    <script src="~/js/jquery-ui.min.js"></script>
+    <script src="~/js/imagesloaded.pkgd.min.js"></script>
+    <script src="~/js/isotope.pkgd.min.js"></script>
+    <script src="~/js/nice-select.min.js"></script>
+    <script src="~/js/wow.min.js"></script>
+    <script src="~/js/lenis.min.js"></script>
+    <script src="~/js/main.js"></script>
+
+    <script src="~/js/SplitText.js"></script>
+    <!-- circle-progress -->
+    <script src="~/js/circle-progress.js"></script>
+
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+
+</html>
