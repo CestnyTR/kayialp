@@ -20,6 +20,17 @@ namespace kayialp.ViewModels
         // Slug üretim kuralı: Boş bıraktıklarımı otomatik üret
         public bool RegenerateEmptySlugs { get; set; } = true;
 
+        // --- NEW: existing paths for preview ---
+        public string? ExistingCardImage { get; set; }
+        public string? ExistingShowcaseImage { get; set; }
+
+        // --- NEW: replace or remove ---
+        public IFormFile? NewCardImage { get; set; }
+        public IFormFile? NewShowcaseImage { get; set; }
+        public bool RemoveCardImage { get; set; }
+        public bool RemoveShowcaseImage { get; set; }
+        public bool GenerateFromTurkish { get; set; }
+
         // Sekmeler
         public List<CategoryTranslationEdit> Translations { get; set; } = new();
     }
@@ -37,5 +48,8 @@ namespace kayialp.ViewModels
         [Display(Name = "Slug")]
         [MaxLength(200)]
         public string? Slug { get; set; } = "";
+
+
+
     }
 }

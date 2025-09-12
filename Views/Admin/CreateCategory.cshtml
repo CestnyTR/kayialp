@@ -1,32 +1,44 @@
-@model kayialp.ViewModels.CreateCategoryViewModel
 @{
+    ViewData["Title"] = "Yeni Kategori Oluştur";
     Layout = "/Views/Shared/_AdminLayout.cshtml";
 }
+@using kayialp.ViewModels
+@model CreateCategoryViewModel
+<h1 class="h3 mb-3">Yeni Kategori Oluştur</h1>
 
-<h1 class="h3 mb-3">Yeni Kategori</h1>
-
-@if (TempData["CategoryMsg"] is string msg)
-{
-    <div class="alert alert-success">@msg</div>
-}
-
-<form asp-action="CreateCategory" method="post">
+<form asp-action="CreateCategory" method="post" enctype="multipart/form-data">
     @Html.AntiForgeryToken()
 
-    <div class="form-group mb-3">
-        <label for="NameTr">Kategori Adı (TR)</label>
+    <div class="mb-3">
+        <label asp-for="NameTr" class="form-label"></label>
         <input asp-for="NameTr" class="form-control" />
         <span asp-validation-for="NameTr" class="text-danger"></span>
     </div>
 
-    <div class="form-group mb-3">
-        <label for="Order">Sıra</label>
+    <div class="mb-3">
+        <label asp-for="Order" class="form-label"></label>
         <input asp-for="Order" type="number" class="form-control" />
         <span asp-validation-for="Order" class="text-danger"></span>
     </div>
 
-    <button type="submit" class="btn btn-primary">Kaydet</button>
-    <a asp-action="Categories" class="btn btn-secondary">İptal</a>
+    <!-- Kart Görseli -->
+    <div class="mb-3">
+        <label asp-for="CardImage" class="form-label">Kart Görseli (312×240)</label>
+        <input asp-for="CardImage" type="file" accept=".jpg,.jpeg,.png,.webp" class="form-control" />
+        <span asp-validation-for="CardImage" class="text-danger"></span>
+        <small class="text-muted">312×240 px ölçülerinde yüklenecek, sistem otomatik kırpacaktır.</small>
+    </div>
+
+    <!-- Vitrin Görseli -->
+    <div class="mb-3">
+        <label asp-for="ShowcaseImage" class="form-label">Vitrin Görseli (423×636)</label>
+        <input asp-for="ShowcaseImage" type="file" accept=".jpg,.jpeg,.png,.webp" class="form-control" />
+        <span asp-validation-for="ShowcaseImage" class="text-danger"></span>
+        <small class="text-muted">423×636 px ölçülerinde yüklenecek, sistem otomatik kırpacaktır.</small>
+    </div>
+
+    <button type="submit" class="btn btn-success">Kaydet</button>
+    <a asp-action="Index" class="btn btn-secondary">İptal</a>
 </form>
 
 @section Scripts {

@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("kayialp")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+ea9a34673124099c75f822596624792dbbca5fd2")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+51dedc81817a6670b9081c38fa3cdfd1a6614b95")]
 [assembly: System.Reflection.AssemblyProductAttribute("kayialp")]
 [assembly: System.Reflection.AssemblyTitleAttribute("kayialp")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

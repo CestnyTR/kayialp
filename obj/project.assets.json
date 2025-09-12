@@ -1787,6 +1787,22 @@
           }
         }
       },
+      "SixLabors.ImageSharp/3.1.4": {
+        "type": "package",
+        "compile": {
+          "lib/net6.0/SixLabors.ImageSharp.dll": {
+            "related": ".xml"
+          }
+        },
+        "runtime": {
+          "lib/net6.0/SixLabors.ImageSharp.dll": {
+            "related": ".xml"
+          }
+        },
+        "build": {
+          "build/SixLabors.ImageSharp.props": {}
+        }
+      },
       "System.Buffers/4.6.0": {
         "type": "package",
         "compile": {
@@ -5116,6 +5132,22 @@
         "newtonsoft.json.bson.nuspec"
       ]
     },
+    "SixLabors.ImageSharp/3.1.4": {
+      "sha512": "lFIdxgGDA5iYkUMRFOze7BGLcdpoLFbR+a20kc1W7NepvzU7ejtxtWOg9RvgG7kb9tBoJ3ONYOK6kLil/dgF1w==",
+      "type": "package",
+      "path": "sixlabors.imagesharp/3.1.4",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "LICENSE",
+        "build/SixLabors.ImageSharp.props",
+        "lib/net6.0/SixLabors.ImageSharp.dll",
+        "lib/net6.0/SixLabors.ImageSharp.xml",
+        "sixlabors.imagesharp.128.png",
+        "sixlabors.imagesharp.3.1.4.nupkg.sha512",
+        "sixlabors.imagesharp.nuspec"
+      ]
+    },
     "System.Buffers/4.6.0": {
       "sha512": "lN6tZi7Q46zFzAbRYXTIvfXcyvQQgxnY7Xm6C6xQ9784dEL1amjM6S6Iw4ZpsvesAKnRVsM4scrDQaDqSClkjA==",
       "type": "package",
@@ -6481,7 +6513,8 @@
       "Microsoft.EntityFrameworkCore.Design >= 9.0.0",
       "Microsoft.EntityFrameworkCore.SqlServer >= 9.0.0",
       "Microsoft.EntityFrameworkCore.Tools >= 9.0.0",
-      "Microsoft.Extensions.Localization >= 9.0.8"
+      "Microsoft.Extensions.Localization >= 9.0.8",
+      "SixLabors.ImageSharp >= 3.1.4"
     ]
   },
   "packageFolders": {
@@ -6561,6 +6594,10 @@
           "Microsoft.Extensions.Localization": {
             "target": "Package",
             "version": "[9.0.8, )"
+          },
+          "SixLabors.ImageSharp": {
+            "target": "Package",
+            "version": "[3.1.4, )"
           }
         },
         "imports": [
@@ -6588,10 +6625,44 @@
   },
   "logs": [
     {
-      "code": "NU1900",
+      "code": "NU1903",
       "level": "Warning",
       "warningLevel": 1,
-      "message": "Error occurred while getting package vulnerability data: Unable to load the service index for source https://api.nuget.org/v3/index.json."
+      "message": "'SixLabors.ImageSharp' 3.1.4 paketinde önem derecesi yüksek olan bilinen bir https://github.com/advisories/GHSA-2cmq-823j-5qj8 güvenlik açığı var",
+      "libraryId": "SixLabors.ImageSharp",
+      "targetGraphs": [
+        "net9.0"
+      ]
+    },
+    {
+      "code": "NU1903",
+      "level": "Warning",
+      "warningLevel": 1,
+      "message": "'SixLabors.ImageSharp' 3.1.4 paketinde önem derecesi yüksek olan bilinen bir https://github.com/advisories/GHSA-63p8-c4ww-9cg7 güvenlik açığı var",
+      "libraryId": "SixLabors.ImageSharp",
+      "targetGraphs": [
+        "net9.0"
+      ]
+    },
+    {
+      "code": "NU1902",
+      "level": "Warning",
+      "warningLevel": 1,
+      "message": "'SixLabors.ImageSharp' 3.1.4 paketinde önem derecesi orta olan bilinen bir https://github.com/advisories/GHSA-qxrv-gp6x-rc23 güvenlik açığı var",
+      "libraryId": "SixLabors.ImageSharp",
+      "targetGraphs": [
+        "net9.0"
+      ]
+    },
+    {
+      "code": "NU1902",
+      "level": "Warning",
+      "warningLevel": 1,
+      "message": "'SixLabors.ImageSharp' 3.1.4 paketinde önem derecesi orta olan bilinen bir https://github.com/advisories/GHSA-rxmq-m78w-7wmc güvenlik açığı var",
+      "libraryId": "SixLabors.ImageSharp",
+      "targetGraphs": [
+        "net9.0"
+      ]
     }
   ]
 }

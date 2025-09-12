@@ -2016,3 +2016,4 @@ D:\iş\sipariş-işleri\Kayıalp\kayialp\obj\Debug\net9.0\compressed\axvwtqsrl5-
 D:\iş\sipariş-işleri\Kayıalp\kayialp\obj\Debug\net9.0\compressed\cvpb4oq21a-mcjyg0kpav.gz
 D:\iş\sipariş-işleri\Kayıalp\kayialp\obj\Debug\net9.0\compressed\03fe2xsri4-x34uq3nqom.gz
 D:\iş\sipariş-işleri\Kayıalp\kayialp\obj\Debug\net9.0\compressed\ot5atqymzy-uycvkzzoji.gz
+D:\iş\sipariş-işleri\Kayıalp\kayialp\bin\Debug\net9.0\SixLabors.ImageSharp.dll

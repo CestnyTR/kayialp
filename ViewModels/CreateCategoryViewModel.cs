@@ -9,5 +9,12 @@ namespace kayialp.ViewModels
 
         [Range(0, int.MaxValue)]
         public int Order { get; set; } = 0;
+
+
+        [Display(Name = "Kart Görseli (312x240)")]
+        public IFormFile? CardImage { get; set; }
+
+        [Display(Name = "Vitrin Görseli (423x636)")]
+        public IFormFile? ShowcaseImage { get; set; }
     }
 }

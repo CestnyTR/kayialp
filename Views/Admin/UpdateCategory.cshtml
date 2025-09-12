@@ -1,102 +1,100 @@
-@model kayialp.ViewModels.UpdateCategoryViewModel
+@using kayialp.ViewModels
+@model UpdateCategoryViewModel
 @{
+    ViewData["Title"] = "Kategori Düzenle";
     Layout = "/Views/Shared/_AdminLayout.cshtml";
 }
 
-<h1 class="h3 mb-3">Kategori Güncelle (#@Model.Id)</h1>
+<h1 class="h3 mb-3">Kategori Düzenle</h1>
 
-<form asp-action="UpdateCategory" asp-route-id="@Model.Id" method="post">
+<form asp-action="UpdateCategory" method="post" enctype="multipart/form-data">
     @Html.AntiForgeryToken()
+    <input type="hidden" asp-for="Id" />
 
-    <div class="card mb-4">
-        <div class="card-body">
-            <div class="form-row">
-                <div class="form-group col-md-3">
-                    <label>Order</label>
-                    <input asp-for="Order" type="number" class="form-control" />
-                    <span asp-validation-for="Order" class="text-danger"></span>
-                </div>
-                <div class="form-group col-md-9">
-                    <label>KeyName (EN camelCase)</label>
-                    <input asp-for="KeyName" class="form-control" readonly />
-                    <small class="form-text text-muted">
-                        EN metinden türetilir. İstersen “EN’den yeniden üret” işaretli olsun.
-                    </small>
-                </div>
-            </div>
-
-            <div class="form-check mt-2">
-                <input asp-for="RegenerateKeyNameFromEnglish" class="form-check-input" type="checkbox" id="regenKey" />
-                <label class="form-check-label" for="regenKey">Kaydederken KeyName’i EN’den yeniden üret</label>
-            </div>
-            <div class="form-check">
-                <input asp-for="RegenerateEmptySlugs" class="form-check-input" type="checkbox" id="regenSlugs" />
-                <label class="form-check-label" for="regenSlugs">Boş bıraktığım slug’ları otomatik üret</label>
-            </div>
-        </div>
+    <!-- Order -->
+    <div class="mb-3">
+        <label asp-for="Order" class="form-label"></label>
+        <input asp-for="Order" type="number" class="form-control" />
+        <span asp-validation-for="Order" class="text-danger"></span>
     </div>
 
-    <!-- Dil sekmeleri -->
-    <ul class="nav nav-tabs" id="langTab" role="tablist">
+    <!-- Checkbox: TR'den otomatik oluştur -->
+    <div class="form-check mb-3">
+        <input asp-for="GenerateFromTurkish" class="form-check-input" type="checkbox" />
+        <label asp-for="GenerateFromTurkish" class="form-check-label">
+            Tüm dilleri ve slug'ları Türkçeden otomatik oluştur
+        </label>
+    </div>
+
+    <!-- Sekmeli çeviri -->
+    <ul class="nav nav-tabs" id="langTabs" role="tablist">
         @for (int i = 0; i < Model.Translations.Count; i++)
         {
-            var active = i == 0 ? "active" : "";
+            var t = Model.Translations[i];
             <li class="nav-item" role="presentation">
-                <a class="nav-link @active" id="tab-@i"  data-bs-toggle="tab" href="#pane-@i" role="tab" aria-controls="pane-@i" aria-selected="@(i==0)">
-                    @Model.Translations[i].LangDisplay
-                </a>
+                <button class="nav-link @(i == 0 ? "active" : "")"
+                        id="tab-@t.LangCode"
+                        data-bs-toggle="tab"
+                        data-bs-target="#pane-@t.LangCode"
+                        type="button" role="tab">
+                    @t.LangDisplay
+                </button>
             </li>
         }
     </ul>
 
-    <div class="tab-content border-left border-right border-bottom p-3" id="langTabContent">
+    <div class="tab-content border p-3">
         @for (int i = 0; i < Model.Translations.Count; i++)
         {
-            var active = i == 0 ? "show active" : "";
-            <div class="tab-pane fade @active" id="pane-@i" role="tabpanel" aria-labelledby="tab-@i">
-                @* gizli alanlar *@
+            var t = Model.Translations[i];
+            <div class="tab-pane fade @(i == 0 ? "show active" : "")"
+                 id="pane-@t.LangCode" role="tabpanel">
                 <input type="hidden" asp-for="Translations[@i].LangId" />
                 <input type="hidden" asp-for="Translations[@i].LangCode" />
-                <input type="hidden" asp-for="Translations[@i].LangDisplay" />
 
-                <div class="form-group">
-                    <label asp-for="Translations[@i].ValueText">Ad (@Model.Translations[i].LangDisplay)</label>
+                <div class="mb-3">
+                    <label class="form-label">Kategori Adı (@t.LangDisplay)</label>
                     <input asp-for="Translations[@i].ValueText" class="form-control" />
-                    <span asp-validation-for="Translations[@i].ValueText" class="text-danger"></span>
                 </div>
 
-                <div class="form-group">
-                    <label asp-for="Translations[@i].Slug">Slug (@Model.Translations[i].LangDisplay)</label>
+                <div class="mb-3">
+                    <label class="form-label">Slug (@t.LangDisplay)</label>
                     <input asp-for="Translations[@i].Slug" class="form-control" />
-                    <small class="form-text text-muted">
-                        Boş bırakırsan kaydederken otomatik üretilecek (Unicode, diline uygun).
-                    </small>
-                    <span asp-validation-for="Translations[@i].Slug" class="text-danger"></span>
                 </div>
             </div>
         }
     </div>
 
-    <div class="mt-3">
-        <button type="submit" class="btn btn-primary">Kaydet</button>
-        <a asp-action="Index" class="btn btn-secondary">İptal</a>
+    <!-- Kart Görseli -->
+    <div class="mb-3">
+        <label class="form-label">Kart Görseli (312×240)</label>
+        @if (!string.IsNullOrEmpty(Model.ExistingCardImage))
+        {
+            <div class="mb-2">
+                <img src="@Model.ExistingCardImage" alt="Kart Görseli" width="156" height="120" class="border" />
+            </div>
+        }
+        <input asp-for="NewCardImage" type="file" accept=".jpg,.jpeg,.png,.webp" class="form-control"  />
+        <span asp-validation-for="NewCardImage" class="text-danger"></span>
     </div>
+
+    <!-- Vitrin Görseli -->
+    <div class="mb-3">
+        <label class="form-label">Vitrin Görseli (423×636)</label>
+        @if (!string.IsNullOrEmpty(Model.ExistingShowcaseImage))
+        {
+            <div class="mb-2">
+                <img src="@Model.ExistingShowcaseImage" alt="Vitrin Görseli" width="141" height="212" class="border" />
+            </div>
+        }
+        <input asp-for="NewShowcaseImage" type="file" accept=".jpg,.jpeg,.png,.webp" class="form-control"  />
+        <span asp-validation-for="NewShowcaseImage" class="text-danger"></span>
+    </div>
+
+    <button type="submit" class="btn btn-primary">Güncelle</button>
+    <a asp-action="Index" class="btn btn-secondary">İptal</a>
 </form>
 
 @section Scripts {
-  <script>
-    document.addEventListener('DOMContentLoaded', function () {
-      if (window.bootstrap && typeof bootstrap.Tab === 'function') {
-        // BS5
-        document.querySelectorAll('#langTab a[data-bs-toggle="tab"]').forEach(function (a) {
-          a.addEventListener('click', function (e) { e.preventDefault(); new bootstrap.Tab(a).show(); });
-        });
-        if (!location.hash) new bootstrap.Tab(document.querySelector('#langTab a')).show();
-      } else if (window.jQuery && $.fn && $.fn.tab) {
-        // BS4
-        $('#langTab a[ data-bs-toggle="tab"]').on('click', function (e) { e.preventDefault(); $(this).tab('show'); });
-        if (!location.hash) { $('#langTab a[ data-bs-toggle="tab"]').first().tab('show'); }
-      }
-    });
-  </script>
+    <partial name="_ValidationScriptsPartial" />
 }

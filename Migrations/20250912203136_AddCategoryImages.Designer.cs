@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using kayialp.Context;
 
@@ -10,9 +11,11 @@ using kayialp.Context;
 namespace kayialp.Migrations
 {
     [DbContext(typeof(kayialpDbContext))]
-    partial class kayialpDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250912203136_AddCategoryImages")]
+    partial class AddCategoryImages
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

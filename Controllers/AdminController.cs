@@ -10,6 +10,10 @@ using System.Text.RegularExpressions;
 using System.Net;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using System.Text;
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.Formats.Webp;
+using SixLabors.ImageSharp.Processing;
+
 namespace kayialp.Controllers
 {
     [Route("admin")]
@@ -518,13 +522,30 @@ namespace kayialp.Controllers
 
             try
             {
-                // 2) Dilleri DB'den al ve tekilleştir (en küçük Id kanonik)
+                // === Görsel işleme ===
+                string folder = Path.Combine(_env.WebRootPath, "uploads", "categories", category.Id.ToString());
+                Directory.CreateDirectory(folder);
+
+                if (model.CardImage != null && model.CardImage.Length > 0)
+                {
+                    category.ImageCard312x240 = await SaveWebpVariantAsync(
+                        model.CardImage, folder, "card-312x240", 312, 240);
+                }
+
+                if (model.ShowcaseImage != null && model.ShowcaseImage.Length > 0)
+                {
+                    category.ImageShowcase423x636 = await SaveWebpVariantAsync(
+                        model.ShowcaseImage, folder, "showcase-423x636", 423, 636);
+                }
+                await _context.SaveChangesAsync();
+
+                // === Dilleri DB'den al ve tekilleştir (en küçük Id kanonik) ===
                 var langsRaw = await _context.Langs
                     .AsNoTracking()
                     .Where(l => !string.IsNullOrWhiteSpace(l.LangCode))
                     .Select(l => new { l.Id, l.LangCode })
                     .ToListAsync();
-                Console.WriteLine($"langsRaw : {langsRaw}");
+
                 var langs = langsRaw
                     .GroupBy(x => NormalizeLangKey(x.LangCode))
                     .Select(g => new { Id = g.Min(x => x.Id), LangCode = g.OrderBy(x => x.Id).First().LangCode })
@@ -532,18 +553,16 @@ namespace kayialp.Controllers
 
                 var tr = langs.FirstOrDefault(l => NormalizeLangKey(l.LangCode) == "tr");
                 if (tr is null) throw new InvalidOperationException("TR language not found in DB.");
-                Console.WriteLine($"langsRaw  tr : {tr}");
 
-                // 3) KeyName için EN çeviri (EN tabloya yazılsın/yazılmasın fark etmez)
+                // === KeyName için EN çeviri ===
                 var enName = await _translator.TranslateAsync(model.NameTr, "TR", "EN");
                 var keyName = TextCaseHelper.ToCamelCaseKey(enName);
 
-                // EN slug (çok nadir fallback için)
                 var enSlug = TextCaseHelper.ToLocalizedSlug(enName);
                 if (string.IsNullOrWhiteSpace(enSlug))
                     enSlug = TextCaseHelper.ToLocalizedSlug(model.NameTr);
 
-                // 4) Tüm diller için çeviri + Unicode slug + upsert
+                // === Tüm diller için çeviri + Unicode slug ===
                 foreach (var lang in langs)
                 {
                     string valueText;
@@ -555,7 +574,7 @@ namespace kayialp.Controllers
                     {
                         var target = NormalizeToDeepLCode(lang.LangCode);
                         try { valueText = await _translator.TranslateAsync(model.NameTr, "TR", target); }
-                        catch { valueText = model.NameTr; } // DeepL yoksa fallback
+                        catch { valueText = model.NameTr; } // hata fallback
                     }
 
                     var localizedSlug = TextCaseHelper.ToLocalizedSlug(valueText);
@@ -566,7 +585,7 @@ namespace kayialp.Controllers
                 }
 
                 TempData["CategoryMsg"] = "Kategori oluşturuldu.";
-                return RedirectToAction(nameof(Index)); // <-- success path
+                return RedirectToAction(nameof(Index)); // success
             }
             catch
             {
@@ -576,9 +595,11 @@ namespace kayialp.Controllers
                 await UpsertCategoryTranslationAsync(category.Id, trId, $"category{category.Id}", model.NameTr, fallbackSlug);
 
                 TempData["CategoryMsg"] = "Kategori oluşturuldu ancak çeviri sırasında hata oluştu.";
-                return RedirectToAction(nameof(Index)); // <-- failure path de return ediyor
+                return RedirectToAction(nameof(Index)); // failure
             }
         }
+
+        // GET: /admin/update-category/{id}
         // GET: /admin/update-category/{id}
         [HttpGet("update-category/{id:int}")]
         public async Task<IActionResult> UpdateCategory(int id)
@@ -603,6 +624,7 @@ namespace kayialp.Controllers
             var existing = await _context.CategoriesTranslations
                 .AsNoTracking()
                 .Where(t => t.CategoriesId == id)
+                .Include(t => t.LangCode)
                 .ToListAsync();
 
             // EN metnini bul (KeyName ön-izleme için)
@@ -622,7 +644,11 @@ namespace kayialp.Controllers
                 Order = category.Order,
                 KeyName = TextCaseHelper.ToCamelCaseKey(previewEnText),
                 RegenerateKeyNameFromEnglish = true,
-                RegenerateEmptySlugs = true
+                RegenerateEmptySlugs = true,
+
+                // --- NEW: Görsel yolları ---
+                ExistingCardImage = category.ImageCard312x240,
+                ExistingShowcaseImage = category.ImageShowcase423x636
             };
 
             // Sekmeler: her dil için mevcut değerleri yerleştir
@@ -653,45 +679,96 @@ namespace kayialp.Controllers
             var category = await _context.Categories.FindAsync(id);
             if (category is null) return NotFound();
 
-            // 1) Sıra güncelle
             category.Order = model.Order;
 
-            // 2) EN metni: gelen sekmelerden EN olanı bul (yoksa TR’yi çevir)
-            var enEdit = model.Translations.FirstOrDefault(x => BaseLang(x.LangCode) == "en");
-            string enTextForKey = enEdit?.ValueText;
-            if (string.IsNullOrWhiteSpace(enTextForKey))
+            // === Görseller ===
+            var folder = Path.Combine(_env.WebRootPath, "uploads", "categories", category.Id.ToString());
+            Directory.CreateDirectory(folder);
+
+            // Kart görseli
+            if (model.NewCardImage != null && model.NewCardImage.Length > 0)
             {
-                var trEdit = model.Translations.FirstOrDefault(x => BaseLang(x.LangCode) == "tr");
-                var trText = trEdit?.ValueText ?? "";
-                // EN yoksa TR’yi EN’e çevirip kullan
-                enTextForKey = await _translator.TranslateAsync(trText, "TR", "EN");
+                // Yeni dosya varsa -> eskisini sil, yenisini ekle
+                TryDeleteFileByWebPath(category.ImageCard312x240);
+                category.ImageCard312x240 = await SaveWebpVariantAsync(
+                    model.NewCardImage, folder, "card-312x240", 312, 240);
+            }
+            else if (string.IsNullOrEmpty(category.ImageCard312x240))
+            {
+                // Yeni yok, eski de yok → hata
+                ModelState.AddModelError("NewCardImage", "Kart görseli zorunludur.");
             }
 
-            // 3) KeyName: checkbox işaretliyse EN’den yeniden üret, değilse modeldeki değeri kullan
-            var newKeyName = model.RegenerateKeyNameFromEnglish
-                ? TextCaseHelper.ToCamelCaseKey(enTextForKey)
-                : (model.KeyName ?? "");
+            // Vitrin görseli
+            if (model.NewShowcaseImage != null && model.NewShowcaseImage.Length > 0)
+            {
+                TryDeleteFileByWebPath(category.ImageShowcase423x636);
+                category.ImageShowcase423x636 = await SaveWebpVariantAsync(
+                    model.NewShowcaseImage, folder, "showcase-423x636", 423, 636);
+            }
+            else if (string.IsNullOrEmpty(category.ImageShowcase423x636))
+            {
+                ModelState.AddModelError("NewShowcaseImage", "Vitrin görseli zorunludur.");
+            }
 
-            // 4) Tüm diller için upsert (ValueText & Slug)
-            //    - Slug alanını boş bıraktıysan ve RegenerateEmptySlugs=true ise otomatik üretiriz (Unicode)
-            //    - Dil içinde slug benzersizliği korunur
+            // Eğer validasyon hataları varsa tekrar view göster
+            if (!ModelState.IsValid)
+                return View("UpdateCategory", model);
+
+            // === Çeviriler ===
             var dbRows = await _context.CategoriesTranslations
                 .Where(t => t.CategoriesId == id)
                 .ToListAsync();
 
+            if (model.GenerateFromTurkish)
+            {
+                var trEdit = model.Translations.FirstOrDefault(x => BaseLang(x.LangCode) == "tr");
+                var trText = trEdit?.ValueText ?? "";
+
+                foreach (var edit in model.Translations)
+                {
+                    if (BaseLang(edit.LangCode) == "tr")
+                    {
+                        // TR olduğu gibi kalsın
+                        edit.ValueText = trText;
+                        edit.Slug = TextCaseHelper.ToLocalizedSlug(trText);
+                    }
+                    else
+                    {
+                        try
+                        {
+                            var target = NormalizeToDeepLCode(edit.LangCode);
+                            var translated = await _translator.TranslateAsync(trText, "TR", target);
+                            edit.ValueText = translated;
+                            edit.Slug = TextCaseHelper.ToLocalizedSlug(translated);
+                        }
+                        catch
+                        {
+                            // Çeviri hatası → fallback TR
+                            edit.ValueText = trText;
+                            edit.Slug = TextCaseHelper.ToLocalizedSlug(trText);
+                        }
+                    }
+                }
+            }
+
+
+            // KeyName – EN veya TR’den üret
+            var enEdit = model.Translations.FirstOrDefault(x => BaseLang(x.LangCode) == "en");
+            string keySourceText = enEdit?.ValueText;
+            if (string.IsNullOrWhiteSpace(keySourceText))
+                keySourceText = model.Translations.FirstOrDefault(x => BaseLang(x.LangCode) == "tr")?.ValueText ?? "";
+
+            var newKeyName = TextCaseHelper.ToCamelCaseKey(keySourceText);
+
             foreach (var edit in model.Translations)
             {
-                if (string.IsNullOrWhiteSpace(edit.ValueText))
-                    continue; // tamamen boş bırakılmışsa pas geç (istersen zorunlu da kılabilirsin)
+                if (string.IsNullOrWhiteSpace(edit.ValueText)) continue;
 
                 var row = dbRows.FirstOrDefault(r => r.LangCodeId == edit.LangId);
-                var desiredSlug = edit.Slug;
-
-                if (string.IsNullOrWhiteSpace(desiredSlug) && model.RegenerateEmptySlugs)
-                    desiredSlug = TextCaseHelper.ToLocalizedSlug(edit.ValueText);
-
-                if (string.IsNullOrWhiteSpace(desiredSlug))
-                    desiredSlug = TextCaseHelper.ToLocalizedSlug(edit.ValueText); // son çare yine üret
+                var slug = string.IsNullOrWhiteSpace(edit.Slug)
+                    ? TextCaseHelper.ToLocalizedSlug(edit.ValueText)
+                    : edit.Slug;
 
                 if (row is null)
                 {
@@ -701,68 +778,58 @@ namespace kayialp.Controllers
                         LangCodeId = edit.LangId,
                         KeyName = newKeyName,
                         ValueText = edit.ValueText,
-                        Slug = await EnsureUniqueLocalizedSlugAsync(edit.LangId, desiredSlug)
+                        Slug = await EnsureUniqueLocalizedSlugAsync(edit.LangId, slug)
                     });
                 }
                 else
                 {
-                    row.KeyName = newKeyName; // tüm dillerde aynı
+                    row.KeyName = newKeyName;
                     row.ValueText = edit.ValueText;
-
-                    // benzersiz hale getir (aynı dilde slug çakışırsa -2, -3 eklenir)
-                    row.Slug = await EnsureUniqueLocalizedSlugAsync(edit.LangId, desiredSlug, row.Id);
+                    row.Slug = await EnsureUniqueLocalizedSlugAsync(edit.LangId, slug, row.Id);
                 }
             }
 
             await _context.SaveChangesAsync();
-
             TempData["CategoryMsg"] = "Kategori güncellendi.";
             return RedirectToAction(nameof(Index));
         }
 
+
+
+        // POST: /admin/delete-category/{id}
         [HttpPost("delete-category/{id:int}")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteCategory(int id)
         {
             var category = await _context.Categories.FindAsync(id);
-            if (category is null)
-            {
-                TempData["CategoryError"] = "Kategori bulunamadı.";
-                return RedirectToAction(nameof(Index));
-            }
+            if (category is null) return NotFound();
 
-            // Bu kategoriye bağlı ürün var mı?
-            var hasProducts = await _context.Products
-                .AnyAsync(p => p.CategoryId == id); // SubCategoryId yoksa yalnızca CategoryId kontrolü yeter
-
+            // 1) Ürün var mı kontrolü
+            bool hasProducts = await _context.Products.AnyAsync(p => p.CategoryId == id);
             if (hasProducts)
             {
-                TempData["CategoryError"] = "Bu kategoriye bağlı ürünler var. Önce ürünleri taşıyın veya silin.";
+                TempData["CategoryMsg"] = "Bu kategoride ürün bulunduğu için silinemez.";
                 return RedirectToAction(nameof(Index));
             }
 
-            // Çevirileri temizle (cascade yoksa güvenli yol)
-            var translations = await _context.CategoriesTranslations
-                .Where(t => t.CategoriesId == id)
-                .ToListAsync();
-
+            // 2) Çeviri kayıtlarını sil
+            var translations = _context.CategoriesTranslations.Where(t => t.CategoriesId == id);
             _context.CategoriesTranslations.RemoveRange(translations);
+
+            // 3) Resim dosyalarını sil
+            if (!string.IsNullOrEmpty(category.ImageCard312x240))
+                TryDeleteFileByWebPath(category.ImageCard312x240);
+
+            if (!string.IsNullOrEmpty(category.ImageShowcase423x636))
+                TryDeleteFileByWebPath(category.ImageShowcase423x636);
+
+            // 4) Kategori kaydını sil
             _context.Categories.Remove(category);
+            await _context.SaveChangesAsync();
 
-            try
-            {
-                await _context.SaveChangesAsync();
-                TempData["CategoryMsg"] = "Kategori silindi.";
-            }
-            catch (DbUpdateException)
-            {
-                TempData["CategoryError"] = "Kategori silinemedi. Bağlı kayıtlar olabilir.";
-            }
-
+            TempData["CategoryMsg"] = "Kategori başarıyla silindi.";
             return RedirectToAction(nameof(Index));
         }
-
-
 
         #endregion
 
@@ -1435,7 +1502,57 @@ namespace kayialp.Controllers
             }
         }
 
+        // --- NEW: paths ---
+        private string GetCategoryFolder(int categoryId)
+            => Path.Combine(_env.WebRootPath, "uploads", "categories", categoryId.ToString());
 
+        private static readonly string[] AllowedImageContentTypes = new[]
+        {
+        "image/jpeg", "image/png", "image/webp"
+    };
+
+        private bool IsAllowedImage(IFormFile? file)
+            => file != null && AllowedImageContentTypes.Contains(file.ContentType) && file.Length > 0 && file.Length <= 10 * 1024 * 1024;
+
+        // --- NEW: central crop + exact size + webp save ---
+        private async Task<string> SaveWebpVariantAsync(IFormFile file, string folder, string fileNameNoExt, int width, int height)
+        {
+            Directory.CreateDirectory(folder);
+            var targetPath = Path.Combine(folder, $"{fileNameNoExt}.webp");
+
+            using var stream = file.OpenReadStream();
+            using var image = await Image.LoadAsync(stream);
+
+            // central crop/cover to exact size
+            image.Mutate(ctx => ctx.Resize(new ResizeOptions
+            {
+                Mode = ResizeMode.Crop,
+                Position = AnchorPositionMode.Center,
+                Size = new Size(width, height)
+            }));
+
+            var encoder = new WebpEncoder
+            {
+                Quality = 80, // optimize
+                FileFormat = WebpFileFormatType.Lossy
+            };
+
+            await image.SaveAsWebpAsync(targetPath, encoder);
+
+            // return web-relative path
+            var rel = $"/uploads/categories/{Path.GetFileName(folder)}/{fileNameNoExt}.webp";
+            return rel.Replace("\\", "/");
+        }
+
+        private void TryDeleteFileByWebPath(string? webPath)
+        {
+            if (string.IsNullOrWhiteSpace(webPath)) return;
+            var abs = Path.Combine(_env.WebRootPath, webPath.TrimStart('/').Replace("/", Path.DirectorySeparatorChar.ToString()));
+            if (System.IO.File.Exists(abs))
+            {
+                System.IO.File.Delete(abs);
+            }
+        }
         #endregion
     }
 }
