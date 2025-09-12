@@ -9,6 +9,7 @@ namespace kayialp.Models
         public int LangCodeId { get; set; }
         public string KeyName { get; set; } = string.Empty;
         public string ValueText { get; set; } = string.Empty;
+        public string? ImageAlts { get; set; }
 
         public string Slug { get; set; } = string.Empty;
 

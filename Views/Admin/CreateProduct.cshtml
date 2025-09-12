@@ -1,0 +1,146 @@
+@model kayialp.ViewModels.CreateProductFullViewModel
+@{
+    Layout = "/Views/Shared/_AdminLayout.cshtml";
+}
+
+<h1 class="h3 mb-3">Yeni Ürün</h1>
+
+@if (TempData["ProductError"] is string err)
+{
+    <div class="alert alert-danger">@err</div>
+}
+@if (TempData["ProductMsg"] is string ok)
+{
+    <div class="alert alert-success">@ok</div>
+}
+
+<form asp-action="CreateProduct" method="post" enctype="multipart/form-data">
+    @Html.AntiForgeryToken()
+
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="form-row">
+                <div class="form-group col-md-6">
+                    <label>Kategori</label>
+                    <select asp-for="CategoryId" class="form-control" asp-items="Model.Categories">
+                        <option value="">Seçiniz…</option>
+                    </select>
+                    <span asp-validation-for="CategoryId" class="text-danger"></span>
+                </div>
+                <div class="form-group col-md-6">
+                    <label>Ürün Adı (TR)</label>
+                    <input asp-for="NameTr" class="form-control" />
+                    <span asp-validation-for="NameTr" class="text-danger"></span>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group col-md-2">
+                    <label>Stok</label>
+                    <input asp-for="Stock" type="number" min="0" class="form-control" />
+                </div>
+                <div class="form-group col-md-2">
+                    <label>Sıra (Order)</label>
+                    <input asp-for="Order" type="number" min="0" class="form-control" />
+                </div>
+                <div class="form-group col-md-8">
+                    <label>Görseller (max 5)</label>
+                    <input asp-for="Images" type="file" class="form-control" multiple accept=".jpg,.jpeg,.png,.webp,.jfif" />
+                    <small class="form-text text-muted">İlk görsel kapak olarak kullanılır.</small>
+                    <span asp-validation-for="Images" class="text-danger"></span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Detaylar & Özellikler -->
+    <!-- Detaylar & Özellikler -->
+    <div class="card mb-4">
+        <div class="card-header"><strong>Ürün Detayları (TR)</strong></div>
+        <div class="card-body">
+            <div class="form-group">
+                <label>Açıklama</label>
+                <textarea class="form-control js-ckeditor" id="desc-editor" name="DescriptionTrHtml"
+                    rows="8">@Model.DescriptionTrHtml</textarea>
+            </div>
+            <div class="form-group">
+                <label>Ürün Hakkında</label>
+                <textarea class="form-control js-ckeditor" id="about-editor" name="AboutTrHtml"
+                    rows="8">@Model.AboutTrHtml</textarea>
+            </div>
+        </div>
+    </div>
+
+    <!-- Feature’lar (madde madde, ürüne bağlı) -->
+    <div class="card mb-4">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <strong>Özellikler (TR)</strong>
+            <button type="button" class="btn btn-sm btn-outline-primary" onclick="addTopFeature()">Özellik Ekle</button>
+        </div>
+        <div class="card-body" id="features-top-container">
+            @for (int j = 0; j < Model.Features.Count; j++)
+            {
+                <div class="form-row align-items-end feature-row mb-2" data-findex="@j">
+                    <!-- BUNU EKLE -->
+                    <input type="hidden" name="Features.Index" value="@j" />
+
+                    <div class="form-group col-md-9">
+                        <label>Özellik Metni</label>
+                        <input class="form-control" name="Features[@j].TextTr" value="@Model.Features[j].TextTr" />
+                    </div>
+                    <div class="form-group col-md-2">
+                        <label>Sıra</label>
+                        <input class="form-control" type="number" name="Features[@j].Order"
+                            value="@Model.Features[j].Order" />
+                    </div>
+                    <div class="form-group col-md-1">
+                        <button type="button" class="btn btn-outline-danger" onclick="removeTopFeature(this)">X</button>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+    <button type="submit" class="btn btn-primary">Kaydet</button>
+    <a asp-action="Products" class="btn btn-secondary">İptal</a>
+    </div>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script src="https://cdn.ckeditor.com/ckeditor5/41.4.2/classic/ckeditor.js"></script>
+    <script>
+        const __ck__ = new Map();
+        function initEditorById(id) {
+            const el = document.getElementById(id);
+            if (!el || __ck__.has(id)) return;
+            ClassicEditor.create(el, { language: 'tr', toolbar: ['heading', '|', 'bold', 'italic', 'link', '|', 'bulletedList', 'numberedList', '|', 'blockQuote', 'undo', 'redo'] })
+                .then(ed => __ck__.set(id, ed)).catch(console.error);
+        }
+        document.addEventListener('DOMContentLoaded', function () {
+            initEditorById('desc-editor'); initEditorById('about-editor');
+        });
+
+        function addTopFeature() {
+            const c = document.getElementById('features-top-container');
+            const j = c.querySelectorAll('.feature-row').length;
+
+            c.insertAdjacentHTML('beforeend', `
+                        <div class="form-row align-items-end feature-row mb-2" data-findex="${j}">
+                          <!-- BUNU EKLE -->
+                          <input type="hidden" name="Features.Index" value="${j}">
+                          <div class="form-group col-md-9">
+                            <label>Özellik Metni</label>
+                            <input class="form-control" name="Features[${j}].TextTr" />
+                          </div>
+                          <div class="form-group col-md-2">
+                            <label>Sıra</label>
+                            <input class="form-control" type="number" name="Features[${j}].Order" value="${j}" />
+                          </div>
+                          <div class="form-group col-md-1">
+                            <button type="button" class="btn btn-outline-danger" onclick="removeTopFeature(this)">X</button>
+                          </div>
+                        </div>`);
+        }
+        function removeTopFeature(btn) { btn.closest('.feature-row').remove(); }
+    </script>
+}

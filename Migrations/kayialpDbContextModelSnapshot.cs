@@ -221,10 +221,6 @@ namespace kayialp.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<string>("KeyName")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<int>("LangCodeId")
                         .HasColumnType("int");
 
@@ -255,12 +251,12 @@ namespace kayialp.Migrations
                     b.Property<int>("Order")
                         .HasColumnType("int");
 
-                    b.Property<int>("ProductDetailsId")
+                    b.Property<int>("ProductId")
                         .HasColumnType("int");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ProductDetailsId");
+                    b.HasIndex("ProductId");
 
                     b.ToTable("ProductDetailsFeatures");
                 });
@@ -273,8 +269,7 @@ namespace kayialp.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<string>("KeyName")
-                        .IsRequired()
+                    b.Property<string>("ImageAlts")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<int>("LangCodeId")
@@ -331,6 +326,9 @@ namespace kayialp.Migrations
                         .HasColumnType("int");
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("ImageAlts")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("KeyName")
                         .IsRequired()
@@ -532,13 +530,13 @@ namespace kayialp.Migrations
 
             modelBuilder.Entity("kayialp.Models.ProductDetailsFeatures", b =>
                 {
-                    b.HasOne("kayialp.Models.ProductDetails", "ProductDetails")
+                    b.HasOne("kayialp.Models.Products", "Product")
                         .WithMany()
-                        .HasForeignKey("ProductDetailsId")
+                        .HasForeignKey("ProductId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("ProductDetails");
+                    b.Navigation("Product");
                 });
 
             modelBuilder.Entity("kayialp.Models.ProductDetailsTranslations", b =>

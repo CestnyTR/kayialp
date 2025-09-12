@@ -1,0 +1,203 @@
+@model kayialp.ViewModels.UpdateProductViewModel
+@{
+    Layout = "/Views/Shared/_AdminLayout.cshtml";
+}
+
+<h1 class="h3 mb-3">Ürün Güncelle (#@Model.Id)</h1>
+
+@if (TempData["ProductError"] is string err)
+{
+    <div class="alert alert-danger">@err</div>
+}
+@if (TempData["ProductMsg"] is string ok)
+{
+    <div class="alert alert-success">@ok</div>
+}
+
+<form asp-action="UpdateProduct" asp-route-id="@Model.Id" method="post" enctype="multipart/form-data">
+    @Html.AntiForgeryToken()
+    <input type="hidden" asp-for="Id" />
+
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="form-row">
+                <div class="form-group col-md-6">
+                    <label>Kategori</label>
+                    <select asp-for="CategoryId" class="form-control" asp-items="Model.Categories">
+                        <option value="">Seçiniz…</option>
+                    </select>
+                    <span asp-validation-for="CategoryId" class="text-danger"></span>
+                </div>
+                <div class="form-group col-md-6">
+                    <label>Ürün Adı (TR)</label>
+                    <input asp-for="NameTr" class="form-control" />
+                    <span asp-validation-for="NameTr" class="text-danger"></span>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group col-md-2">
+                    <label>Stok</label>
+                    <input asp-for="Stock" type="number" class="form-control" min="0" />
+                </div>
+                <div class="form-group col-md-2">
+                    <label>Sıra</label>
+                    <input asp-for="Order" type="number" class="form-control" min="0" />
+                </div>
+                <div class="form-group col-md-8">
+                    <label>Yeni Görseller (toplam max 5)</label>
+                    <!-- Önerilen (TagHelper’sız): -->
+                    <input type="file" id="NewImages" name="NewImages" class="form-control" multiple
+                        accept=".jpg,.jpeg,.png,.webp,.jfif" />
+                </div>
+            </div>
+
+            <div class="form-check">
+                <input asp-for="RegenerateOtherLangs" class="form-check-input" type="checkbox" id="regenAll" />
+                <label class="form-check-label" for="regenAll">Diğer dilleri TR’den yeniden üret</label>
+            </div>
+            <div class="form-check">
+                <input asp-for="RegenerateEmptySlugs" class="form-check-input" type="checkbox" id="regenSlugs" />
+                <label class="form-check-label" for="regenSlugs">Boş slug’ları otomatik üret</label>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mevcut görseller -->
+    <div class="card mb-4">
+        <div class="card-header"><strong>Mevcut Görseller</strong></div>
+        <div class="card-body">
+            @if (Model.ExistingImages?.Any() == true)
+            {
+                <div class="d-flex flex-wrap">
+                    @for (int i = 0; i < Model.ExistingImages.Count; i++)
+                    {
+                        var p = Model.ExistingImages[i];
+                        <div class="border rounded p-2 mr-2 mb-2" style="width:160px">
+                            <img src="@p" style="width:100%;height:100px;object-fit:cover;border-radius:4px;" />
+                            <div class="mt-2">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="CoverImagePath" value="@p" @(p ==
+                                                                                                                                                  Model.CoverImagePath ? "checked" : "") id="cover_@i" />
+                                <label class="form-check-label" for="cover_@i">Kapak</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="RemoveImagePaths" value="@p"
+                                    id="rem_@i" />
+                                <label class="form-check-label text-danger" for="rem_@i">Sil</label>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+                        }
+                        else
+            {
+                <div class="text-muted">Kayıtlı görsel yok.</div>
+            }
+        </div>
+    </div>
+
+    <!-- Detaylar -->
+    <div class="card mb-4">
+        <div class="card-header"><strong>Ürün Detayları (TR)</strong></div>
+        <div class="card-body">
+            <div class="form-group">
+                <label>Açıklama</label>
+                <textarea class="form-control js-ck" id="desc-editor" name="DescriptionTrHtml"
+                    rows="8">@Model.DescriptionTrHtml</textarea>
+            </div>
+            <div class="form-group">
+                <label>Ürün Hakkında</label>
+                <textarea class="form-control js-ck" id="about-editor" name="AboutTrHtml"
+                    rows="8">@Model.AboutTrHtml</textarea>
+            </div>
+        </div>
+    </div>
+
+    <!-- Özellikler -->
+    <div class="card mb-4">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <strong>Özellikler (TR)</strong>
+            <button type="button" class="btn btn-sm btn-outline-primary" onclick="addFeature()">Özellik Ekle</button>
+        </div>
+        <div class="card-body" id="feat-container">
+            @for (int j = 0; j < Model.Features.Count; j++)
+            {
+                <div class="form-row align-items-end feature-row mb-2" data-findex="@j">
+                    <input type="hidden" name="Features.Index" value="@j" />
+                    <input type="hidden" name="Features[@j].Id" value="@Model.Features[j].Id" />
+                    <div class="form-group col-md-7">
+                        <label>Metin</label>
+                        <input class="form-control" name="Features[@j].TextTr" value="@Model.Features[j].TextTr" />
+                    </div>
+                    <div class="form-group col-md-2">
+                        <label>Sıra</label>
+                        <input class="form-control" type="number" name="Features[@j].Order"
+                            value="@Model.Features[j].Order" />
+                    </div>
+                    <div class="form-group col-md-2">
+                        <div class="form-check mt-4">
+                            <input class="form-check-input" type="checkbox" name="Features[@j].Delete" id="del_@j" />
+                            <label class="form-check-label text-danger" for="del_@j">Sil</label>
+                        </div>
+                    </div>
+                    <div class="form-group col-md-1">
+                        <button type="button" class="btn btn-outline-danger" onclick="removeRow(this)">X</button>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+
+    <div class="mb-4">
+        <button type="submit" class="btn btn-primary">Kaydet</button>
+        <a href="/admin" class="btn btn-secondary">İptal</a>
+    </div>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script src="https://cdn.ckeditor.com/ckeditor5/41.4.2/classic/ckeditor.js"></script>
+    <script>
+        const __eds = new Map();
+        function initCk(id) {
+            if (__eds.has(id)) return;
+            ClassicEditor.create(document.getElementById(id), {
+                language: 'tr',
+                toolbar: ['heading', '|', 'bold', 'italic', 'link', '|', 'bulletedList', 'numberedList', '|', 'blockQuote', 'undo', 'redo']
+            }).then(ed => __eds.set(id, ed)).catch(console.error);
+        }
+        document.addEventListener('DOMContentLoaded', function () {
+            initCk('desc-editor'); initCk('about-editor');
+        });
+
+        function addFeature() {
+            const c = document.getElementById('feat-container');
+            const j = c.querySelectorAll('.feature-row').length;
+            c.insertAdjacentHTML('beforeend', `
+    <div class="form-row align-items-end feature-row mb-2" data-findex="${j}">
+      <input type="hidden" name="Features.Index" value="${j}" />
+      <input type="hidden" name="Features[${j}].Id" value="0" />
+      <div class="form-group col-md-7">
+        <label>Metin</label>
+        <input class="form-control" name="Features[${j}].TextTr" />
+      </div>
+      <div class="form-group col-md-2">
+        <label>Sıra</label>
+        <input class="form-control" type="number" name="Features[${j}].Order" value="${j}" />
+      </div>
+      <div class="form-group col-md-2">
+        <div class="form-check mt-4">
+          <input class="form-check-input" type="checkbox" name="Features[${j}].Delete" id="del_${j}" />
+          <label class="form-check-label text-danger" for="del_${j}">Sil</label>
+        </div>
+      </div>
+      <div class="form-group col-md-1">
+        <button type="button" class="btn btn-outline-danger" onclick="removeRow(this)">X</button>
+      </div>
+    </div>`);
+        }
+        function removeRow(btn) { btn.closest('.feature-row').remove(); }
+    </script>
+}

@@ -11,6 +11,6 @@ namespace kayialp.Models
         public int Order { get; set; }
 
         [ForeignKey("CategoryId")]
-        public Categories Category { get; set; } = new Categories();
+        public Categories Category { get; set; } //= new Categories();
     }
 }

@@ -9,6 +9,6 @@ namespace kayialp.Models
         public int Order { get; set; }
 
         [ForeignKey("ProductId")]
-        public Products Product { get; set; } = new Products();
+        public Products Product { get; set; } //= new Products();
     }
 }
