@@ -1,203 +1,335 @@
-@model kayialp.ViewModels.UpdateProductViewModel
+@using kayialp.ViewModels
+@model UpdateProductViewModel
 @{
     Layout = "/Views/Shared/_AdminLayout.cshtml";
+    ViewData["Title"] = "Ürün Güncelle";
+    var existing = ViewBag.ExistingImages as List<string> ?? new List<string>();
 }
 
-<h1 class="h3 mb-3">Ürün Güncelle (#@Model.Id)</h1>
-
-@if (TempData["ProductError"] is string err)
-{
-    <div class="alert alert-danger">@err</div>
-}
-@if (TempData["ProductMsg"] is string ok)
-{
-    <div class="alert alert-success">@ok</div>
-}
+<h2>@ViewData["Title"]</h2>
 
 <form asp-action="UpdateProduct" asp-route-id="@Model.Id" method="post" enctype="multipart/form-data">
     @Html.AntiForgeryToken()
     <input type="hidden" asp-for="Id" />
+    <input type="hidden" asp-for="AttributeOrder" id="AttributeOrder" />
 
-    <div class="card mb-4">
-        <div class="card-body">
-            <div class="form-row">
-                <div class="form-group col-md-6">
-                    <label>Kategori</label>
-                    <select asp-for="CategoryId" class="form-control" asp-items="Model.Categories">
-                        <option value="">Seçiniz…</option>
-                    </select>
-                    <span asp-validation-for="CategoryId" class="text-danger"></span>
-                </div>
-                <div class="form-group col-md-6">
-                    <label>Ürün Adı (TR)</label>
-                    <input asp-for="NameTr" class="form-control" />
-                    <span asp-validation-for="NameTr" class="text-danger"></span>
+    <!-- Temel alanlar -->
+    <div class="card mb-4 p-3">
+        <div class="row g-3">
+            <div class="col-md-4">
+                <label class="form-label">Kategori</label>
+                <select asp-for="CategoryId" class="form-select" asp-items="ViewBag.Categories"></select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">Stok</label>
+                <input asp-for="Stock" class="form-control" />
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">Sıra</label>
+                <input asp-for="Order" class="form-control" />
+            </div>
+            <div class="col-md-2 d-flex align-items-end">
+                <div class="form-check">
+                    <input class="form-check-input" asp-for="IsActive" />
+                    <label class="form-check-label" for="IsActive">Aktif</label>
                 </div>
             </div>
-
-            <div class="form-row">
-                <div class="form-group col-md-2">
-                    <label>Stok</label>
-                    <input asp-for="Stock" type="number" class="form-control" min="0" />
+            <div class="col-md-2 d-flex align-items-end">
+                <div class="form-check">
+                    <input class="form-check-input" asp-for="AutoTranslate" />
+                    <label class="form-check-label" for="AutoTranslate">AutoTranslate (TR → boş alanlar)</label>
                 </div>
-                <div class="form-group col-md-2">
-                    <label>Sıra</label>
-                    <input asp-for="Order" type="number" class="form-control" min="0" />
-                </div>
-                <div class="form-group col-md-8">
-                    <label>Yeni Görseller (toplam max 5)</label>
-                    <!-- Önerilen (TagHelper’sız): -->
-                    <input type="file" id="NewImages" name="NewImages" class="form-control" multiple
-                        accept=".jpg,.jpeg,.png,.webp,.jfif" />
-                </div>
-            </div>
-
-            <div class="form-check">
-                <input asp-for="RegenerateOtherLangs" class="form-check-input" type="checkbox" id="regenAll" />
-                <label class="form-check-label" for="regenAll">Diğer dilleri TR’den yeniden üret</label>
-            </div>
-            <div class="form-check">
-                <input asp-for="RegenerateEmptySlugs" class="form-check-input" type="checkbox" id="regenSlugs" />
-                <label class="form-check-label" for="regenSlugs">Boş slug’ları otomatik üret</label>
             </div>
         </div>
     </div>
 
-    <!-- Mevcut görseller -->
-    <div class="card mb-4">
-        <div class="card-header"><strong>Mevcut Görseller</strong></div>
-        <div class="card-body">
-            @if (Model.ExistingImages?.Any() == true)
-            {
-                <div class="d-flex flex-wrap">
-                    @for (int i = 0; i < Model.ExistingImages.Count; i++)
+    <!-- Görseller -->
+    <div class="card mb-4 p-3">
+        <h5>Görseller</h5>
+        <div class="mb-2">
+            <label class="form-label">Yeni görsel(ler) ekle (toplam 5’e kadar)</label>
+            <input asp-for="NewImages" type="file" class="form-control" multiple />
+        </div>
+
+        @if (existing.Any())
+        {
+            <div class="mb-2">
+                <label class="form-label">Mevcut Görseller (sırayı değiştir / kapak seç / sil)</label>
+                <div id="image-list" class="list-group">
+                    @for (int i = 0; i < existing.Count; i++)
                     {
-                        var p = Model.ExistingImages[i];
-                        <div class="border rounded p-2 mr-2 mb-2" style="width:160px">
-                            <img src="@p" style="width:100%;height:100px;object-fit:cover;border-radius:4px;" />
-                            <div class="mt-2">
-                                <div class="form-check">
-                                    <input class="form-check-input" type="radio" name="CoverImagePath" value="@p" @(p ==
-                                                                                                                                                  Model.CoverImagePath ? "checked" : "") id="cover_@i" />
-                                <label class="form-check-label" for="cover_@i">Kapak</label>
+                        var f = existing[i];
+                        <div class="list-group-item d-flex align-items-center justify-content-between">
+                            <div class="d-flex align-items-center gap-3">
+                                <img src="@($"/uploads/products/{Model.Id}/{f}")"
+                                    style="width:60px;height:60px;object-fit:cover;border-radius:6px;" />
+                                <span class="small">@f</span>
                             </div>
+                            <div class="d-flex align-items-center gap-3">
+                                <div class="form-check">
+                                    <input class="form-check-input cover-radio" type="radio" name="CoverIndex" value="@i" @(i==0
+                                                                                                                                                          ? "checked" : "") />
+                                <label class="form-check-label">Kapak</label>
+                            </div>
+                            <button class="btn btn-sm btn-outline-secondary move-up" type="button"
+                                data-index="@i">↑</button>
+                            <button class="btn btn-sm btn-outline-secondary move-down" type="button"
+                                data-index="@i">↓</button>
                             <div class="form-check">
-                                <input class="form-check-input" type="checkbox" name="RemoveImagePaths" value="@p"
-                                    id="rem_@i" />
-                                <label class="form-check-label text-danger" for="rem_@i">Sil</label>
+                                <input class="form-check-input remove-chk" type="checkbox" name="RemoveImages" value="@f" />
+                                <label class="form-check-label">Sil</label>
                             </div>
                         </div>
                     </div>
                 }
             </div>
-                        }
-                        else
+        </div>
+        <input type="hidden" asp-for="ImageOrder" id="ImageOrder" />
+                }
+        <small class="text-muted">Not: Kapak ve sıra, <code>CoverIndex</code> ve <code>ImageOrder</code> alanlarına
+            yazılır.</small>
+    </div>
+
+    <!-- Dil Sekmeleri -->
+    <div class="card mb-4 p-3">
+        <ul class="nav nav-tabs" id="langTabs" role="tablist">
+            @for (int i = 0; i < Model.Langs.Count; i++)
             {
-                <div class="text-muted">Kayıtlı görsel yok.</div>
+                var lcTab = Model.Langs[i].LangCode;
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link @(i == 0 ? "active" : "")" id="tab-@lcTab" data-bs-toggle="tab"
+                        data-bs-target="#pane-@lcTab" type="button" role="tab">
+                        @lcTab.ToUpperInvariant()
+                    </button>
+                </li>
             }
-        </div>
-    </div>
+        </ul>
 
-    <!-- Detaylar -->
-    <div class="card mb-4">
-        <div class="card-header"><strong>Ürün Detayları (TR)</strong></div>
-        <div class="card-body">
-            <div class="form-group">
-                <label>Açıklama</label>
-                <textarea class="form-control js-ck" id="desc-editor" name="DescriptionTrHtml"
-                    rows="8">@Model.DescriptionTrHtml</textarea>
-            </div>
-            <div class="form-group">
-                <label>Ürün Hakkında</label>
-                <textarea class="form-control js-ck" id="about-editor" name="AboutTrHtml"
-                    rows="8">@Model.AboutTrHtml</textarea>
-            </div>
-        </div>
-    </div>
-
-    <!-- Özellikler -->
-    <div class="card mb-4">
-        <div class="card-header d-flex justify-content-between align-items-center">
-            <strong>Özellikler (TR)</strong>
-            <button type="button" class="btn btn-sm btn-outline-primary" onclick="addFeature()">Özellik Ekle</button>
-        </div>
-        <div class="card-body" id="feat-container">
-            @for (int j = 0; j < Model.Features.Count; j++)
+        <div class="tab-content border border-top-0 p-3" id="langTabContent">
+            @for (int i = 0; i < Model.Langs.Count; i++)
             {
-                <div class="form-row align-items-end feature-row mb-2" data-findex="@j">
-                    <input type="hidden" name="Features.Index" value="@j" />
-                    <input type="hidden" name="Features[@j].Id" value="@Model.Features[j].Id" />
-                    <div class="form-group col-md-7">
-                        <label>Metin</label>
-                        <input class="form-control" name="Features[@j].TextTr" value="@Model.Features[j].TextTr" />
-                    </div>
-                    <div class="form-group col-md-2">
-                        <label>Sıra</label>
-                        <input class="form-control" type="number" name="Features[@j].Order"
-                            value="@Model.Features[j].Order" />
-                    </div>
-                    <div class="form-group col-md-2">
-                        <div class="form-check mt-4">
-                            <input class="form-check-input" type="checkbox" name="Features[@j].Delete" id="del_@j" />
-                            <label class="form-check-label text-danger" for="del_@j">Sil</label>
+                var lc = Model.Langs[i].LangCode;
+                <div class="tab-pane fade @(i == 0 ? "show active" : "")" id="pane-@lc" role="tabpanel">
+                    <input type="hidden" name="Langs[@i].LangCode" value="@lc" />
+
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">@lc.ToUpper() Ad (Name)</label>
+                            <input name="Langs[@i].Name" value="@(Model.Langs[i].Name ?? "")" class="form-control" />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Slug</label>
+                            <input name="Langs[@i].Slug" value="@(Model.Langs[i].Slug ?? "")" class="form-control" />
+                            <small class="text-muted">Boşsa addan türetilecek.</small>
+                        </div>
+
+                        <div class="col-12">
+                            <label class="form-label">Image Alts (CSV)</label>
+                            <input name="Langs[@i].ImageAltsCsv" value="@(Model.Langs[i].ImageAltsCsv ?? "")"
+                                class="form-control" />
+                        </div>
+
+                        <div class="col-12">
+                            <label class="form-label">Kısa Açıklama (short_desc)</label>
+                            <textarea name="Langs[@i].ShortHtml" class="form-control editor"
+                            rows="3">@Html.Raw(Model.Langs[i].ShortHtml ?? "")</textarea>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Açıklama (description)</label>
+                            <textarea name="Langs[@i].DescHtml" class="form-control editor"
+                            rows="6">@Html.Raw(Model.Langs[i].DescHtml ?? "")</textarea>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Hakkında (about)</label>
+                            <textarea name="Langs[@i].AboutHtml" class="form-control editor"
+                            rows="4">@Html.Raw(Model.Langs[i].AboutHtml ?? "")</textarea>
                         </div>
                     </div>
-                    <div class="form-group col-md-1">
-                        <button type="button" class="btn btn-outline-danger" onclick="removeRow(this)">X</button>
-                    </div>
+
+                    <hr />
+                    <h6>@lc.ToUpperInvariant() Özellikler</h6>
+                    @if (Model.Langs[i].Attrs != null && Model.Langs[i].Attrs.Count > 0)
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-sm align-middle attr-table" data-lang="@lc">
+                                <thead>
+                                    <tr>
+                                        <th style="width:90px">Sıra</th>
+                                        <th style="width:35%">Ad</th>
+                                        <th>Değer</th>
+                                        <th style="width:110px"></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @for (int j = 0; j < Model.Langs[i].Attrs.Count; j++)
+                                    {
+                                        <tr data-attrid="@Model.Langs[i].Attrs[j].AttributeId">
+                                            <td class="order-cell">
+                                                @Model.Langs[i].Attrs[j].Order
+                                                <input type="hidden" name="Langs[@i].Attrs[@j].Order"
+                                                    value="@Model.Langs[i].Attrs[j].Order" />
+                                                <input type="hidden" name="Langs[@i].Attrs[@j].AttributeId"
+                                                    value="@Model.Langs[i].Attrs[j].AttributeId" />
+                                            </td>
+                                            <td>
+                                                <input class="form-control form-control-sm" name="Langs[@i].Attrs[@j].Name"
+                                                    value="@(Model.Langs[i].Attrs[j].Name ?? "")" />
+                                            </td>
+                                            <td>
+                                                <input class="form-control form-control-sm" name="Langs[@i].Attrs[@j].Value"
+                                                    value="@(Model.Langs[i].Attrs[j].Value ?? "")" />
+                                            </td>
+                                            <td class="text-end">
+                                                <button type="button" class="btn btn-sm btn-outline-secondary attr-up">↑</button>
+                                                <button type="button" class="btn btn-sm btn-outline-secondary attr-down">↓</button>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-muted">Bu dil için özellik yok.</div>
+                    }
                 </div>
             }
         </div>
     </div>
 
-    <div class="mb-4">
+    <!-- Özellikler (Türkçe) — sadece YENİ ekleme -->
+    <div class="card mb-4 p-3">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+            <h5 class="m-0">Özellikler (Türkçe)
+                <small class="text-muted">(yalnızca yeni satır ekle)</small>
+            </h5>
+            <button type="button" class="btn btn-sm btn-outline-primary" id="btnAddAttr">+ Satır Ekle</button>
+        </div>
+
+        <!-- Başlangıçta boş; kullanıcı + ile satır ekleyecek -->
+        <div id="attrs"></div>
+
+        <!-- Yeni satır şablonu -->
+        <template id="attr-template">
+            <div class="row g-2 align-items-end mb-2 attr-row" data-index="__idx__">
+                <input type="hidden" name="Attributes[__idx__].Id" value="" />
+                <div class="col-1">
+                    <label class="form-label">Sıra</label>
+                    <input name="Attributes[__idx__].Order" value="0" class="form-control" />
+                </div>
+                <div class="col-4">
+                    <label class="form-label">Ad (TR)</label>
+                    <input name="Attributes[__idx__].NameTr" class="form-control" />
+                </div>
+                <div class="col-6">
+                    <label class="form-label">Değer (TR)</label>
+                    <input name="Attributes[__idx__].ValueTr" class="form-control" />
+                </div>
+                <div class="col-1 form-check mt-4">
+                    <input type="checkbox" class="form-check-input" name="Attributes[__idx__].Delete" value="true" />
+                    <label class="form-check-label">Sil</label>
+                </div>
+            </div>
+        </template>
+    </div>
+
+    <div class="d-flex justify-content-end gap-2">
+        <a asp-action="Index" class="btn btn-outline-secondary">İptal</a>
         <button type="submit" class="btn btn-primary">Kaydet</button>
-        <a href="/admin" class="btn btn-secondary">İptal</a>
     </div>
 </form>
 
 @section Scripts {
-    <partial name="_ValidationScriptsPartial" />
-    <script src="https://cdn.ckeditor.com/ckeditor5/41.4.2/classic/ckeditor.js"></script>
     <script>
-        const __eds = new Map();
-        function initCk(id) {
-            if (__eds.has(id)) return;
-            ClassicEditor.create(document.getElementById(id), {
-                language: 'tr',
-                toolbar: ['heading', '|', 'bold', 'italic', 'link', '|', 'bulletedList', 'numberedList', '|', 'blockQuote', 'undo', 'redo']
-            }).then(ed => __eds.set(id, ed)).catch(console.error);
-        }
-        document.addEventListener('DOMContentLoaded', function () {
-            initCk('desc-editor'); initCk('about-editor');
-        });
+        (function () {
+            // === Görsel sıralama/kapak ===
+            const list = document.getElementById('image-list');
+            const hiddenOrder = document.getElementById('ImageOrder');
+            function updateOrderHidden() {
+                if (!list || !hiddenOrder) return;
+                const items = Array.from(list.querySelectorAll('.list-group-item span.small')).map(s => s.innerText.trim());
+                hiddenOrder.value = items.join(',');
+            }
+            if (list) {
+                list.addEventListener('click', (e) => {
+                    const btn = e.target;
+                    if (btn.classList.contains('move-up') || btn.classList.contains('move-down')) {
+                        const idx = parseInt(btn.getAttribute('data-index'));
+                        const items = Array.from(list.children);
+                        const item = items[idx];
+                        if (btn.classList.contains('move-up') && idx > 0) list.insertBefore(item, items[idx - 1]);
+                        if (btn.classList.contains('move-down') && idx < items.length - 1) list.insertBefore(items[idx + 1], item);
+                        Array.from(list.querySelectorAll('.move-up, .move-down')).forEach((el, i) => el.setAttribute('data-index', Math.floor(i / 2)));
+                        updateOrderHidden();
+                    }
+                    if (btn.classList.contains('cover-radio')) updateOrderHidden();
+                });
+                updateOrderHidden();
+            }
 
-        function addFeature() {
-            const c = document.getElementById('feat-container');
-            const j = c.querySelectorAll('.feature-row').length;
-            c.insertAdjacentHTML('beforeend', `
-    <div class="form-row align-items-end feature-row mb-2" data-findex="${j}">
-      <input type="hidden" name="Features.Index" value="${j}" />
-      <input type="hidden" name="Features[${j}].Id" value="0" />
-      <div class="form-group col-md-7">
-        <label>Metin</label>
-        <input class="form-control" name="Features[${j}].TextTr" />
-      </div>
-      <div class="form-group col-md-2">
-        <label>Sıra</label>
-        <input class="form-control" type="number" name="Features[${j}].Order" value="${j}" />
-      </div>
-      <div class="form-group col-md-2">
-        <div class="form-check mt-4">
-          <input class="form-check-input" type="checkbox" name="Features[${j}].Delete" id="del_${j}" />
-          <label class="form-check-label text-danger" for="del_${j}">Sil</label>
-        </div>
-      </div>
-      <div class="form-group col-md-1">
-        <button type="button" class="btn btn-outline-danger" onclick="removeRow(this)">X</button>
-      </div>
-    </div>`);
-        }
-        function removeRow(btn) { btn.closest('.feature-row').remove(); }
+            // === Özellik sırası senkron ===
+            const attrOrderHidden = document.getElementById('AttributeOrder');
+
+            function syncAllTablesToCsv() {
+                if (!attrOrderHidden || !attrOrderHidden.value) return;
+                const seq = attrOrderHidden.value.split(',').filter(Boolean);
+                document.querySelectorAll('table.attr-table').forEach(tbl => {
+                    const tbody = tbl.querySelector('tbody');
+                    const rows = Array.from(tbody.querySelectorAll('tr'));
+                    const map = {};
+                    rows.forEach(r => map[r.getAttribute('data-attrid')] = r);
+                    seq.forEach((id) => { const row = map[id]; if (row) tbody.appendChild(row); });
+                    Array.from(tbody.querySelectorAll('tr')).forEach((tr, idx) => {
+                        const cell = tr.querySelector('.order-cell');
+                        if (cell) cell.firstChild.nodeValue = idx;
+                        const hidden = tr.querySelector('input[name$=".Order"]');
+                        if (hidden) hidden.value = idx;
+                    });
+                });
+            }
+            function refreshCsvFromActiveTable() {
+                const activePane = document.querySelector('.tab-pane.show.active');
+                let tbl = activePane ? activePane.querySelector('table.attr-table') : null;
+                if (!tbl) tbl = document.querySelector('table.attr-table');
+                if (!tbl) return;
+                const ids = Array.from(tbl.querySelectorAll('tbody tr')).map(r => r.getAttribute('data-attrid'));
+                if (attrOrderHidden) attrOrderHidden.value = ids.join(',');
+                syncAllTablesToCsv();
+            }
+            document.addEventListener('click', function (e) {
+                const btn = e.target;
+                if (!btn.classList.contains('attr-up') && !btn.classList.contains('attr-down')) return;
+
+                const tr = btn.closest('tr');
+                const tbody = tr.closest('tbody');
+                const prev = tr.previousElementSibling;
+                const next = tr.nextElementSibling;
+
+                if (btn.classList.contains('attr-up') && prev) tbody.insertBefore(tr, prev);
+                else if (btn.classList.contains('attr-down') && next) tbody.insertBefore(next, tr);
+
+                const ids = Array.from(tbody.querySelectorAll('tr')).map(r => r.getAttribute('data-attrid'));
+                if (attrOrderHidden) attrOrderHidden.value = ids.join(',');
+                syncAllTablesToCsv();
+            });
+
+            document.addEventListener('shown.bs.tab', function () { refreshCsvFromActiveTable(); });
+            // TR özellik ekleme UI (+ Satır Ekle)
+            const attrs = document.getElementById('attrs');
+            const tpl = document.getElementById('attr-template');
+            const btnAdd = document.getElementById('btnAddAttr');
+            if (attrs && tpl && btnAdd) {
+                btnAdd.addEventListener('click', () => {
+                    const idx = attrs.querySelectorAll('.attr-row').length;
+                    let html = tpl.innerHTML.trim().replaceAll('__idx__', String(idx));
+                    const div = document.createElement('div');
+                    div.innerHTML = html;
+                    attrs.appendChild(div.firstElementChild);
+                });
+            }
+            // İlk senkron
+            refreshCsvFromActiveTable();
+        })();
     </script>
 }

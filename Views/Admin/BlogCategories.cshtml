@@ -1,0 +1,135 @@
+@model List<kayialp.ViewModels.BlogCategoryListItemVM>
+@{
+    Layout = "/Views/Shared/_AdminLayout.cshtml";
+    ViewData["Title"] = "Blog Kategorileri";
+}
+
+<h2 class="mb-3">@ViewData["Title"]</h2>
+
+@if (TempData["BlogMsg"] is string msg)
+{
+    <div class="alert alert-info">@msg</div>
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <a href="/admin/create-blog-category" class="btn btn-success">Yeni Kategori</a>
+    <a href="/admin/blog" class="btn btn-outline-secondary">Blog Yazıları</a>
+</div>
+
+<form id="reorderForm">
+    @Html.AntiForgeryToken()
+    <div class="table-responsive">
+        <table class="table table-striped align-middle" id="catTable">
+            <thead>
+                <tr>
+                    <th style="width:44px;"></th>
+                    <th>#</th>
+                    <th>TR Adı</th>
+                    <th>Sıra</th>
+                    <th>Aktif</th>
+                    <th style="width:160px;">İşlemler</th>
+                </tr>
+            </thead>
+            <tbody id="catTbody">
+                @foreach (var x in Model.OrderBy(m => m.Order).ThenBy(m => m.Id))
+                {
+                    <tr draggable="true" data-id="@x.Id" class="drag-row">
+                        <td class="text-muted" style="cursor:grab;">☰</td>
+                        <td>@x.Id</td>
+                        <td>@x.Name</td>
+                        <td class="order-cell">@x.Order</td>
+                        <td>@(x.IsActive ? "Evet" : "Hayır")</td>
+                        <td class="d-flex gap-2">
+                            <a href="/admin/update-blog-category/@x.Id" class="btn btn-sm btn-primary">Düzenle</a>
+
+                            <form asp-action="DeleteBlogCategory" asp-route-id="@x.Id" method="post"
+                                onsubmit="return confirm('Bu kategoriyi kalıcı olarak silmek istiyor musunuz?');"
+                                class="m-0">
+                                @Html.AntiForgeryToken()
+                                <button class="btn btn-sm btn-danger" type="submit">Sil</button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+    <div class="d-flex justify-content-end">
+        <button type="button" id="btnSaveOrder" class="btn btn-outline-primary">
+            Sırayı Kaydet
+        </button>
+    </div>
+</form>
+
+@section Scripts {
+    <script>
+        (function () {
+            // Basit native drag&drop
+            const tbody = document.getElementById('catTbody');
+            if (!tbody) return;
+
+            let dragEl = null;
+
+            tbody.addEventListener('dragstart', (e) => {
+                const tr = e.target.closest('tr');
+                if (!tr) return;
+                dragEl = tr;
+                tr.classList.add('opacity-50');
+                e.dataTransfer.effectAllowed = 'move';
+            });
+
+            tbody.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                const tr = e.target.closest('tr');
+                if (!tr || tr === dragEl) return;
+                const rect = tr.getBoundingClientRect();
+                const before = (e.clientY - rect.top) < rect.height / 2;
+                tbody.insertBefore(dragEl, before ? tr : tr.nextSibling);
+            });
+
+            tbody.addEventListener('dragend', (e) => {
+                if (dragEl) dragEl.classList.remove('opacity-50');
+                dragEl = null;
+                renumber();
+            });
+
+            function renumber() {
+                // Görsel olarak sıra sütununu güncelle
+                const rows = tbody.querySelectorAll('tr');
+                rows.forEach((r, idx) => {
+                    const cell = r.querySelector('.order-cell');
+                    if (cell) cell.textContent = idx;
+                });
+            }
+
+            // CSRF token
+            function getAntiForgery() {
+                const tokenInput = document.querySelector('#reorderForm input[name="__RequestVerificationToken"]');
+                return tokenInput ? tokenInput.value : '';
+            }
+
+            // Kaydet
+            document.getElementById('btnSaveOrder').addEventListener('click', async () => {
+                const ids = Array.from(tbody.querySelectorAll('tr')).map(tr => parseInt(tr.dataset.id, 10));
+                const token = getAntiForgery();
+
+                const res = await fetch('/admin/reorder-blog-categories', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'RequestVerificationToken': token   // ValidateAntiForgeryToken header
+                    },
+                    body: JSON.stringify({ ids })
+                });
+
+                const j = await res.json().catch(() => ({ ok: false }));
+                if (j && j.ok) {
+                    alert('Sıra kaydedildi.');
+                } else {
+                    alert('Sıra kaydedilemedi.');
+                }
+            });
+        })();
+    </script>
+}

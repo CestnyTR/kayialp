@@ -1,0 +1,172 @@
+@using kayialp.ViewModels
+@model AdminBlogIndexVM
+@{
+    Layout = "/Views/Shared/_AdminLayout.cshtml";
+    ViewData["Title"] = "Blog Yazıları";
+    var posts = Model.Posts ?? new List<AdminBlogListItemVM>();
+}
+
+<h2 class="mb-3">@ViewData["Title"]</h2>
+
+<!-- Antiforgery: JS erişimi için -->
+<form id="__af" method="post">
+    @Html.AntiForgeryToken()
+</form>
+
+<div class="card shadow mb-4">
+    <div class="card-header py-3 d-flex justify-content-between align-items-center">
+        <h6 class="m-0 font-weight-bold text-primary">Yazılar</h6>
+        <div class="d-flex gap-2">
+            <a href="/admin/create-post" class="btn btn-success btn-icon-split">
+                <span class="icon text-white-50"><i class="fas fa-plus"></i></span>
+                <span class="text">Yeni Yazı</span>
+            </a>
+            <button type="button" class="btn btn-outline-secondary" id="btnReorderPosts">Sırayı Kaydet</button>
+        </div>
+    </div>
+
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-bordered align-middle" id="PostTable" width="100%" cellspacing="0">
+                <thead>
+                <tr>
+                    <th style="width:76px;">Kapak</th>
+                    <th>Başlık</th>
+                    <th style="width:22%;">Kategori</th>
+                    <th style="width:90px;">Sıra</th>
+                    <th style="width:90px;">Aktif</th>
+                    <th style="width:22%;">Slug</th>
+                    <th style="width:160px;"></th>
+                </tr>
+                </thead>
+                <tbody id="post-body">
+                @if (posts.Count == 0)
+                {
+                    <tr>
+                        <td colspan="7" class="text-center text-muted py-4">
+                            Henüz içerik bulunmuyor.
+                        </td>
+                    </tr>
+                }
+                else
+                {
+                    foreach (var p in posts)
+                    {
+                        var cover = string.IsNullOrWhiteSpace(p.CoverUrl) ? "/img/placeholder.webp" : p.CoverUrl;
+                        <tr class="post-row" data-id="@p.Id" draggable="true">
+                            <td>
+                                <img src="@cover" alt="cover"
+                                     style="width:64px;height:64px;object-fit:cover;border-radius:8px;border:1px solid #eee;" />
+                            </td>
+                            <td class="fw-semibold">@p.Title</td>
+                            <td>@p.CategoryName</td>
+                            <td>@p.Order</td>
+                            <td>
+                                @if (p.IsActive)
+                                { <span class="badge bg-success">Aktif</span> }
+                                else
+                                { <span class="badge bg-secondary">Pasif</span> }
+                            </td>
+                            <td class="text-truncate" style="max-width:260px;">@p.Slug</td>
+                            <td class="text-end">
+                                <a href="/admin/update-post/@p.Id" class="btn btn-sm btn-outline-primary">Düzenle</a>
+                                <button type="button" class="btn btn-sm btn-outline-danger btn-del" data-id="@p.Id">Sil</button>
+                            </td>
+                        </tr>
+                    }
+                }
+                </tbody>
+            </table>
+        </div>
+        <div class="d-flex justify-content-end">
+            <button type="button" class="btn btn-sm btn-outline-secondary" id="btnReorderPostsBottom">Sırayı Kaydet</button>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+(function(){
+  // antiforgery
+  function getAfToken() {
+      const el = document.querySelector('input[name="__RequestVerificationToken"]');
+      return el ? el.value : '';
+  }
+
+  // drag & drop enable
+  function enableDrag(containerSelector, rowSelector){
+      const container = document.querySelector(containerSelector);
+      if (!container) return;
+      let dragEl = null;
+
+      container.addEventListener('dragstart', (e)=>{
+          const tr = e.target.closest(rowSelector);
+          if (!tr) return;
+          dragEl = tr;
+          e.dataTransfer.effectAllowed = 'move';
+          tr.classList.add('opacity-50');
+      });
+
+      container.addEventListener('dragend', ()=>{
+          if (dragEl) dragEl.classList.remove('opacity-50');
+          dragEl = null;
+      });
+
+      container.addEventListener('dragover', (e)=>{
+          e.preventDefault();
+          const tr = e.target.closest(rowSelector);
+          if (!tr || tr === dragEl) return;
+          const rect = tr.getBoundingClientRect();
+          const after = (e.clientY - rect.top) > (rect.height / 2);
+          if (after) tr.after(dragEl);
+          else tr.before(dragEl);
+      });
+  }
+
+  function collectIds(containerSelector, rowSelector){
+      const rows = document.querySelectorAll(`${containerSelector} ${rowSelector}`);
+      return Array.from(rows).map(r => r.getAttribute('data-id')).filter(Boolean).join(',');
+  }
+
+  async function postReorder(idsCsv){
+      const res = await fetch('/admin/reorder-posts', {
+          method: 'POST',
+          headers: {
+              'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+              'RequestVerificationToken': getAfToken()
+          },
+          body: new URLSearchParams({ ids: idsCsv })
+      });
+      try { return await res.json(); } catch { return { success:false }; }
+  }
+
+  enableDrag('#post-body', '.post-row');
+
+  async function reorder(){
+      const ids = collectIds('#post-body', '.post-row');
+      if (!ids){ alert('Sıralanacak kayıt yok.'); return; }
+      const json = await postReorder(ids);
+      alert(json.success ? 'Sıralama kaydedildi.' : (json.error || 'Sıralama kaydedilemedi.'));
+  }
+  document.getElementById('btnReorderPosts')?.addEventListener('click', reorder);
+  document.getElementById('btnReorderPostsBottom')?.addEventListener('click', reorder);
+
+  // sert sil
+  document.addEventListener('click', async (e)=>{
+      const btn = e.target.closest('.btn-del');
+      if (!btn) return;
+      const id = btn.getAttribute('data-id');
+      if (!id) return;
+      if (!confirm('Bu yazıyı kalıcı olarak silmek istiyor musunuz?')) return;
+
+      const res = await fetch(`/admin/delete-post/${id}`, {
+          method: 'POST',
+          headers: { 'RequestVerificationToken': getAfToken() }
+      });
+      const json = await res.json().catch(()=>({success:false}));
+      if (json.success) btn.closest('tr')?.remove();
+      else alert(json.error || 'Silme işlemi başarısız.');
+  });
+})();
+</script>
+}

@@ -1,127 +1,163 @@
-﻿﻿@{
+﻿﻿@using kayialp.ViewModels
+@model AdminIndexViewModel
+@{
     Layout = "/Views/Shared/_AdminLayout.cshtml";
+    ViewData["Title"] = "Ürünler";
+    var cats = Model.Categories ?? new List<CategoryViewModel>();
+    var items = Model.Products ?? new List<ProductListItemViewModel>();
+    string q = Context.Request.Query["q"];
+    int selectedCat = int.TryParse(Context.Request.Query["categoryId"], out var cid) ? cid : 0;
 }
-@model kayialp.ViewModels.AdminIndexViewModel
 
-<h1 class="h3 mb-2 text-gray-800">Admin Paneli</h1>
+<h2 class="mb-3">@ViewData["Title"]</h2>
 
-<!-- Ürünler -->
-<div class="card shadow mb-4">
-    <div class="card-header py-3 d-flex justify-content-between align-items-center">
-        <h6 class="m-0 font-weight-bold text-primary">Ürünler</h6>
-        <a href="/admin/create-product" class="btn btn-success btn-icon-split">
-            <span class="icon text-white-50"><i class="fas fa-check"></i></span>
-            <span class="text">Ürün ekle</span>
-        </a>
-    </div>
-    <div class="card-body">
-        <div class="table-responsive">
-            <table class="table table-bordered" id="ProductTable" width="100%" cellspacing="0">
-                <thead>
-                    <tr>
-                        <th>#</th>
-                        <th>Görsel</th>
-                        <th>Ürün adı</th>
-                        <th>Kategori</th>
-                        <th>Stok</th>
-                        <th>Sıra</th>
-                        <th>Slug</th>
-                        <th>Güncelle</th>
-                        <th>Sil</th>
-                    </tr>
-                </thead>
-                <tfoot>
-                    <tr>
-                        <th>#</th>
-                        <th>Görsel</th>
-                        <th>Ürün adı</th>
-                        <th>Kategori</th>
-                        <th>Stok</th>
-                        <th>Sıra</th>
-                        <th>Slug</th>
-                        <th>Güncelle</th>
-                        <th>Sil</th>
-                    </tr>
-                </tfoot>
-                <tbody>
-                    @foreach (var item in Model.Products)
+<!-- Antiforgery: JS erişimi için tek bir form içinde token üret -->
+<form id="__af" method="post">
+    @Html.AntiForgeryToken()
+</form>
+
+<!-- Filtreler -->
+<form method="get" class="card mb-3 p-3">
+    <div class="row g-2 align-items-end">
+        <div class="col-md-4">
+            <label class="form-label">Kategori</label>
+            <select name="categoryId" class="form-select">
+                <option value="">Tümü</option>
+                @foreach (var c in cats.OrderBy(c => c.Name))
+                {
+                    if (selectedCat == c.Id)
                     {
-                        <tr>
-                            <td>@item.Id</td>
-                            <td style="width:90px">
-                                @if (!string.IsNullOrWhiteSpace(item.FirstImageUrl))
+                        <option value="@c.Id" selected="selected">@c.Name</option>
+                    }
+                    else
+                    {
+                        <option value="@c.Id">@c.Name</option>
+                    }
+                }
+            </select>
+        </div>
+        <div class="col-md-5">
+            <label class="form-label">Arama (Ad / Slug)</label>
+            <input type="text" name="q" value="@q" class="form-control" placeholder="örn. aspiratör" />
+        </div>
+        <div class="col-md-3 d-flex gap-2">
+            <button type="submit" class="btn btn-primary w-100 mt-4">Ara</button>
+            <a class="btn btn-outline-secondary w-100 mt-4" href="/admin">Temizle</a>
+        </div>
+    </div>
+</form>
+
+<!-- Liste -->
+<div class="card">
+    <div class="d-flex justify-content-between align-items-center px-3 pt-3">
+        <h5 class="m-0">Ürün Listesi</h5>
+        <div class="d-flex gap-2">
+            <a class="btn btn-sm btn-success" asp-action="CreateProduct">+ Yeni Ürün</a>
+            <button type="button" class="btn btn-sm btn-outline-secondary" id="btnReorder">Sırayı Kaydet</button>
+        </div>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table align-middle mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th style="width:76px;">Görsel</th>
+                    <th>Ad</th>
+                    <th style="width:22%;">Kategori</th>
+                    <th style="width:90px;">Stok</th>
+                    <th style="width:90px;">Sıra</th>
+                    <th style="width:22%;">Slug</th>
+                    <th style="width:160px;"></th>
+                </tr>
+            </thead>
+            <tbody id="prod-body">
+                @if (items.Count == 0)
+                {
+                    <tr>
+                        <td colspan="7" class="text-center text-muted py-4">Kriterlere uygun ürün bulunamadı.</td>
+                    </tr>
+                }
+                else
+                {
+                    foreach (var p in items)
+                    {
+                        var img = string.IsNullOrWhiteSpace(p.FirstImageUrl) ? "/img/placeholder.webp" : p.FirstImageUrl;
+                        <tr class="prod-row" data-id="@p.Id" draggable="true">
+                            <td>
+                                <div class="d-flex align-items-center gap-2">
+                                    <img src="@img" alt="cover"
+                                        style="width:64px;height:64px;object-fit:cover;border-radius:8px;border:1px solid #eee;" />
+                                    @if (p.ImageCount > 1)
+                                    {
+                                        <span class="badge bg-secondary">+@(p.ImageCount - 1)</span>
+                                    }
+                                </div>
+                            </td>
+                            <td class="fw-semibold">@p.Name</td>
+                            <td>@(string.IsNullOrWhiteSpace(p.CategoryName) ? "-" : p.CategoryName)</td>
+                            <td>
+                                @if (p.Stock <= 0)
                                 {
-                                    <div class="d-flex align-items-center">
-                                        <img src="@item.FirstImageUrl" alt="thumb"
-                                            style="width:64px;height:64px;object-fit:cover;border-radius:6px;border:1px solid #eee;" />
-                                        @if (item.ImageCount > 1)
-                                        {
-                                            <span class="badge badge-secondary ml-2">+@((item.ImageCount - 1))</span>
-                                        }
-                                    </div>
+                                    <span class="badge bg-danger">0</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-success">@p.Stock</span>
                                 }
                             </td>
-                            <td>@item.Name</td>
-                            <td>@item.CategoryName</td>
-                            <td>@item.Stock</td>
-                            <td>@item.Order</td>
-                            <td><small>@item.Slug</small></td>
-                            <td>
-                                <a href="/admin/update-product/@item.Id" class="btn btn-info btn-circle">
-                                    <i class="fas fa-edit"></i>
-                                </a>
-                            </td>
-                            <td>
-                                <form asp-action="DeleteProduct" asp-route-id="@item.Id" method="post"
-                                    onsubmit="return confirm('Bu ürünü silmek istediğinize emin misiniz?');">
-                                    @Html.AntiForgeryToken()
-                                    <button type="submit" class="btn btn-danger btn-circle">
-                                        <i class="fas fa-trash"></i>
-                                    </button>
-                                </form>
+                            <td>@p.Order</td>
+                            <td class="text-truncate" style="max-width:260px;">@p.Slug</td>
+                            <td class="text-end">
+                                <a class="btn btn-sm btn-outline-primary" asp-action="UpdateProduct"
+                                    asp-route-id="@p.Id">Düzenle</a>
+                                <button type="button" class="btn btn-sm btn-outline-danger btn-del" data-id="@p.Id">Sil</button>
                             </td>
                         </tr>
                     }
-                </tbody>
-            </table>
-        </div>
+                }
+            </tbody>
+        </table>
+    </div>
+
+    <div class="d-flex justify-content-end gap-2 p-3 border-top">
+        <button type="button" class="btn btn-sm btn-outline-secondary" id="btnReorderBottom">Sırayı Kaydet</button>
     </div>
 </div>
+<!-- Antiforgery token: sayfanda zaten başka bir form varsa tekrarlaman gerekmez -->
+<form id="__af" method="post">
+    @Html.AntiForgeryToken()
+</form>
 
 <!-- Kategoriler -->
 <div class="card shadow mb-4">
     <div class="card-header py-3 d-flex justify-content-between align-items-center">
         <h6 class="m-0 font-weight-bold text-primary">Kategoriler</h6>
-        <a href="/admin/create-category" class="btn btn-success btn-icon-split">
-            <span class="icon text-white-50"><i class="fas fa-check"></i></span>
-            <span class="text">Yeni Kategori Ekle</span>
-        </a>
+        <div class="d-flex gap-2">
+            <a href="/admin/create-category" class="btn btn-success btn-icon-split">
+                <span class="icon text-white-50"><i class="fas fa-check"></i></span>
+                <span class="text">Yeni Kategori Ekle</span>
+            </a>
+            <button type="button" class="btn btn-outline-secondary" id="btnReorderCats">Sırayı Kaydet</button>
+        </div>
     </div>
+
     <div class="card-body">
         <div class="table-responsive">
             <table class="table table-bordered" id="CategoryTable" width="100%" cellspacing="0">
                 <thead>
                     <tr>
-                        <th>#</th>
+                        <th style="width:60px;">#</th>
                         <th>Kategori Adı</th>
-                        <th>Güncelle</th>
-                        <th>Sil</th>
+                        <th style="width:120px;">Güncelle</th>
+                        <th style="width:120px;">Sil</th>
                     </tr>
                 </thead>
-                <tfoot>
-                    <tr>
-                        <th>#</th>
-                        <th>Kategori Adı</th>
-                        <th>Güncelle</th>
-                        <th>Sil</th>
-                    </tr>
-                </tfoot>
-                <tbody>
+                <tbody id="cat-body">
                     @foreach (var item in Model.Categories)
                     {
-                        <tr>
-                            <td>@item.Id</td>
-                            <td>@item.Name</td>
+                        <tr class="cat-row" data-id="@item.Id" draggable="true">
+                            <td>@item.Order</td>
+                            <td class="fw-semibold">@item.Name</td>
                             <td>
                                 <a href="/admin/update-category/@item.Id" class="btn btn-info btn-circle">
                                     <i class="fas fa-edit"></i>
@@ -143,14 +179,171 @@
         </div>
     </div>
 </div>
-
 @section Scripts {
-    <script src="~/js/admin/jquery.dataTables.min.js"></script>
-    <script src="~/js/admin/dataTables.bootstrap4.min.js"></script>
     <script>
         $(function () {
-            $('#ProductTable').DataTable();
-            $('#CategoryTable').DataTable();
+            $('#CategoryTable').DataTable(); // DRAG ile çakışmasın diye KAPALI
+            $('#ProductTable').DataTable(); // Ürün tablosunda kalabilir
         });
+    </script>
+    <script>
+        (function () {
+            // Drag & Drop enable (generic)
+            function enableDrag(containerSelector, rowSelector) {
+                var container = document.querySelector(containerSelector);
+                if (!container) return;
+
+                var dragEl = null;
+
+                container.addEventListener('dragstart', function (e) {
+                    var tr = e.target.closest(rowSelector);
+                    if (!tr) return;
+                    dragEl = tr;
+                    e.dataTransfer.effectAllowed = 'move';
+                    tr.classList.add('opacity-50');
+                });
+
+                container.addEventListener('dragend', function () {
+                    if (dragEl) dragEl.classList.remove('opacity-50');
+                    dragEl = null;
+                });
+
+                container.addEventListener('dragover', function (e) {
+                    e.preventDefault();
+                    var tr = e.target.closest(rowSelector);
+                    if (!tr || tr === dragEl) return;
+                    var rect = tr.getBoundingClientRect();
+                    var after = (e.clientY - rect.top) > (rect.height / 2);
+                    if (after) tr.after(dragEl);
+                    else tr.before(dragEl);
+                });
+            }
+
+            function collectIds(containerSelector, rowSelector) {
+                var rows = document.querySelectorAll(containerSelector + ' ' + rowSelector);
+                return Array.from(rows).map(function (r) { return r.getAttribute('data-id'); })
+                    .filter(Boolean).join(',');
+            }
+
+            // Kategori drag aktif
+            enableDrag('#cat-body', '.cat-row');
+
+            // Sırayı kaydet
+            var btn = document.getElementById('btnReorderCats');
+            if (btn) {
+                btn.addEventListener('click', async function () {
+                    var ids = collectIds('#cat-body', '.cat-row');
+                    if (!ids) { alert('Sıralanacak kategori yok.'); return; }
+
+                    var res = await fetch('/admin/reorder-categories', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+                            'RequestVerificationToken': getAfToken()
+                        },
+                        body: new URLSearchParams({ ids: ids })
+                    });
+
+                    var json = {};
+                    try { json = await res.json(); } catch { json = { success: false }; }
+
+                    if (json.success) alert('Kategori sırası kaydedildi.');
+                    else alert(json.error || 'Kategori sırası kaydedilemedi.');
+                });
+            }
+            // ---- antiforgery token ----
+            function getAfToken() {
+                const f = document.getElementById('__af');
+                if (!f) return '';
+                const inp = f.querySelector('input[name="__RequestVerificationToken"]');
+                return inp ? inp.value : '';
+            }
+
+            // ---- drag & drop (generic) ----
+            function enableDrag(containerSelector, rowSelector) {
+                const container = document.querySelector(containerSelector);
+                if (!container) return;
+
+                let dragEl = null;
+
+                container.addEventListener('dragstart', (e) => {
+                    const tr = e.target.closest(rowSelector);
+                    if (!tr) return;
+                    dragEl = tr;
+                    e.dataTransfer.effectAllowed = 'move';
+                    tr.classList.add('opacity-50');
+                });
+
+                container.addEventListener('dragend', () => {
+                    if (dragEl) dragEl.classList.remove('opacity-50');
+                    dragEl = null;
+                });
+
+                container.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                    const tr = e.target.closest(rowSelector);
+                    if (!tr || tr === dragEl) return;
+                    const rect = tr.getBoundingClientRect();
+                    const after = (e.clientY - rect.top) > (rect.height / 2);
+                    if (after) tr.after(dragEl);
+                    else tr.before(dragEl);
+                });
+            }
+
+            function collectIds(containerSelector, rowSelector) {
+                const rows = document.querySelectorAll(`${containerSelector} ${rowSelector}`);
+                return Array.from(rows).map(r => r.getAttribute('data-id')).filter(Boolean).join(',');
+            }
+
+            async function postReorder(endpoint, idsCsv) {
+                const res = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+                        'RequestVerificationToken': getAfToken()
+                    },
+                    body: new URLSearchParams({ ids: idsCsv })
+                });
+                const json = await res.json().catch(() => ({ success: false }));
+                return json;
+            }
+
+            // ---- Ürün sırası kaydet ----
+            enableDrag('#prod-body', '.prod-row');
+
+            async function reorderProducts() {
+                const ids = collectIds('#prod-body', '.prod-row');
+                if (!ids) { alert('Sıralanacak kayıt yok.'); return; }
+                const json = await postReorder('/admin/reorder-products', ids);
+                if (json.success) alert('Sıralama kaydedildi.');
+                else alert(json.error || 'Sıralama kaydedilemedi.');
+            }
+
+            document.getElementById('btnReorder')?.addEventListener('click', reorderProducts);
+            document.getElementById('btnReorderBottom')?.addEventListener('click', reorderProducts);
+
+            // ---- Ürün sert sil ----
+            document.addEventListener('click', async (e) => {
+                const btn = e.target.closest('.btn-del');
+                if (!btn) return;
+                const id = btn.getAttribute('data-id');
+                if (!id) return;
+
+                if (!confirm('Bu ürünü kalıcı olarak silmek istiyor musunuz?')) return;
+
+                const res = await fetch(`/admin/delete-product/${id}`, {
+                    method: 'POST',
+                    headers: { 'RequestVerificationToken': getAfToken() }
+                });
+
+                const json = await res.json().catch(() => ({ success: false }));
+                if (json.success) {
+                    const tr = btn.closest('tr');
+                    tr?.remove();
+                } else {
+                    alert(json.error || 'Silme işlemi başarısız.');
+                }
+            });
+        })();
     </script>
 }

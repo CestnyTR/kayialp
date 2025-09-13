@@ -1,0 +1,116 @@
+@using kayialp.ViewModels
+@model CreateBlogCategoryVM
+@{
+    Layout = "/Views/Shared/_AdminLayout.cshtml";
+    ViewData["Title"] = "Yeni Blog Kategorisi";
+}
+
+<h2 class="mb-3">@ViewData["Title"]</h2>
+
+<form action="/admin/create-blog-category" method="post" class="card p-3">
+    @Html.AntiForgeryToken()
+
+    <div class="alert alert-danger" asp-validation-summary="All"
+        style="display:@(ViewData.ModelState.IsValid ? "none" : "block")"></div>
+
+    <div class="row g-3">
+        <div class="col-md-2">
+            <label class="form-label">Sıra</label>
+            <input asp-for="Order" class="form-control" />
+        </div>
+        <div class="col-md-2 d-flex align-items-end">
+            <div class="form-check">
+                <input class="form-check-input" asp-for="IsActive" />
+                <label class="form-check-label" for="IsActive">Aktif</label>
+            </div>
+        </div>
+        <div class="col-md-8 d-flex align-items-end">
+            <div class="form-check">
+                <input class="form-check-input" asp-for="AutoTranslate" />
+                <label class="form-check-label" for="AutoTranslate">AutoTranslate (TR → boş alanlar)</label>
+            </div>
+        </div>
+
+        <!-- TR kısayol (opsiyonel) -->
+        <div class="col-12">
+            <label class="form-label">TR Ad (opsiyonel kısayol)</label>
+            <input asp-for="NameTr" class="form-control" />
+            <small class="text-muted">Doldurursan TR sekmesinde otomatik gelir, diğer diller boşsa TR’den
+                çevrilir.</small>
+        </div>
+    </div>
+
+    <hr />
+
+    <!-- Dil sekmeleri -->
+    <ul class="nav nav-tabs" id="langTabs" role="tablist">
+        @for (int i = 0; i < Model.Langs.Count; i++)
+        {
+            var lc = Model.Langs[i].LangCode;
+            <li class="nav-item" role="presentation">
+                <button class="nav-link @(i == 0 ? "active" : "")" id="tab-@lc" data-bs-toggle="tab"
+                    data-bs-target="#pane-@lc" type="button" role="tab">
+                    @lc.ToUpperInvariant()
+                </button>
+            </li>
+        }
+    </ul>
+
+    <div class="tab-content border border-top-0 p-3" id="langTabContent">
+        @for (int i = 0; i < Model.Langs.Count; i++)
+        {
+            var lc = Model.Langs[i].LangCode;
+            <div class="tab-pane fade @(i == 0 ? "show active" : "")" id="pane-@lc" role="tabpanel">
+                <input type="hidden" name="Langs[@i].LangCode" value="@lc" />
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label">@lc.ToUpper() Ad</label>
+                        <input name="Langs[@i].Name" value="@(Model.Langs[i].Name ?? "")" class="form-control lang-title"
+                            data-idx="@i" data-lc="@lc" />
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Slug</label>
+                        <input name="Langs[@i].Slug" value="@(Model.Langs[i].Slug ?? "")" class="form-control lang-slug" />
+                        <small class="text-muted">Boşsa addan türetilir. Dil bazında benzersiz olmalı.</small>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+
+    <div class="d-flex justify-content-end gap-2 mt-3">
+        <a href="/admin/blog" class="btn btn-outline-secondary">İptal</a>
+        <button type="submit" class="btn btn-primary">Kaydet</button>
+    </div>
+</form>
+
+@section Scripts {
+    <script>
+        (function () {
+            function toSlug(s) {
+                if (!s) return '';
+                const map = {
+                    'İ': 'I', 'I': 'I', 'Ş': 'S', 'Ğ': 'G', 'Ü': 'U', 'Ö': 'O', 'Ç': 'C',
+                    'ı': 'i', 'ş': 's', 'ğ': 'g', 'ü': 'u', 'ö': 'o', 'ç': 'c'
+                };
+                s = s.replace(/[\u0130\u0049\u015E\u011E\u00DC\u00D6\u00C7\u0131\u015F\u011F\u00FC\u00F6\u00E7]/g, m => map[m] || m);
+                s = s.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+                s = s.toLowerCase().trim();
+                s = s.replace(/[^a-z0-9\s-]/g, '');
+                s = s.replace(/\s+/g, '-').replace(/-+/g, '-');
+                return s;
+            }
+
+            document.querySelectorAll('.lang-title').forEach(inp => {
+                const idx = inp.getAttribute('data-idx');
+                const slugInput = document.querySelector(`input[name="Langs[${idx}].Slug"]`);
+                if (!slugInput) return;
+                inp.addEventListener('input', () => {
+                    if (!slugInput.value || slugInput.value.trim().length === 0) {
+                        slugInput.value = toSlug(inp.value);
+                    }
+                });
+            });
+        })();
+    </script>
+}

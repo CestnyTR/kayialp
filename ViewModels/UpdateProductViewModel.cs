@@ -1,77 +1,71 @@
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc.Rendering;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
+// using Microsoft.AspNetCore.Http;
+// using System.Collections.Generic;
 
 namespace kayialp.ViewModels
 {
-    public class UpdateProductViewModel
+    public sealed class LangAttributeEditVM
+    {
+        public int AttributeId { get; set; }  // ProductAttributes.Id
+        public int Order { get; set; }
+        public string? Name { get; set; }
+        public string? Value { get; set; }
+    }
+
+    public sealed class UpdateProductLangVM
+    {
+        public string LangCode { get; set; } = "";   // "tr","en","ru","ar"
+        public string? Name { get; set; }
+        public string? Slug { get; set; }            // boşsa addan türet
+        public string? ImageAltsCsv { get; set; }    // boşsa otomatik üret/çevir
+        public string? ShortHtml { get; set; }
+        public string? DescHtml { get; set; }
+        public string? AboutHtml { get; set; }
+
+        // Bu dil için özellik çevirileri (edit edilebilir)
+        public List<LangAttributeEditVM> Attrs { get; set; } = new();
+    }
+
+    // TR için satır ekleme/silme/güncelleme
+    public sealed class UpdateProductAttributeRow
+    {
+        public int? Id { get; set; }         // mevcut satır için
+        public int Order { get; set; }
+        public string? NameTr { get; set; }  // TR kaynak ad
+        public string? ValueTr { get; set; } // TR kaynak değer
+        public bool? Delete { get; set; }    // sert sil
+    }
+
+    public sealed class UpdateProductViewModel
     {
         public int Id { get; set; }
-
-        [Required]
         public int CategoryId { get; set; }
+        public int Stock { get; set; }
+        public int Order { get; set; }
+        public bool IsActive { get; set; }
 
-        [Required, MinLength(2), MaxLength(160)]
-        public string NameTr { get; set; } = string.Empty;
+        // Görseller
+        public List<IFormFile>? NewImages { get; set; }
+        public List<string>? RemoveImages { get; set; }   // "cover.webp","gallery-1.webp" vb.
+        public string? ImageOrder { get; set; }           // dosya adları CSV
+        public int? CoverIndex { get; set; }              // 0-based
 
-        [Range(0, int.MaxValue)]
-        public int Stock { get; set; } = 0;
+        // Çeviri davranışı
+        public bool AutoTranslate { get; set; } = true;
 
-        [Range(0, int.MaxValue)]
-        public int Order { get; set; } = 0;
+        // TR quick edit (istenirse formda kullanmak için)
+        public string? NameTr { get; set; }
+        public string? ShortDescriptionTr { get; set; }
+        public string? DescriptionTr { get; set; }
+        public string? AboutTr { get; set; }
+        public string? ImageAltsTr { get; set; }
 
-        // Mevcut resimler (CSV’den çözülen yollar)
-        public List<string> ExistingImages { get; set; } = new();
+        // Sekmeler
+        public List<UpdateProductLangVM> Langs { get; set; } = new();
 
-        // İşaretlenen mevcut resimler (tam yol) silinecek
-        public List<string> RemoveImagePaths { get; set; } = new();
+        // TR’de satır ekleme/silme için
+        public List<UpdateProductAttributeRow>? Attributes { get; set; }
 
-        // Kapak olarak işaretlenen mevcut yol (opsiyonel)
-        public string? CoverImagePath { get; set; }
-
-        // Yeni resimler (multiple) – toplam 5 sınırı korunur
-        public List<IFormFile> NewImages { get; set; } = new();
-
-        // Detaylar (TR)
-        [MaxLength(20000)]
-        public string? DescriptionTrHtml { get; set; }
-
-        [MaxLength(20000)]
-        public string? AboutTrHtml { get; set; }
-
-        // Seçenekler
-        public bool RegenerateOtherLangs { get; set; } = false;
-        public bool RegenerateEmptySlugs { get; set; } = true;
-
-        // Özellikler
-        public List<FeatureRowVM> Features { get; set; } = new();
-
-        // Seçim listeleri
-        public IEnumerable<SelectListItem>? Categories { get; set; }
-    }
-
-    public class FeatureRowVM
-    {
-        public int Id { get; set; } // 0 => yeni
-        [Required, MinLength(1), MaxLength(1000)]
-        public string TextTr { get; set; } = string.Empty;
-        [Range(0, int.MaxValue)]
-        public int Order { get; set; } = 0;
-        public bool Delete { get; set; } = false;
-    }
-
-    public class ProductTransEditVM
-    {
-        public int LangId { get; set; }           // DB'deki dil Id
-        public string LangCode { get; set; } = ""; // "tr","en","ru","ar"
-        public string LangDisplay { get; set; } = ""; // Sekmede göstereceğiz (TR, EN, RU, AR)
-
-        [Required, MinLength(1), MaxLength(160)]
-        public string Name { get; set; } = "";    // ProductsTranslations.ValueText
-
-        [MaxLength(300)]
-        public string? Slug { get; set; }         // Boş bırakılırsa otomatik üretilecek
+        // Özellik global sırası (AttributeId CSV)
+        public string? AttributeOrder { get; set; }
     }
 }
-

@@ -1,0 +1,134 @@
+@using kayialp.ViewModels
+@model UpdatePostVM
+@{
+    Layout = "/Views/Shared/_AdminLayout.cshtml";
+    ViewData["Title"] = "Blog Yazısı Güncelle";
+    var langs = Model.Langs ?? new List<BlogLangVM>();
+}
+
+<h2 class="mb-3">@ViewData["Title"]</h2>
+
+<form asp-action="UpdatePost" asp-route-id="@Model.Id" method="post" enctype="multipart/form-data" class="card p-3">
+    @Html.AntiForgeryToken()
+    <input type="hidden" asp-for="Id" />
+
+    <div class="row g-3">
+        <div class="col-md-4">
+            <label class="form-label">Kategori</label>
+            <select asp-for="CategoryId" class="form-select" asp-items="ViewBag.BlogCategories">
+                <option value="">— Seçiniz —</option>
+            </select>
+        </div>
+        <div class="col-md-2">
+            <label class="form-label">Sıra</label>
+            <input asp-for="Order" class="form-control" />
+        </div>
+        <div class="col-md-2 d-flex align-items-end">
+            <div class="form-check">
+                <input class="form-check-input" asp-for="IsActive" />
+                <label class="form-check-label" for="IsActive">Aktif</label>
+            </div>
+        </div>
+        <div class="col-md-4 d-flex align-items-end">
+            <div class="form-check">
+                <input class="form-check-input" asp-for="AutoTranslate" />
+                <label class="form-check-label" for="AutoTranslate">AutoTranslate (TR → boş alanlar)</label>
+            </div>
+        </div>
+
+        <!-- Kapak -->
+        <div class="col-md-6">
+            <label class="form-label">Kapak Görseli (312×240)</label>
+            @if (!string.IsNullOrWhiteSpace(Model.ExistingCover))
+            {
+                <div class="d-flex align-items-center gap-3 mb-2">
+                    <img src="@Model.ExistingCover" style="width:120px;height:92px;object-fit:cover;border-radius:8px;border:1px solid #eee;" />
+                    <div class="form-check">
+                        <input class="form-check-input" asp-for="RemoveCover" />
+                        <label class="form-check-label" for="RemoveCover">Mevcut kapağı sil</label>
+                    </div>
+                </div>
+            }
+            <input asp-for="CoverImage" type="file" class="form-control" />
+        </div>
+
+        <!-- İç görsel -->
+        <div class="col-md-6">
+            <label class="form-label">İç Görsel (856×460)</label>
+            @if (!string.IsNullOrWhiteSpace(Model.ExistingInner))
+            {
+                <div class="d-flex align-items-center gap-3 mb-2">
+                    <img src="@Model.ExistingInner" style="width:180px;height:97px;object-fit:cover;border-radius:8px;border:1px solid #eee;" />
+                    <div class="form-check">
+                        <input class="form-check-input" asp-for="RemoveInner" />
+                        <label class="form-check-label" for="RemoveInner">Mevcut resmi sil</label>
+                    </div>
+                </div>
+            }
+            <input asp-for="InnerImage" type="file" class="form-control" />
+        </div>
+    </div>
+
+    <hr />
+
+    <!-- Dil sekmeleri -->
+    <ul class="nav nav-tabs" id="langTabs" role="tablist">
+        @for (int i = 0; i < langs.Count; i++)
+        {
+            var lc = langs[i].LangCode;
+            <li class="nav-item" role="presentation">
+                <button class="nav-link @(i == 0 ? "active" : "")" id="tab-@lc" data-bs-toggle="tab"
+                        data-bs-target="#pane-@lc" type="button" role="tab">@lc.ToUpperInvariant()</button>
+            </li>
+        }
+    </ul>
+    <div class="tab-content border border-top-0 p-3">
+        @for (int i = 0; i < langs.Count; i++)
+        {
+            var lc = langs[i].LangCode;
+            <div class="tab-pane fade @(i==0?"show active":"")" id="pane-@lc" role="tabpanel">
+                <input type="hidden" name="Langs[@i].LangCode" value="@lc" />
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label">@lc.ToUpper() Başlık (Title)</label>
+                        <input name="Langs[@i].Title" value="@(langs[i].Title ?? "")" class="form-control" />
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Slug</label>
+                        <input name="Langs[@i].Slug" value="@(langs[i].Slug ?? "")" class="form-control" />
+                        <small class="text-muted">Boşsa başlıktan türetilir. Çakışırsa hata verilir.</small>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label">Kapak Alt Yazısı</label>
+                        <input name="Langs[@i].ImageAltCover" value="@(langs[i].ImageAltCover ?? "")" class="form-control" />
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">İç Görsel Alt Yazısı</label>
+                        <input name="Langs[@i].ImageAltInner" value="@(langs[i].ImageAltInner ?? "")" class="form-control" />
+                    </div>
+
+                    <div class="col-12">
+                        <label class="form-label">Özet (summary)</label>
+                        <textarea name="Langs[@i].SummaryHtml" class="form-control editor" rows="3">@Html.Raw(langs[i].SummaryHtml ?? "")</textarea>
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label">İçerik (body)</label>
+                        <textarea name="Langs[@i].BodyHtml" class="form-control editor" rows="8">@Html.Raw(langs[i].BodyHtml ?? "")</textarea>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+
+    <div class="d-flex justify-content-end gap-2 mt-3">
+        <a href="/admin/blog" class="btn btn-outline-secondary">İptal</a>
+        <button type="submit" class="btn btn-primary">Kaydet</button>
+    </div>
+</form>
+
+@section Scripts{
+    <script>
+        // .editor sınıfına sahip alanlar için WYSIWYG init'i burada yapılabilir.
+    </script>
+}

@@ -1,0 +1,235 @@
+@using kayialp.ViewModels
+@model CreatePostVM
+@{
+    Layout = "/Views/Shared/_AdminLayout.cshtml";
+    ViewData["Title"] = "Yeni Blog Yazısı";
+}
+
+<h2 class="mb-3">@ViewData["Title"]</h2>
+
+<form action="/admin/create-post" method="post" enctype="multipart/form-data" class="card p-3">
+    @Html.AntiForgeryToken()
+
+    <!-- Genel hata özeti -->
+    <div class="alert alert-danger" asp-validation-summary="All"
+        style="display:@(ViewData.ModelState.IsValid ? "none" : "block")"></div>
+
+    <!-- Üst alanlar -->
+    <div class="row g-3">
+        <div class="col-md-4">
+            <label class="form-label d-flex justify-content-between align-items-center">
+                <span>Kategori</span>
+                <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal"
+                    data-bs-target="#catModal">
+                    + Yeni
+                </button>
+            </label>
+            <select asp-for="CategoryId" class="form-select" asp-items="ViewBag.BlogCategories">
+                <option value="">— Seçiniz —</option>
+            </select>
+            <span asp-validation-for="CategoryId" class="text-danger"></span>
+        </div>
+
+        <div class="col-md-2">
+            <label class="form-label">Sıra</label>
+            <input asp-for="Order" class="form-control" />
+            <span asp-validation-for="Order" class="text-danger"></span>
+        </div>
+
+        <div class="col-md-2 d-flex align-items-end">
+            <div class="form-check">
+                <input class="form-check-input" asp-for="IsActive" />
+                <label class="form-check-label" for="IsActive">Aktif</label>
+            </div>
+        </div>
+
+        <div class="col-md-4 d-flex align-items-end">
+            <div class="form-check">
+                <input class="form-check-input" asp-for="AutoTranslate" />
+                <label class="form-check-label" for="AutoTranslate">AutoTranslate (TR → boş alanlar) </label>
+            </div>
+            <small class="text-muted ms-2 d-flex align-items-end">
+                Açıkken, boş kalan diller TR’den otomatik çevrilir. Doluysa **dokunulmaz**.
+            </small>
+        </div>
+
+        <!-- Görseller -->
+        <div class="col-md-6">
+            <label class="form-label d-flex align-items-center gap-2">
+                Kapak Görseli (312×240)
+                <span class="badge bg-secondary">Zorunlu</span>
+            </label>
+            <input asp-for="CoverImage" type="file" class="form-control" accept="image/*" id="coverInput" />
+            <span asp-validation-for="CoverImage" class="text-danger"></span>
+            <div class="mt-2" id="coverPreviewWrap" style="display:none;">
+                <img id="coverPreview" alt="Kapak Önizleme"
+                    style="width:156px;height:120px;object-fit:cover;border:1px solid #eee;border-radius:8px;" />
+            </div>
+            <small class="text-muted">Öneri: Tam 312×240 px veya aynı oranda.</small>
+        </div>
+
+        <div class="col-md-6">
+            <label class="form-label d-flex align-items-center gap-2">
+                İç Görsel (856×460)
+                <span class="badge bg-secondary">Zorunlu</span>
+            </label>
+            <input asp-for="InnerImage" type="file" class="form-control" accept="image/*" id="innerInput" />
+            <span asp-validation-for="InnerImage" class="text-danger"></span>
+            <div class="mt-2" id="innerPreviewWrap" style="display:none;">
+                <img id="innerPreview" alt="İç Önizleme"
+                    style="width:214px;height:115px;object-fit:cover;border:1px solid #eee;border-radius:8px;" />
+            </div>
+            <small class="text-muted">Öneri: Tam 856×460 px veya aynı oranda.</small>
+        </div>
+    </div>
+
+    <hr />
+
+    <!-- TR Kısayollar (opsiyonel) -->
+    <div class="card mb-3">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <strong>TR Kısayollar (opsiyonel)</strong>
+            <small class="text-muted">Burayı doldurursan TR sekmesindeki karşılıklar otomatik dolu gelir.</small>
+        </div>
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label class="form-label">Başlık (TitleTr)</label>
+                    <input asp-for="TitleTr" class="form-control" />
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Kapak Alt Yazı (AltCoverTr)</label>
+                    <input asp-for="AltCoverTr" class="form-control" />
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">İç Görsel Alt Yazı (AltInnerTr)</label>
+                    <input asp-for="AltInnerTr" class="form-control" />
+                </div>
+                <div class="col-12">
+                    <label class="form-label">Özet (SummaryTr)</label>
+                    <textarea asp-for="SummaryTr" class="form-control" rows="3"></textarea>
+                </div>
+                <div class="col-12">
+                    <label class="form-label">İçerik (BodyTr)</label>
+                    <textarea asp-for="BodyTr" class="form-control" rows="6"></textarea>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="d-flex justify-content-end gap-2 mt-3">
+        <a href="/admin/blog" class="btn btn-outline-secondary">İptal</a>
+        <button type="submit" class="btn btn-primary">Kaydet</button>
+    </div>
+</form>
+<div class="modal fade" id="catModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Yeni Blog Kategorisi</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label">TR Ad</label>
+                    <input type="text" class="form-control" id="qcNameTr" />
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Sıra</label>
+                    <input type="number" class="form-control" id="qcOrder" value="0" />
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="qcActive" checked />
+                    <label class="form-check-label">Aktif</label>
+                </div>
+                <div class="text-danger small mt-2" id="qcErr" style="display:none;"></div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" data-bs-dismiss="modal">Kapat</button>
+                <button class="btn btn-primary" id="qcSaveBtn" type="button">Kaydet</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        (function () {
+            // Görsel önizleme
+            const bindPreview = (inputId, imgId, wrapId) => {
+                const inp = document.getElementById(inputId);
+                const img = document.getElementById(imgId);
+                const wrap = document.getElementById(wrapId);
+                if (!inp || !img || !wrap) return;
+                inp.addEventListener('change', () => {
+                    const f = inp.files && inp.files[0];
+                    if (!f) { wrap.style.display = 'none'; return; }
+                    const url = URL.createObjectURL(f);
+                    img.src = url;
+                    wrap.style.display = 'block';
+                });
+            };
+            bindPreview('coverInput', 'coverPreview', 'coverPreviewWrap');
+            bindPreview('innerInput', 'innerPreview', 'innerPreviewWrap');
+
+            // Başlıktan slug üret (yalnızca slug alanı boşsa)
+            // Basit bir yerelleştirilmiş slug generator (backend yine normalize edecek)
+            function toSlug(s) {
+                if (!s) return '';
+                // kaba normalize: TR karakterleri ve genel diakritikler
+                const map = {
+                    'İ': 'I', 'I': 'I', 'Ş': 'S', 'Ğ': 'G', 'Ü': 'U', 'Ö': 'O', 'Ç': 'C',
+                    'ı': 'i', 'ş': 's', 'ğ': 'g', 'ü': 'u', 'ö': 'o', 'ç': 'c'
+                };
+                s = s.replace(/[\u0130\u0049\u015E\u011E\u00DC\u00D6\u00C7\u0131\u015F\u011F\u00FC\u00F6\u00E7]/g, m => map[m] || m);
+                s = s.normalize('NFD').replace(/[\u0300-\u036f]/g, ''); // diacritics
+                s = s.toLowerCase().trim();
+                s = s.replace(/[^a-z0-9\s-]/g, '');
+                s = s.replace(/\s+/g, '-').replace(/-+/g, '-');
+                return s;
+            }
+
+            document.querySelectorAll('.lang-title').forEach(inp => {
+                inp.addEventListener('input', e => {
+                    const idx = inp.getAttribute('data-idx');
+                    const slugInput = document.querySelector(`input[name="Langs[${idx}].Slug"]`);
+                    if (!slugInput) return;
+                    if (!slugInput.value || slugInput.value.trim().length === 0) {
+                        slugInput.value = toSlug(inp.value);
+                    }
+                });
+            });
+
+            const btn = document.getElementById('qcSaveBtn');
+            if (!btn) return;
+
+            btn.addEventListener('click', async () => {
+                const nameTr = document.getElementById('qcNameTr').value || '';
+                const order = parseInt(document.getElementById('qcOrder').value || '0', 10);
+                const active = document.getElementById('qcActive').checked;
+                const err = document.getElementById('qcErr');
+
+                err.style.display = 'none'; err.textContent = '';
+
+                const res = await fetch('/admin/create-blog-category-quick', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ nameTr, order, isActive: active })
+                });
+                const j = await res.json();
+                if (!j.ok) {
+                    err.textContent = j.error || 'Kayıt başarısız.'; err.style.display = 'block'; return;
+                }
+                // dropdown'a ekle ve seç
+                const sel = document.getElementById('CategoryId');
+                const opt = new Option(j.name, j.id, true, true);
+                sel.add(opt);
+
+                // modal kapat
+                const m = bootstrap.Modal.getInstance(document.getElementById('catModal'));
+                if (m) m.hide();
+            });
+        })();
+
+    </script>
+}

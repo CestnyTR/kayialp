@@ -1,0 +1,103 @@
+@using kayialp.ViewModels
+@model UpdateBlogCategoryVM
+@{
+    Layout = "/Views/Shared/_AdminLayout.cshtml";
+    ViewData["Title"] = "Kategori Güncelle";
+}
+
+<h2 class="mb-3">@ViewData["Title"]</h2>
+
+<form action="/admin/update-blog-category/@Model.Id" method="post" class="card p-3">
+    @Html.AntiForgeryToken()
+    <input type="hidden" asp-for="Id" />
+
+    <div class="alert alert-danger" asp-validation-summary="All"
+         style="display:@(ViewData.ModelState.IsValid ? "none" : "block")"></div>
+
+    <div class="row g-3">
+        <div class="col-md-2">
+            <label class="form-label">Sıra</label>
+            <input asp-for="Order" class="form-control" />
+        </div>
+        <div class="col-md-2 d-flex align-items-end">
+            <div class="form-check">
+                <input class="form-check-input" asp-for="IsActive" />
+                <label class="form-check-label" for="IsActive">Aktif</label>
+            </div>
+        </div>
+        <div class="col-md-8 d-flex align-items-end">
+            <div class="form-check">
+                <input class="form-check-input" asp-for="AutoTranslate" />
+                <label class="form-check-label" for="AutoTranslate">AutoTranslate (TR → boş alanlar)</label>
+            </div>
+        </div>
+
+        <div class="col-12">
+            <label class="form-label">TR Ad (kısayol)</label>
+            <input asp-for="NameTr" class="form-control" />
+        </div>
+    </div>
+
+    <hr />
+
+    <ul class="nav nav-tabs" role="tablist">
+        @for (int i = 0; i < Model.Langs.Count; i++)
+        {
+            var lc = Model.Langs[i].LangCode;
+            <li class="nav-item" role="presentation">
+                <button class="nav-link @(i==0?"active":"")" data-bs-toggle="tab" data-bs-target="#pane-@lc" type="button" role="tab">
+                    @lc.ToUpperInvariant()
+                </button>
+            </li>
+        }
+    </ul>
+
+    <div class="tab-content border border-top-0 p-3">
+        @for (int i = 0; i < Model.Langs.Count; i++)
+        {
+            var lc = Model.Langs[i].LangCode;
+            <div class="tab-pane fade @(i==0?"show active":"")" id="pane-@lc" role="tabpanel">
+                <input type="hidden" name="Langs[@i].LangCode" value="@lc" />
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label">@lc.ToUpper() Ad</label>
+                        <input name="Langs[@i].Name" value="@(Model.Langs[i].Name ?? "")" class="form-control lang-title" data-idx="@i" />
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Slug</label>
+                        <input name="Langs[@i].Slug" value="@(Model.Langs[i].Slug ?? "")" class="form-control lang-slug" />
+                        <small class="text-muted">Boşsa addan türetilir. (Dil bazında benzersiz)</small>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+
+    <div class="d-flex justify-content-end gap-2">
+        <a href="/admin/blog-categories" class="btn btn-outline-secondary">Geri</a>
+        <button class="btn btn-primary" type="submit">Kaydet</button>
+    </div>
+</form>
+
+@section Scripts{
+<script>
+(function(){
+  function toSlug(s){
+    if(!s) return '';
+    const map={'İ':'I','I':'I','Ş':'S','Ğ':'G','Ü':'U','Ö':'O','Ç':'C','ı':'i','ş':'s','ğ':'g','ü':'u','ö':'o','ç':'c'};
+    s=s.replace(/[\u0130\u0049\u015E\u011E\u00DC\u00D6\u00C7\u0131\u015F\u011F\u00FC\u00F6\u00E7]/g,m=>map[m]||m);
+    s=s.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim();
+    s=s.replace(/[^a-z0-9\s-]/g,'').replace(/\s+/g,'-').replace(/-+/g,'-');
+    return s;
+  }
+  document.querySelectorAll('.lang-title').forEach((inp,ix)=>{
+    const idx = inp.getAttribute('data-idx') ?? ix;
+    const slug = document.querySelector(`input[name="Langs[${idx}].Slug"]`);
+    if(!slug) return;
+    inp.addEventListener('input', ()=>{
+      if(!slug.value || slug.value.trim()===''){ slug.value = toSlug(inp.value); }
+    });
+  });
+})();
+</script>
+}
