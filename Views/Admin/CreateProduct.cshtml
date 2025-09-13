@@ -1,146 +1,349 @@
-@model kayialp.ViewModels.CreateProductFullViewModel
+@using kayialp.ViewModels
+@model CreateProductViewModel
 @{
+    ViewData["Title"] = "Ürün Ekle";
     Layout = "/Views/Shared/_AdminLayout.cshtml";
 }
 
-<h1 class="h3 mb-3">Yeni Ürün</h1>
+<!-- bootstrap-select CSS (opsiyonel, arama için) -->
+<link rel="stylesheet"
+    href="https://cdn.jsdelivr.net/npm/bootstrap-select@1.14.0-beta3/dist/css/bootstrap-select.min.css" />
 
-@if (TempData["ProductError"] is string err)
-{
-    <div class="alert alert-danger">@err</div>
-}
-@if (TempData["ProductMsg"] is string ok)
-{
-    <div class="alert alert-success">@ok</div>
-}
+<h1 class="h3 mb-4">Ürün Ekle</h1>
 
 <form asp-action="CreateProduct" method="post" enctype="multipart/form-data">
     @Html.AntiForgeryToken()
+    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+    <!-- Hidden'lar: JS doldurur -->
+    <input type="hidden" asp-for="ImageOrder" />
+    <input type="hidden" asp-for="CoverIndex" />
 
     <div class="card mb-4">
+        <div class="card-header fw-semibold d-flex justify-content-between align-items-center">
+            <span>Temel Bilgiler</span>
+            <small class="text-muted">Kaydederken tüm diller otomatik TR'den türetilecek (slug + alt metin kalıbı
+                dahil).</small>
+        </div>
         <div class="card-body">
-            <div class="form-row">
-                <div class="form-group col-md-6">
-                    <label>Kategori</label>
-                    <select asp-for="CategoryId" class="form-control" asp-items="Model.Categories">
+            <div class="row g-3">
+                <div class="col-lg-4">
+                    <label class="form-label">Kategori</label>
+                    <select asp-for="CategoryId" class="form-select selectpicker" form-select=fallback,
+                        selectpicker="plugin" data-live-search="true" asp-items="ViewBag.Categories">
                         <option value="">Seçiniz…</option>
                     </select>
                     <span asp-validation-for="CategoryId" class="text-danger"></span>
                 </div>
-                <div class="form-group col-md-6">
-                    <label>Ürün Adı (TR)</label>
-                    <input asp-for="NameTr" class="form-control" />
-                    <span asp-validation-for="NameTr" class="text-danger"></span>
-                </div>
-            </div>
-
-            <div class="form-row">
-                <div class="form-group col-md-2">
-                    <label>Stok</label>
+                <div class="col-lg-4">
+                    <label asp-for="Stock" class="form-label">Stok</label>
                     <input asp-for="Stock" type="number" min="0" class="form-control" />
+                    <span asp-validation-for="Stock" class="text-danger"></span>
                 </div>
-                <div class="form-group col-md-2">
-                    <label>Sıra (Order)</label>
-                    <input asp-for="Order" type="number" min="0" class="form-control" />
+                <div class="col-lg-4">
+                    <label asp-for="Order" class="form-label">Sıra (Order)</label>
+                    <input asp-for="Order" type="number" class="form-control" />
+                    <span asp-validation-for="Order" class="text-danger"></span>
                 </div>
-                <div class="form-group col-md-8">
-                    <label>Görseller (max 5)</label>
-                    <input asp-for="Images" type="file" class="form-control" multiple accept=".jpg,.jpeg,.png,.webp,.jfif" />
-                    <small class="form-text text-muted">İlk görsel kapak olarak kullanılır.</small>
-                    <span asp-validation-for="Images" class="text-danger"></span>
+            </div>
+
+            @* HIDDEN alanlar: JS doldurur *@
+            <input type="hidden" asp-for="ImageOrder" />
+            <input type="hidden" asp-for="CoverIndex" />
+
+            <div class="mt-4">
+                <label class="form-label">Görseller (min 1 / max 5)</label>
+                <input asp-for="Images" type="file" multiple accept=".jpg,.jpeg,.png,.webp" class="form-control" />
+                <small class="text-muted">Yüklendikten sonra WEBP'e çevrilecektir (1200×1200). İlk görsel varsayılan
+                    kapaktır.</small>
+                <span asp-validation-for="Images" class="text-danger"></span>
+
+                <div class="mt-3">
+                    <div class="d-flex align-items-center justify-content-between mb-2">
+                        <div class="fw-semibold">Görsel Sırası (sürükle-bırak) & Kapak Seçimi</div>
+                        <small class="text-muted">En fazla 5 görsel. ⭐ = Kapak</small>
+                    </div>
+                    <div id="ImageList" class="d-flex flex-wrap gap-2"></div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Detaylar & Özellikler -->
-    <!-- Detaylar & Özellikler -->
     <div class="card mb-4">
-        <div class="card-header"><strong>Ürün Detayları (TR)</strong></div>
+        <div class="card-header fw-semibold">Ürün Başlığı ve Alt Metin (Türkçe)</div>
         <div class="card-body">
-            <div class="form-group">
-                <label>Açıklama</label>
-                <textarea class="form-control js-ckeditor" id="desc-editor" name="DescriptionTrHtml"
-                    rows="8">@Model.DescriptionTrHtml</textarea>
+            <div class="mb-3">
+                <label asp-for="NameTr" class="form-label">Ürün Adı (TR)</label>
+                <input asp-for="NameTr" class="form-control" />
+                <span asp-validation-for="NameTr" class="text-danger"></span>
             </div>
-            <div class="form-group">
-                <label>Ürün Hakkında</label>
-                <textarea class="form-control js-ckeditor" id="about-editor" name="AboutTrHtml"
-                    rows="8">@Model.AboutTrHtml</textarea>
+            <div class="mb-1">
+                <label asp-for="ImageAltsTr" class="form-label">Görsel Alt Metin(leri) (TR)</label>
+                <input asp-for="ImageAltsTr" class="form-control" />
+                <small class="text-muted">Boş bırakırsanız otomatik olarak <em>Ürün Adı (TR)</em>
+                    kullanılacaktır.</small>
             </div>
         </div>
     </div>
 
-    <!-- Feature’lar (madde madde, ürüne bağlı) -->
     <div class="card mb-4">
-        <div class="card-header d-flex justify-content-between align-items-center">
-            <strong>Özellikler (TR)</strong>
-            <button type="button" class="btn btn-sm btn-outline-primary" onclick="addTopFeature()">Özellik Ekle</button>
+        <div class="card-header fw-semibold">Ürün Detayları (TR)</div>
+        <div class="card-body">
+            <div class="mb-3">
+                <label class="form-label">Kısa Açıklama</label>
+                <textarea asp-for="ShortDescriptionTr" rows="3" class="form-control"></textarea>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Açıklama</label>
+                <textarea asp-for="DescriptionTr" rows="5" class="form-control"></textarea>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Ürün Hakkında</label>
+                <textarea asp-for="AboutTr" rows="4" class="form-control"></textarea>
+            </div>
         </div>
-        <div class="card-body" id="features-top-container">
-            @for (int j = 0; j < Model.Features.Count; j++)
-            {
-                <div class="form-row align-items-end feature-row mb-2" data-findex="@j">
-                    <!-- BUNU EKLE -->
-                    <input type="hidden" name="Features.Index" value="@j" />
+    </div>
 
-                    <div class="form-group col-md-9">
-                        <label>Özellik Metni</label>
-                        <input class="form-control" name="Features[@j].TextTr" value="@Model.Features[j].TextTr" />
+    <div class="card mb-4">
+        <div class="card-header fw-semibold d-flex justify-content-between align-items-center">
+            <span>Özellikler (Türkçe) — sınırsız</span>
+            <button type="button" id="AddAttrBtn" class="btn btn-sm btn-outline-primary">Özellik Ekle</button>
+        </div>
+
+        <div class="card-body">
+            <!-- Satırların geldiği yer -->
+            <div id="AttrRows"></div>
+
+            <!-- Template: JS bunu kopyalayıp KEY’i doldurur -->
+            <template id="AttrRowTpl">
+                <div class="row g-2 align-items-end attr-row mb-2" data-key="__k__">
+                    <!-- KOLEKSIYON INDEX KAYDI (BU ÇOK ÖNEMLİ) -->
+                    <input type="hidden" name="Attributes.index" value="__k__" />
+
+                    <div class="col-md-5">
+                        <label class="form-label">Etiket</label>
+                        <input name="Attributes[__k__].NameTr" class="form-control" placeholder="Örn: Motor Gücü" />
                     </div>
-                    <div class="form-group col-md-2">
-                        <label>Sıra</label>
-                        <input class="form-control" type="number" name="Features[@j].Order"
-                            value="@Model.Features[j].Order" />
+                    <div class="col-md-5">
+                        <label class="form-label">Değer</label>
+                        <input name="Attributes[__k__].ValueTr" class="form-control" placeholder="Örn: 5.5 kW" />
                     </div>
-                    <div class="form-group col-md-1">
-                        <button type="button" class="btn btn-outline-danger" onclick="removeTopFeature(this)">X</button>
+                    <div class="col-md-1">
+                        <label class="form-label">Sıra</label>
+                        <input name="Attributes[__k__].Order" type="number" class="form-control" value="0" />
+                    </div>
+                    <div class="col-md-1 d-grid">
+                        <button type="button" class="btn btn-outline-danger attr-del">Sil</button>
                     </div>
                 </div>
-            }
+            </template>
+
+            <small class="text-muted d-block mt-2">
+                “Etiket” = özellik adı, “Değer” = özellik değeri. Boş satırlar kaydedilmez.
+            </small>
         </div>
     </div>
-    <button type="submit" class="btn btn-primary">Kaydet</button>
-    <a asp-action="Products" class="btn btn-secondary">İptal</a>
+
+
+    <div class="d-flex gap-2">
+        <button type="submit" class="btn btn-success">Kaydet</button>
+        <a asp-action="Index" class="btn btn-secondary">İptal</a>
     </div>
 </form>
 
+
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
-    <script src="https://cdn.ckeditor.com/ckeditor5/41.4.2/classic/ckeditor.js"></script>
+    <!-- SortableJS -->
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
+    <!-- bootstrap-select JS (opsiyonel) -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap-select@1.14.0-beta3/dist/js/bootstrap-select.min.js"></script>
+
     <script>
-        const __ck__ = new Map();
-        function initEditorById(id) {
-            const el = document.getElementById(id);
-            if (!el || __ck__.has(id)) return;
-            ClassicEditor.create(el, { language: 'tr', toolbar: ['heading', '|', 'bold', 'italic', 'link', '|', 'bulletedList', 'numberedList', '|', 'blockQuote', 'undo', 'redo'] })
-                .then(ed => __ck__.set(id, ed)).catch(console.error);
-        }
+        // DOM yüklendikten sonra başlat
         document.addEventListener('DOMContentLoaded', function () {
-            initEditorById('desc-editor'); initEditorById('about-editor');
+            const $sel = $('.selectpicker');
+            if ($sel.length) {
+                $sel.selectpicker();       // ilk init
+            }
         });
+        (function () {
+            const box = document.getElementById("AttrRows");
+            const tpl = document.getElementById("AttrRowTpl").innerHTML;
+            const addBtn = document.getElementById("AddAttrBtn");
 
-        function addTopFeature() {
-            const c = document.getElementById('features-top-container');
-            const j = c.querySelectorAll('.feature-row').length;
+            // benzersiz KEY üret
+            function newKey() {
+                return 'k' + Math.random().toString(36).slice(2) + Date.now().toString(36);
+            }
 
-            c.insertAdjacentHTML('beforeend', `
-                        <div class="form-row align-items-end feature-row mb-2" data-findex="${j}">
-                          <!-- BUNU EKLE -->
-                          <input type="hidden" name="Features.Index" value="${j}">
-                          <div class="form-group col-md-9">
-                            <label>Özellik Metni</label>
-                            <input class="form-control" name="Features[${j}].TextTr" />
-                          </div>
-                          <div class="form-group col-md-2">
-                            <label>Sıra</label>
-                            <input class="form-control" type="number" name="Features[${j}].Order" value="${j}" />
-                          </div>
-                          <div class="form-group col-md-1">
-                            <button type="button" class="btn btn-outline-danger" onclick="removeTopFeature(this)">X</button>
-                          </div>
-                        </div>`);
-        }
-        function removeTopFeature(btn) { btn.closest('.feature-row').remove(); }
+            // satır ekle
+            function addRow(preset) {
+                const key = newKey();
+                const html = tpl.replaceAll('__k__', key);
+                const wrapper = document.createElement('div');
+                wrapper.innerHTML = html.trim();
+                const row = wrapper.firstChild;
+
+                // preset değerleri (isteğe bağlı)
+                if (preset) {
+                    if (preset.name) row.querySelector(`[name="Attributes[${key}].NameTr"]`).value = preset.name;
+                    if (preset.value) row.querySelector(`[name="Attributes[${key}].ValueTr"]`).value = preset.value;
+                    if (typeof preset.order === 'number') row.querySelector(`[name="Attributes[${key}].Order"]`).value = preset.order;
+                } else {
+                    // varsayılan order = mevcut satır sayısı
+                    const count = box.querySelectorAll('.attr-row').length;
+                    row.querySelector(`[name="Attributes[${key}].Order"]`).value = count;
+                }
+
+                box.appendChild(row);
+                refreshDeleteButtons();
+            }
+
+            // sil butonlarını güncelle (tek satır kaldıysa "sil" = temizle)
+            function refreshDeleteButtons() {
+                const rows = box.querySelectorAll('.attr-row');
+                rows.forEach(btn => btn.querySelector('.attr-del').disabled = false);
+                if (rows.length === 1) {
+                    rows[0].querySelector('.attr-del').disabled = false; // silinmesine izin veriyoruz ama "temizleme" yapacağız
+                }
+            }
+
+            // başlangıçta en az 1 satır
+            if (!box.querySelector('.attr-row')) addRow();
+
+            // Ekle
+            addBtn.addEventListener('click', function () { addRow(); });
+
+            // Sil / Temizle
+            box.addEventListener('click', function (e) {
+                const btn = e.target.closest('.attr-del');
+                if (!btn) return;
+
+                const rows = box.querySelectorAll('.attr-row');
+                const row = btn.closest('.attr-row');
+
+                if (rows.length <= 1) {
+                    // tek satırsa -> alanları temizle
+                    row.querySelectorAll('input').forEach(i => { if (i.type !== 'hidden') i.value = ''; });
+                    return;
+                }
+                row.remove();
+                refreshDeleteButtons();
+            });
+            // Razor id'lerini modelden al -> selector hatası olmaz
+            const imgInputId = "@Html.IdFor(m => m.Images)";
+            const orderInputId = "@Html.IdFor(m => m.ImageOrder)";
+            const coverInputId = "@Html.IdFor(m => m.CoverIndex)";
+
+            const fileInput = document.getElementById(imgInputId);
+            const listEl = document.getElementById("ImageList");
+            const orderHid = document.getElementById(orderInputId);
+            const coverHid = document.getElementById(coverInputId);
+
+            // UI içi durum (File nesnesinin referansını ve orijinal index'ini tutuyoruz)
+            let items = []; // [{file: File, key: string}]
+
+            // benzersiz anahtar
+            const makeKey = () => 'k' + Math.random().toString(36).slice(2) + Date.now().toString(36);
+
+            // FileList'i tamamen yeniden kur (DataTransfer ile)
+            function rebuildFileInputByItems() {
+                const dt = new DataTransfer();
+                items.forEach(x => dt.items.add(x.file));
+                fileInput.files = dt.files;
+            }
+
+            // Gizli alanları yaz
+            function writeHidden() {
+                // order'ı item KEY'lerinden değil, input içindeki dosya SIRASINDAN üretelim
+                // çünkü backend, index'e göre okuyacak (0 kapak, 1.. galeriler)
+                const order = Array.from(listEl.querySelectorAll('.img-card'))
+                    .map((el, i) => i); // artık sıralanmış files ile aynı
+                orderHid.value = order.join(',');
+                coverHid.value = listEl.children.length ? 0 : ""; // ilk kart kapak
+            }
+
+            // UI'yı baştan çiz
+            function render() {
+                listEl.innerHTML = "";
+                items.forEach((x, idx) => {
+                    const url = URL.createObjectURL(x.file);
+                    const card = document.createElement('div');
+                    card.className = "img-card card p-2";
+                    card.style.width = "140px";
+                    card.dataset.key = x.key;
+
+                    card.innerHTML = `
+                        <img class="rounded border" style="width:100%;height:100px;object-fit:cover" src="${url}" />
+                        <div class="d-flex justify-content-between align-items-center mt-2">
+                            <button type="button" class="btn btn-sm btn-outline-secondary make-cover">Kapak Yap</button>
+                            <button type="button" class="btn btn-sm btn-outline-danger remove">Sil</button>
+                        </div>
+                        <div class="mt-1 text-center cover-badge ${idx === 0 ? '' : 'd-none'}">
+                            <span class="badge bg-warning text-dark">⭐ Kapak</span>
+                        </div>
+                    `;
+                    // objectURL'ı kart kaldırılırken serbest bırak
+                    card.querySelector('img').addEventListener('load', () => URL.revokeObjectURL(url), { once: true });
+                    listEl.appendChild(card);
+                });
+                writeHidden();
+            }
+
+            // Dosyalar seçildi
+            fileInput.addEventListener('change', function () {
+                const files = Array.from(this.files || []);
+                if (files.length > 5) {
+                    alert("En fazla 5 görsel seçebilirsiniz.");
+                    this.value = ""; items = []; listEl.innerHTML = ""; writeHidden();
+                    return;
+                }
+                items = files.map(f => ({ file: f, key: makeKey() }));
+                render();
+            });
+
+            // Kapak yap & Sil
+            listEl.addEventListener('click', function (e) {
+                const btn = e.target.closest('button');
+                if (!btn) return;
+                const card = e.target.closest('.img-card');
+                const key = card.dataset.key;
+                const idx = items.findIndex(x => x.key === key);
+
+                if (btn.classList.contains('make-cover')) {
+                    if (idx > 0) {
+                        // ilgili elemanı başa al
+                        const moved = items.splice(idx, 1)[0];
+                        items.unshift(moved);
+                        rebuildFileInputByItems();
+                        render();
+                    }
+                } else if (btn.classList.contains('remove')) {
+                    // elemanı sil
+                    items.splice(idx, 1);
+                    rebuildFileInputByItems();
+                    render();
+                }
+            });
+
+            // Drag-drop sıralama
+            Sortable.create(listEl, {
+                animation: 150,
+                onEnd: function (evt) {
+                    // UI sırasına göre items'ı yeniden sırala
+                    const newOrderKeys = Array.from(listEl.querySelectorAll('.img-card')).map(el => el.dataset.key);
+                    items.sort((a, b) => newOrderKeys.indexOf(a.key) - newOrderKeys.indexOf(b.key));
+                    rebuildFileInputByItems();
+                    // kapak rozeti ilk elemana
+                    listEl.querySelectorAll(".cover-badge").forEach(x => x.classList.add("d-none"));
+                    if (listEl.firstElementChild) {
+                        listEl.firstElementChild.querySelector(".cover-badge").classList.remove("d-none");
+                    }
+                    writeHidden();
+                }
+            });
+        })();
     </script>
+
 }

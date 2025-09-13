@@ -88,7 +88,7 @@
                             class="@(currentController == "Fair" ? "active" : "")">@Html.Localize("pages.layout.fairs")</a>
                     </li>
                     <li><a asp-controller="Contact" asp-action="Index" asp-route-culture="@ViewData["Culture"]"
-                            class="@(currentController == "Contact" ? "active" : "")">@Html.Localize("pages.layout.communication")</a>
+                            class="@(currentController == "Contact" ? "active" : "")">@Html.Localize(key: "pages.layout.communication")</a>
                     </li>
                 </ul>
                 <div class="sticky-bottom">

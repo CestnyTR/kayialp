@@ -7,21 +7,40 @@ namespace kayialp.ViewModels
     {
         [Required]
         public int CategoryId { get; set; }
-
-        [Required, MinLength(2), MaxLength(160)]
-        public string NameTr { get; set; } = string.Empty;
-
-        // Virgül ile çoklu görsel (max 5)
-        [MaxLength(2000)]
-        public string? ImageUrlsCsv { get; set; }
-
         [Range(0, int.MaxValue)]
-        public int Stock { get; set; } = 0;
+        public int Stock { get; set; }
+        public int Order { get; set; }
 
-        [Range(0, int.MaxValue)]
-        public int Order { get; set; } = 0;
+        // Görseller (min 1, max 5)
+        [Required]
+        public List<IFormFile> Images { get; set; } = new();
 
-        // Dropdown için
-        public IEnumerable<SelectListItem>? Categories { get; set; }
+        // Görsel yönetimi için hidden alanlar (JS doldurur)
+        public string? ImageOrder { get; set; }   // örn: "0,2,1" (FileList index'leri)
+        public int? CoverIndex { get; set; }      // kapak olan FileList index'i
+
+        // Yalnızca TR alanları
+        [Required, MinLength(3), MaxLength(120)]
+        public string NameTr { get; set; } = "";
+        public string? ImageAltsTr { get; set; } = "";
+
+        // Detaylar (TR)
+        public string? ShortDescriptionTr { get; set; } = "";
+        public string? DescriptionTr { get; set; } = "";
+        public string? AboutTr { get; set; } = "";
+
+        // Özellikler (TR)
+        public List<ProductAttributeRow> Attributes { get; set; } = new();
     }
+
+    public class ProductAttributeRow
+    {
+        [MaxLength(120)]
+        public string? NameTr { get; set; }   // Etiket
+        [MaxLength(400)]
+        public string? ValueTr { get; set; }  // Değer
+        public int Order { get; set; } = 0;
+    }
+
 }
+

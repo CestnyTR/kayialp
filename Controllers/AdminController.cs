@@ -13,6 +13,7 @@ using System.Text;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Formats.Webp;
 using SixLabors.ImageSharp.Processing;
+using ProductModels;
 
 namespace kayialp.Controllers
 {
@@ -95,412 +96,279 @@ namespace kayialp.Controllers
         #region  Product sections
 
         // ===================== CREATE PRODUCT (FULL) =====================
-
         [HttpGet("create-product")]
         public async Task<IActionResult> CreateProduct()
         {
-            var vm = new CreateProductFullViewModel
+            var trId = await _context.Langs.Where(l => l.LangCode == "tr").Select(l => l.Id).FirstAsync();
+
+            var categories = await (from c in _context.Categories
+                                    join t in _context.CategoriesTranslations on c.Id equals t.CategoriesId
+                                    where t.LangCodeId == trId
+                                    orderby c.Order, t.ValueText
+                                    select new { c.Id, Name = t.ValueText })
+                                   .AsNoTracking()
+                                   .ToListAsync();
+
+            ViewBag.Categories = new SelectList(categories, "Id", "Name");
+
+            var vm = new CreateProductViewModel
             {
-                Categories = await GetCategorySelectListAsync(),
-
-                // İki sabit CKEditor alanı (boş başlayabilir)
-                DescriptionTrHtml = string.Empty, // Açıklama
-                AboutTrHtml = string.Empty, // Ürün Hakkında
-
-                // Ürüne bağlı (detaydan bağımsız) özellik listesi – başlangıçta 1 satır
-                Features = new List<ProductFeatureInput>
-        {
-            new ProductFeatureInput { TextTr = string.Empty, Order = 0 }
-        }
+                Attributes = new List<ProductAttributeRow> { new ProductAttributeRow() }
             };
-
             return View("CreateProduct", vm);
         }
         [HttpPost("create-product")]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> CreateProduct(CreateProductFullViewModel model)
+        public async Task<IActionResult> CreateProduct(CreateProductViewModel model)
         {
-            // 1) Validasyon: görseller
-            if (model.Images is null || model.Images.Count == 0)
-                ModelState.AddModelError(nameof(model.Images), "En az bir görsel yükleyin.");
-
-            if (model.Images?.Count > 5)
-                ModelState.AddModelError(nameof(model.Images), "En fazla 5 görsel yükleyebilirsiniz.");
-
-            // 2) Validasyon: en az bir detay
-            if (string.IsNullOrWhiteSpace(model.DescriptionTrHtml) &&
-                string.IsNullOrWhiteSpace(model.AboutTrHtml))
-            {
-                ModelState.AddModelError(string.Empty, "En az bir detay (Açıklama veya Ürün Hakkında) doldurulmalı.");
-            }
+            // 0) Dosya/doğrulama
+            if (model.Images == null || model.Images.Count < 1 || model.Images.Count > 5)
+                ModelState.AddModelError(nameof(model.Images), "Lütfen 1 ile 5 arasında görsel yükleyin.");
 
             if (!ModelState.IsValid)
             {
-                model.Categories = await GetCategorySelectListAsync();
+                var trIdR = await _context.Langs.Where(l => l.LangCode == "tr").Select(l => l.Id).FirstAsync();
+                var categoriesR = await (from c in _context.Categories
+                                         join t in _context.CategoriesTranslations on c.Id equals t.CategoriesId
+                                         where t.LangCodeId == trIdR
+                                         orderby c.Order, t.ValueText
+                                         select new { c.Id, Name = t.ValueText }).ToListAsync();
+                ViewBag.Categories = new SelectList(categoriesR, "Id", "Name");
                 return View("CreateProduct", model);
             }
 
-            await using var tx = await _context.Database.BeginTransactionAsync();
-            try
+            // 1) Ürün ana kaydı
+            var product = new Products
             {
-                // 3) Görselleri kaydet
-                var imageUrls = await SaveImagesAsync(model.Images);
-                if (imageUrls.Count == 0)
-                {
-                    ModelState.AddModelError(nameof(model.Images), "Geçerli bir görsel yüklenemedi (uzantı/boyut).");
-                    model.Categories = await GetCategorySelectListAsync();
-                    return View("CreateProduct", model);
-                }
+                CategoryId = model.CategoryId,
+                Stock = model.Stock,
+                Order = model.Order
+            };
+            _context.Products.Add(product);
+            await _context.SaveChangesAsync();
 
-                var imageCsv = string.Join(",", imageUrls);
-                var imageCount = imageUrls.Count;
-
-                // 4) Ürün çekirdeği
-                var product = new Products
-                {
-                    CategoryId = model.CategoryId,
-                    Stock = model.Stock,
-                    Order = model.Order,
-                    ImageUrl = imageCsv
-                };
-                _context.Products.Add(product);
-                await _context.SaveChangesAsync(); // Id lazım
-
-                // 5) Diller
-                var langs = await GetCanonicalLangsAsync();
-                var tr = langs.FirstOrDefault(l => NormalizeLangKey(l.Code) == "tr");
-                if (tr.Equals(default((int Id, string Code))))
-                    throw new InvalidOperationException("TR language not found.");
-
-                // 6) KeyName & EN kanonik slug
-                string enName;
-                try
-                {
-                    enName = await _translator.TranslateAsync(model.NameTr, "TR", "EN");
-                    if (string.IsNullOrWhiteSpace(enName)) enName = model.NameTr;
-                }
-                catch { enName = model.NameTr; }
-
-                var keyName = TextCaseHelper.ToCamelCaseKey(enName);
-
-                var canonicalSlug = TextCaseHelper.ToLocalizedSlug(enName);
-                if (string.IsNullOrWhiteSpace(canonicalSlug))
-                    canonicalSlug = TextCaseHelper.ToLocalizedSlug(model.NameTr);
-                if (string.IsNullOrWhiteSpace(canonicalSlug))
-                    canonicalSlug = "product-" + Guid.NewGuid().ToString("N")[..8];
-
-                var productSlugProp = product.GetType().GetProperty("Slug");
-                if (productSlugProp != null && productSlugProp.CanWrite)
-                {
-                    productSlugProp.SetValue(product, canonicalSlug);
-                    await _context.SaveChangesAsync();
-                }
-
-                // 7) Ürün çevirileri (ad, slug, alt text otomatik)
-                foreach (var lang in langs)
-                {
-                    string valueText;
-                    if (lang.Id == tr.Id) valueText = model.NameTr;
-                    else
-                    {
-                        var target = NormalizeToDeepLCode(lang.Code);
-                        try { valueText = await _translator.TranslateAsync(model.NameTr, "TR", target); }
-                        catch { valueText = model.NameTr; }
-                    }
-
-                    var localizedSlug = TextCaseHelper.ToLocalizedSlug(valueText);
-                    if (string.IsNullOrWhiteSpace(localizedSlug)) localizedSlug = canonicalSlug;
-                    localizedSlug = await EnsureUniqueProductSlugAsync(lang.Id, localizedSlug);
-
-                    var imageAltsCsv = BuildAutoImageAltsCsv(valueText, imageCount, NormalizeLangKey(lang.Code));
-
-                    _context.ProductsTranslations.Add(new ProductsTranslations
-                    {
-                        ProductId = product.Id,
-                        LangCodeId = lang.Id,
-                        KeyName = keyName,
-                        ValueText = valueText,
-                        Slug = localizedSlug,
-                        ImageAlts = imageAltsCsv
-                    });
-                }
-                await _context.SaveChangesAsync();
-
-                // 8) Detaylar (Order: 0 = Açıklama, 1 = Ürün Hakkında)
-                int nextOrder = 0;
-                if (!string.IsNullOrWhiteSpace(model.DescriptionTrHtml))
-                    await AddDetailAsync(product.Id, model.DescriptionTrHtml!, nextOrder++, langs, tr.Id);
-
-                if (!string.IsNullOrWhiteSpace(model.AboutTrHtml))
-                    await AddDetailAsync(product.Id, model.AboutTrHtml!, nextOrder++, langs, tr.Id);
-
-                // 9) Feature'lar (ürün bazlı)
-                await AddFeaturesAsync(product.Id, model.Features ?? new List<ProductFeatureInput>(), langs, tr.Id);
-
-                // 10) Commit + Redirect
-                await tx.CommitAsync();
-                TempData["ProductMsg"] = "Ürün oluşturuldu.";
-                return RedirectToAction(nameof(Index));
-            }
-            catch (Exception ex)
+            // 2) Görsellerin sıra/kapak belirlenmesi
+            var files = model.Images;
+            var ordered = new List<IFormFile>();
+            if (!string.IsNullOrWhiteSpace(model.ImageOrder))
             {
-                await tx.RollbackAsync();
-                Console.Error.WriteLine("CreateProduct ERROR: " + ex);
-                TempData["ProductError"] = "Ürün oluşturulurken hata oluştu: " + ex.Message;
-                model.Categories = await GetCategorySelectListAsync();
-                return View("CreateProduct", model);
+                var idxs = model.ImageOrder.Split(',', StringSplitOptions.RemoveEmptyEntries)
+                                           .Select(s => int.TryParse(s, out var n) ? n : -1)
+                                           .Where(n => n >= 0 && n < files.Count)
+                                           .ToList();
+
+                foreach (var i in idxs) ordered.Add(files[i]);
+                foreach (var (f, i) in files.Select((f, i) => (f, i)))
+                    if (!idxs.Contains(i)) ordered.Add(f);
             }
-        }
-        // ========== UPDATE PRODUCT – GET ==========
-        [HttpGet("update-product/{id:int}")]
-        public async Task<IActionResult> UpdateProduct(int id)
-        {
-            // TR sabit
-            var langs = await GetCanonicalLangsAsync();
-            var tr = langs.FirstOrDefault(l => NormalizeLangKey(l.Code) == "tr");
-            if (tr == default) return NotFound("TR language not found.");
+            else
+            {
+                ordered = files.ToList();
+            }
 
-            var p = await _context.Products
-                .AsNoTracking()
-                .FirstOrDefaultAsync(x => x.Id == id);
-            if (p is null) return NotFound();
+            // coverIndex: varsa onu başa çek
+            if (model.CoverIndex.HasValue)
+            {
+                var ci = model.CoverIndex.Value;
+                if (ci >= 0 && ci < files.Count)
+                {
+                    var coverFile = files[ci];
+                    ordered = ordered.Where(f => f != coverFile).Prepend(coverFile).ToList();
+                }
+            }
 
-            var ptTr = await _context.ProductsTranslations
-                .AsNoTracking()
-                .FirstOrDefaultAsync(x => x.ProductId == id && x.LangCodeId == tr.Id);
+            var folder = Path.Combine(_env.WebRootPath, "uploads", "products", product.Id.ToString());
+            Directory.CreateDirectory(folder);
 
-            // Detaylar (Order 0= Açıklama, 1= Ürün Hakkında)
-            var details = await _context.ProductDetails
+            // Kapak
+            product.ImageUrl = await SaveWebpVariantAsync(ordered[0], folder, "cover", 1200, 1200);
+            // Güvenlik yaması: metod yanlış klasör döndürürse düzelt
+            if (!string.IsNullOrWhiteSpace(product.ImageUrl))
+                product.ImageUrl = product.ImageUrl.Replace("/uploads/categories/", "/uploads/products/");
+
+            // Galeri (kalanlar)
+            for (int i = 1; i < ordered.Count && i <= 4; i++)
+            {
+                var p = await SaveWebpVariantAsync(ordered[i], folder, $"gallery-{i}", 1200, 1200);
+                // (gerekirse p üzerinde aynı replace uygulanabilir)
+            }
+            await _context.SaveChangesAsync();
+
+            // 3) Diller (DB’den kanonikle – CreateCategory ile aynı mantık)
+            var langsRaw = await _context.Langs
                 .AsNoTracking()
-                .Where(d => d.ProductId == id)
+                .Where(l => !string.IsNullOrWhiteSpace(l.LangCode))
+                .Select(l => new { l.Id, l.LangCode })
                 .ToListAsync();
 
-            var det0 = details.FirstOrDefault(d => d.Order == 0);
-            var det1 = details.FirstOrDefault(d => d.Order == 1);
+            var langs = langsRaw
+                .GroupBy(x => NormalizeLangKey(x.LangCode))
+                .Select(g => new { Id = g.Min(x => x.Id), LangCode = g.OrderBy(x => x.Id).First().LangCode })
+                .ToList();
 
-            var det0Tr = det0 == null ? null :
-                await _context.ProductDetailsTranslations.AsNoTracking()
-                    .FirstOrDefaultAsync(t => t.ProductDetailsId == det0.Id && t.LangCodeId == tr.Id);
+            var tr = langs.FirstOrDefault(l => NormalizeLangKey(l.LangCode) == "tr");
+            if (tr is null) throw new InvalidOperationException("TR language not found in DB.");
 
-            var det1Tr = det1 == null ? null :
-                await _context.ProductDetailsTranslations.AsNoTracking()
-                    .FirstOrDefaultAsync(t => t.ProductDetailsId == det1.Id && t.LangCodeId == tr.Id);
+            // 4) Ürün başlık/slug/alt → TR’den
+            var nameTr = (model.NameTr ?? "").Trim();
+            if (string.IsNullOrWhiteSpace(nameTr))
+                throw new InvalidOperationException("Ürün adı (TR) zorunludur.");
 
-            // Özellikler (TR)
-            var feats = await (
-                from f in _context.ProductDetailsFeatures.AsNoTracking().Where(x => x.ProductId == id)
-                join ft in _context.ProductDetailsFeatureTranslations.AsNoTracking().Where(x => x.LangCodeId == tr.Id)
-                     on f.Id equals ft.ProductDetailsFeatureId
-                orderby f.Order, f.Id
-                select new FeatureRowVM
+            // KeyName için EN çeviri (CreateCategory ile tutarlılık)
+            var enName = await _translator.TranslateAsync(nameTr, "TR", "EN");
+            var keyName = TextCaseHelper.ToCamelCaseKey(enName);
+
+            // Slug baz (TR)
+            var slugBaseTr = TextCaseHelper.ToLocalizedSlug(nameTr);
+            if (string.IsNullOrWhiteSpace(slugBaseTr))
+                slugBaseTr = "urun";
+
+            // Görsel ALT metinleri için CSV (görsel sayısı kadar)
+            var altListTr = BuildAutoImageAltsList(ordered.Count, nameTr);
+            var altsCsvTr = string.Join(", ", altListTr);
+
+            // 5) İçerik blokları (tek ProductContent + 3 blok)
+            var content = new ProductContent { ProductId = product.Id, Order = 0, IsActive = true };
+            _context.ProductContents.Add(content);
+            await _context.SaveChangesAsync();
+
+            var blockShort = new ProductContentBlock { ProductContentId = content.Id, BlockType = "short_desc", Order = 0, IsActive = true };
+            var blockDesc = new ProductContentBlock { ProductContentId = content.Id, BlockType = "description", Order = 1, IsActive = true };
+            var blockAbout = new ProductContentBlock { ProductContentId = content.Id, BlockType = "about", Order = 2, IsActive = true };
+            _context.ProductContentBlocks.AddRange(blockShort, blockDesc, blockAbout);
+            await _context.SaveChangesAsync();
+
+            // === TR kayıtları ===
+            _context.ProductsTranslations.Add(new ProductsTranslations
+            {
+                ProductId = product.Id,
+                LangCodeId = tr.Id,
+                KeyName = keyName,
+                ValueText = nameTr,
+                Slug = await EnsureUniqueProductSlugAsync(tr.Id, slugBaseTr),
+                ImageAlts = altsCsvTr
+            });
+
+            _context.ProductContentBlockTranslations.AddRange(
+                new ProductContentBlockTranslation { BlockId = blockShort.Id, LangCodeId = tr.Id, Html = model.ShortDescriptionTr ?? "" },
+                new ProductContentBlockTranslation { BlockId = blockDesc.Id, LangCodeId = tr.Id, Html = model.DescriptionTr ?? "" },
+                new ProductContentBlockTranslation { BlockId = blockAbout.Id, LangCodeId = tr.Id, Html = model.AboutTr ?? "" }
+            );
+
+            // 6) Hedef dillere otomatik çeviri
+            foreach (var lang in langs.Where(l => l.Id != tr.Id))
+            {
+                var target = NormalizeToDeepLCode(lang.LangCode);
+
+                // Ad, slug
+                string nameT;
+                try { nameT = await _translator.TranslateAsync(nameTr, "TR", target); }
+                catch { nameT = nameTr; }
+
+                // Dil-özel slug (adı baz al)
+                var slugBaseT = TextCaseHelper.ToLocalizedSlug(nameT);
+                if (string.IsNullOrWhiteSpace(slugBaseT))
+                    slugBaseT = slugBaseTr;
+                var slugT = await EnsureUniqueProductSlugAsync(lang.Id, slugBaseT);
+
+                // Alt metinler (CSV eleman bazında çeviri)
+                var altListT = new List<string>(altListTr.Count);
+                foreach (var alt in altListTr)
                 {
-                    Id = f.Id,
-                    TextTr = ft.ValueText,
-                    Order = f.Order
-                }).ToListAsync();
+                    try { altListT.Add(await _translator.TranslateAsync(alt, "TR", target)); }
+                    catch { altListT.Add(alt); }
+                }
+                var altsCsvT = string.Join(", ", altListT);
 
-            var vm = new UpdateProductViewModel
-            {
-                Id = p.Id,
-                CategoryId = p.CategoryId,
-                NameTr = ptTr?.ValueText ?? "",
-                Stock = p.Stock,
-                Order = p.Order,
-                ExistingImages = SplitCsv(p.ImageUrl),
-                CoverImagePath = SplitCsv(p.ImageUrl).FirstOrDefault(),
-                DescriptionTrHtml = det0Tr?.ValueText,
-                AboutTrHtml = det1Tr?.ValueText,
-                Features = feats,
-                Categories = await GetCategorySelectListAsync()
-            };
+                // İçerik blokları
+                string shortT, descT, aboutT;
+                try { shortT = await _translator.TranslateAsync(model.ShortDescriptionTr ?? "", "TR", target); } catch { shortT = model.ShortDescriptionTr ?? ""; }
+                try { descT = await _translator.TranslateAsync(model.DescriptionTr ?? "", "TR", target); } catch { descT = model.DescriptionTr ?? ""; }
+                try { aboutT = await _translator.TranslateAsync(model.AboutTr ?? "", "TR", target); } catch { aboutT = model.AboutTr ?? ""; }
 
-            return View("UpdateProduct", vm);
-        }
+                _context.ProductsTranslations.Add(new ProductsTranslations
+                {
+                    ProductId = product.Id,
+                    LangCodeId = lang.Id,
+                    KeyName = keyName,          // KeyName sabit kalır (EN bazlı)
+                    ValueText = nameT,
+                    Slug = slugT,
+                    ImageAlts = altsCsvT
+                });
 
-        // ========== UPDATE PRODUCT – POST ==========
-        [HttpPost("update-product/{id:int}")]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> UpdateProduct(int id, UpdateProductViewModel model)
-        {
-            if (id != model.Id) return BadRequest();
-
-            var langs = await GetCanonicalLangsAsync();
-            var tr = langs.First(l => NormalizeLangKey(l.Code) == "tr");
-
-            var product = await _context.Products.FirstOrDefaultAsync(x => x.Id == id);
-            if (product is null) return NotFound();
-
-            // 1) Mevcut + silinecekleri çıkar
-            var existingAll = SplitCsv(product.ImageUrl);
-            var removeSet = new HashSet<string>(model.RemoveImagePaths ?? new(), StringComparer.OrdinalIgnoreCase);
-            var existingAfter = existingAll.Where(x => !removeSet.Contains(x)).ToList();
-
-            // 🔧 2) "NewImages" zorunluluğunu dinamik yönet
-            // Önce eski hatayı temizle (kalıntı olmasın)
-            ModelState.Remove(nameof(UpdateProductViewModel.NewImages));
-
-            // 🔧 3) FINALDE EN AZ 1 GÖRSEL KALSIN: 
-            bool anyNewPosted = (model.NewImages ?? new()).Any(f => f != null && f.Length > 0);
-            // if (existingAfter.Count == 0 && !anyNewPosted)
-            // {
-            //     ModelState.AddModelError(nameof(UpdateProductViewModel.NewImages),
-            //         "En az bir görsel zorunludur. Mevcutları sildiyseniz en az bir yeni görsel ekleyin.");
-            //     model.Categories = await GetCategorySelectListAsync();
-            //     model.ExistingImages = existingAfter;
-            //     return View("UpdateProduct", model);
-            // }
-
-            // 4) Kaç yeni dosyaya izin var? (toplam 5 sınırı)
-            var allowNew = Math.Max(0, 5 - existingAfter.Count);
-            var postedNew = (model.NewImages ?? new())
-                            .Where(f => f != null && f.Length > 0)
-                            .Take(allowNew)
-                            .ToList();
-
-            List<string> savedNew = new();
-            if (postedNew.Count > 0)
-            {
-                savedNew = await SaveImagesAsync(postedNew, ModelState);
+                _context.ProductContentBlockTranslations.AddRange(
+                    new ProductContentBlockTranslation { BlockId = blockShort.Id, LangCodeId = lang.Id, Html = shortT },
+                    new ProductContentBlockTranslation { BlockId = blockDesc.Id, LangCodeId = lang.Id, Html = descT },
+                    new ProductContentBlockTranslation { BlockId = blockAbout.Id, LangCodeId = lang.Id, Html = aboutT }
+                );
             }
-            await using var tx = await _context.Database.BeginTransactionAsync();
-            try
+
+            // 7) Özellikler (TR’den → tüm dillere çeviri)
+            if (model.Attributes != null && model.Attributes.Any(a =>
+                !string.IsNullOrWhiteSpace(a.NameTr) || !string.IsNullOrWhiteSpace(a.ValueTr)))
             {
-                // 5) Yeni dosyaları kaydet (varsa)
-                if (postedNew.Count > 0)
-                    savedNew = await SaveImagesAsync(postedNew, ModelState);
-
-                // 6) Final liste
-                var finalImages = existingAfter.Concat(savedNew).ToList();
-
-                // Emniyet: herhangi bir nedenle boş kaldıysa yakala
-                if (finalImages.Count == 0)
-                    throw new InvalidOperationException("En az bir görsel kalmalı.");
-
-                // 7) Kapak seçili ama final listede yoksa, ilkini kapak say
-                if (string.IsNullOrWhiteSpace(model.CoverImagePath) ||
-                    !finalImages.Contains(model.CoverImagePath, StringComparer.OrdinalIgnoreCase))
-                {
-                    model.CoverImagePath = finalImages[0];
-                }
-                else
-                {
-                    // Kapak başa alınsın
-                    finalImages.Remove(model.CoverImagePath);
-                    finalImages.Insert(0, model.CoverImagePath);
-                }
-
-                // Ürün alanları
-                product.CategoryId = model.CategoryId;
-                product.Stock = model.Stock;
-                product.Order = model.Order;
-                product.ImageUrl = string.Join(",", finalImages);
-
+                var group = new ProductAttributeGroup { ProductId = product.Id, Order = 0, IsActive = true };
+                _context.ProductAttributeGroups.Add(group);
                 await _context.SaveChangesAsync();
 
-                // Ürün TR çevirisi
-                var ptTr = await _context.ProductsTranslations
-                    .FirstOrDefaultAsync(x => x.ProductId == product.Id && x.LangCodeId == tr.Id);
-
-                if (ptTr == null)
+                foreach (var (row, idx) in model.Attributes.Select((r, i) => (r, i)))
                 {
-                    ptTr = new ProductsTranslations
+                    if (string.IsNullOrWhiteSpace(row.NameTr) && string.IsNullOrWhiteSpace(row.ValueTr)) continue;
+
+                    var key = TextCaseHelper.ToCamelCaseKey(row.NameTr ?? $"attr{idx + 1}");
+                    var attr = new ProductAttribute
                     {
-                        ProductId = product.Id,
-                        LangCodeId = tr.Id,
-                        KeyName = ptTr?.KeyName ?? "product" + product.Id // yoksa basit default
+                        GroupId = group.Id,
+                        KeyName = key,
+                        Order = row.Order
                     };
-                    _context.ProductsTranslations.Add(ptTr);
-                }
-                ptTr.ValueText = model.NameTr;
+                    _context.ProductAttributes.Add(attr);
+                    await _context.SaveChangesAsync();
 
-                // Slug (TR)
-                if (model.RegenerateEmptySlugs || string.IsNullOrWhiteSpace(ptTr.Slug))
-                {
-                    var trSlug = TextCaseHelper.ToLocalizedSlug(model.NameTr);
-                    ptTr.Slug = await EnsureUniqueProductSlugAsync(tr.Id, trSlug, ptTr.Id);
-                }
+                    // TR
+                    _context.ProductAttributeTranslations.Add(new ProductAttributeTranslation
+                    {
+                        AttributeId = attr.Id,
+                        LangCodeId = tr.Id,
+                        Name = row.NameTr ?? "",
+                        Value = row.ValueTr ?? ""
+                    });
 
-                // ImageAlts (TR)
-                ptTr.ImageAlts = BuildAutoImageAltsCsv(ptTr.ValueText, finalImages.Count, "tr");
-                await _context.SaveChangesAsync();
-
-                // Diğer diller (opsiyonel yeniden üret)
-                if (model.RegenerateOtherLangs)
-                {
+                    // Hedef diller
                     foreach (var lang in langs.Where(l => l.Id != tr.Id))
                     {
-                        var pt = await _context.ProductsTranslations
-                            .FirstOrDefaultAsync(x => x.ProductId == product.Id && x.LangCodeId == lang.Id);
+                        var target = NormalizeToDeepLCode(lang.LangCode);
+                        string nameT, valueT;
+                        try { nameT = await _translator.TranslateAsync(row.NameTr ?? "", "TR", target); } catch { nameT = row.NameTr ?? ""; }
+                        try { valueT = await _translator.TranslateAsync(row.ValueTr ?? "", "TR", target); } catch { valueT = row.ValueTr ?? ""; }
 
-                        if (pt == null)
+                        _context.ProductAttributeTranslations.Add(new ProductAttributeTranslation
                         {
-                            pt = new ProductsTranslations
-                            {
-                                ProductId = product.Id,
-                                LangCodeId = lang.Id,
-                                KeyName = ptTr.KeyName // ürün anahtarı aynı
-                            };
-                            _context.ProductsTranslations.Add(pt);
-                        }
-
-                        string valueText = model.NameTr;
-                        try
-                        {
-                            var t = await _translator.TranslateAsync(model.NameTr, "TR", NormalizeToDeepLCode(lang.Code));
-                            if (!string.IsNullOrWhiteSpace(t)) valueText = t;
-                        }
-                        catch { /* TR fallback */ }
-
-                        pt.ValueText = valueText;
-
-                        var slug = TextCaseHelper.ToLocalizedSlug(valueText);
-                        if (string.IsNullOrWhiteSpace(slug))
-                            slug = ptTr.Slug; // en azından bir şey olsun
-                        pt.Slug = await EnsureUniqueProductSlugAsync(lang.Id, slug, pt.Id);
-
-                        pt.ImageAlts = BuildAutoImageAltsCsv(valueText, finalImages.Count, NormalizeLangKey(lang.Code));
+                            AttributeId = attr.Id,
+                            LangCodeId = lang.Id,
+                            Name = nameT,
+                            Value = valueT
+                        });
                     }
-                    await _context.SaveChangesAsync();
                 }
-                else
-                {
-                    // Yalnızca alts güncelle (resim sayısı değiştiyse faydalı)
-                    var others = await _context.ProductsTranslations
-                        .Where(x => x.ProductId == product.Id && x.LangCodeId != tr.Id)
-                        .ToListAsync();
-
-                    foreach (var pt in others)
-                    {
-                        // Dil kodunu bulalım
-                        var code = langs.FirstOrDefault(l => l.Id == pt.LangCodeId).Code;
-                        var lang2 = NormalizeLangKey(code);
-                        pt.ImageAlts = BuildAutoImageAltsCsv(pt.ValueText, finalImages.Count, lang2);
-                    }
-                    await _context.SaveChangesAsync();
-                }
-
-                // Detaylar (0/1)
-                await UpsertDetailHtmlAsync(product.Id, order: 0, trHtml: model.DescriptionTrHtml ?? "", langs, tr.Id, model.RegenerateOtherLangs);
-                await UpsertDetailHtmlAsync(product.Id, order: 1, trHtml: model.AboutTrHtml ?? "", langs, tr.Id, model.RegenerateOtherLangs);
-
-                // Özellikler
-                var postedFeatures = RecoverFeaturesFromForm(model.Features); // binder güvenlik ağı
-                await UpsertFeaturesAsync(product.Id, postedFeatures, langs, tr.Id, model.RegenerateOtherLangs);
-
-                await tx.CommitAsync();
-                TempData["ProductMsg"] = "Ürün güncellendi.";
-                return RedirectToAction(nameof(Index));
             }
-            catch (Exception ex)
-            {
-                await tx.RollbackAsync();
-                // (opsiyonel: savedNew dosyalarını silme bloğu sizde zaten var)
-                TempData["ProductError"] = "Ürün güncellenemedi: " + ex.Message;
-                model.Categories = await GetCategorySelectListAsync();
-                model.ExistingImages = existingAfter; // kullanıcıya kalanları göster
-                return View("UpdateProduct", model);
-            }
+
+            await _context.SaveChangesAsync();
+            TempData["ProductMsg"] = "Ürün başarıyla eklendi ve tüm dillere çevrildi.";
+            return RedirectToAction(nameof(Index));
         }
+
+        // === Yardımcılar ===
+
+        // Görsel sayısı kadar ALT liste üretir: [name, "name - image 2", ...]
+        private static List<string> BuildAutoImageAltsList(int count, string productName)
+        {
+            var list = new List<string>(Math.Max(1, count));
+            for (int i = 0; i < Math.Max(1, count); i++)
+                list.Add(i == 0 ? productName : $"{productName} - image {i + 1}");
+            return list;
+        }
+
 
         #endregion
 
@@ -599,7 +467,7 @@ namespace kayialp.Controllers
             }
         }
 
-        // GET: /admin/update-category/{id}
+
         // GET: /admin/update-category/{id}
         [HttpGet("update-category/{id:int}")]
         public async Task<IActionResult> UpdateCategory(int id)
@@ -1040,164 +908,6 @@ namespace kayialp.Controllers
             return string.Join(",", list);
         }
 
-        // Görsel kaydetme (max 5), relative path listesi döner
-
-
-        // TR HTML → düz metin
-        private static string StripHtml(string? html)
-        {
-            if (string.IsNullOrWhiteSpace(html)) return string.Empty;
-            return Regex.Replace(html, "<.*?>", string.Empty)
-                        .Replace("&nbsp;", " ")
-                        .Trim();
-        }
-
-        // Düz metni basit <p> bloklarına sar
-        private static string PlainToParagraphs(string? text)
-        {
-            if (string.IsNullOrWhiteSpace(text)) return string.Empty;
-            var parts = text.Replace("\r\n", "\n").Split('\n');
-            var sb = new System.Text.StringBuilder();
-            foreach (var p in parts)
-            {
-                var t = p.Trim();
-                if (t.Length == 0) continue;
-                sb.Append("<p>").Append(WebUtility.HtmlEncode(t)).Append("</p>");
-            }
-            return sb.ToString();
-        }
-
-        // Detay ekle (Order = 0/1)
-        private async Task AddDetailAsync(
-            int productId,
-            string trHtml,
-            int order,
-            List<(int Id, string Code)> langs,
-            int trId)
-        {
-            var pd = new ProductDetails
-            {
-                ProductId = productId,
-                Order = order
-            };
-            _context.ProductDetails.Add(pd);
-            await _context.SaveChangesAsync(); // pd.Id
-
-            // TR HTML → aynen kaydet
-            _context.ProductDetailsTranslations.Add(new ProductDetailsTranslations
-            {
-                ProductDetailsId = pd.Id,
-                LangCodeId = trId,
-                ValueText = trHtml ?? string.Empty
-            });
-
-            // Diğer diller: TR HTML -> strip -> çeviri -> <p> blokları
-            var trPlain = StripHtml(trHtml);
-
-            foreach (var lang in langs.Where(l => l.Id != trId))
-            {
-                string translated = trPlain;
-                var target = NormalizeToDeepLCode(lang.Code);
-                try
-                {
-                    translated = await _translator.TranslateAsync(trPlain, "TR", target);
-                    if (string.IsNullOrWhiteSpace(translated)) translated = trPlain;
-                }
-                catch { translated = trPlain; }
-
-                var htmlParagraphs = PlainToParagraphs(translated);
-
-                _context.ProductDetailsTranslations.Add(new ProductDetailsTranslations
-                {
-                    ProductDetailsId = pd.Id,
-                    LangCodeId = lang.Id,
-                    ValueText = string.IsNullOrWhiteSpace(htmlParagraphs)
-                                    ? System.Net.WebUtility.HtmlEncode(translated)
-                                    : htmlParagraphs
-                });
-            }
-
-            await _context.SaveChangesAsync();
-        }
-
-        // Ürüne bağlı feature’ları ekle
-        private async Task AddFeaturesAsync(
-        int productId,
-        IEnumerable<ProductFeatureInput> features,
-        List<(int Id, string Code)> langs,
-        int trId)
-        {
-            // 1) Gelenleri temizle + sıralamayı belirle
-            var clean = (features ?? Enumerable.Empty<ProductFeatureInput>())
-                .Where(f => f != null && !string.IsNullOrWhiteSpace(f.TextTr))
-                .Select((f, i) => new
-                {
-                    TextTr = f.TextTr.Trim(),
-                    Order = f.Order > 0 ? f.Order : i
-                })
-                .ToList();
-
-            if (clean.Count == 0) return;
-
-            // 2) Her özellik için ProductDetailsFeatures kaydı oluştur (ProductId + Order)
-            var featureRows = clean.Select(c => new ProductDetailsFeatures
-            {
-                ProductId = productId,
-                Order = c.Order
-            }).ToList();
-
-            _context.ProductDetailsFeatures.AddRange(featureRows);
-            await _context.SaveChangesAsync(); // <-- Id'ler doldu
-
-            // 3) Çeviri kayıtlarını toplu hazırla (TR + diğer diller)
-            var transRows = new List<ProductDetailsFeatureTranslations>(clean.Count * langs.Count);
-
-            for (int idx = 0; idx < clean.Count; idx++)
-            {
-                var baseTextTr = clean[idx].TextTr;
-                var fRow = featureRows[idx];
-
-                // TR kaydı
-                transRows.Add(new ProductDetailsFeatureTranslations
-                {
-                    ProductDetailsFeatureId = fRow.Id,
-                    LangCodeId = trId,
-                    ValueText = baseTextTr
-                });
-
-                // Diğer diller
-                foreach (var lang in langs)
-                {
-                    if (lang.Id == trId) continue;
-
-                    string text = baseTextTr;
-                    try
-                    {
-                        var target = NormalizeToDeepLCode(lang.Code);
-                        var t = await _translator.TranslateAsync(baseTextTr, "TR", target);
-                        if (!string.IsNullOrWhiteSpace(t)) text = t;
-                    }
-                    catch
-                    {
-                        // çeviri hatasında TR'ye düş
-                        text = baseTextTr;
-                    }
-
-                    transRows.Add(new ProductDetailsFeatureTranslations
-                    {
-                        ProductDetailsFeatureId = fRow.Id,
-                        LangCodeId = lang.Id,
-                        ValueText = text
-                    });
-                }
-            }
-
-            // 4) Toplu insert
-            _context.ProductDetailsFeatureTranslations.AddRange(transRows);
-            await _context.SaveChangesAsync();
-        }
-
-
 
         private static readonly HashSet<string> _allowedImageExts =
             new(StringComparer.OrdinalIgnoreCase) { ".jpg", ".jpeg", ".png", ".webp", ".jfif" };
@@ -1205,64 +915,6 @@ namespace kayialp.Controllers
         // 10 MB
         private const long MAX_IMAGE_BYTES = 10 * 1024 * 1024;
 
-        // Çoklu görsel kaydeder, göreli yolları döner (örn. /uploads/products/2025/09/xxx.jpg)
-        private async Task<List<string>> SaveImagesAsync(
-    IEnumerable<IFormFile> files,
-    ModelStateDictionary? modelState = null)
-        {
-            // 🔧 Fallback: Binder tek dosya bind ederse Form.Files'tan tümünü al
-            var list = files?.Where(f => f != null && f.Length > 0).ToList() ?? new List<IFormFile>();
-            if (list.Count == 0 && Request?.Form?.Files?.Count > 0)
-                list = Request.Form.Files.Where(f => f != null && f.Length > 0).ToList();
-
-            // (İsterseniz debug)
-            Console.WriteLine($"[Upload] Posted files: model={(files == null ? 0 : files.Count())}, form={Request?.Form?.Files?.Count ?? 0}");
-
-            var saved = new List<string>();
-            if (list.Count == 0) return saved;
-
-            var webRoot = _env.WebRootPath;
-            if (string.IsNullOrWhiteSpace(webRoot))
-                webRoot = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
-
-            var now = DateTime.UtcNow;
-            var relFolder = $"/uploads/products/{now:yyyy}/{now:MM}";
-            var absFolder = Path.Combine(webRoot, relFolder.TrimStart('/').Replace("/", Path.DirectorySeparatorChar.ToString()));
-            Directory.CreateDirectory(absFolder);
-
-            foreach (var f in list)
-            {
-                if (f.Length > MAX_IMAGE_BYTES)
-                {
-                    modelState?.AddModelError(nameof(CreateProductFullViewModel.Images),
-                        $"{f.FileName} 10 MB sınırını aşıyor.");
-                    continue;
-                }
-
-                var ext = Path.GetExtension(f.FileName);
-                if (string.IsNullOrWhiteSpace(ext) || !_allowedImageExts.Contains(ext))
-                {
-                    modelState?.AddModelError(nameof(CreateProductFullViewModel.Images),
-                        $"{f.FileName} desteklenmeyen uzantı. İzin verilen: .jpg, .jpeg, .png, .webp, .jfif");
-                    continue;
-                }
-
-                var safeBase = SlugifyFileBase(Path.GetFileNameWithoutExtension(f.FileName));
-                if (string.IsNullOrWhiteSpace(safeBase)) safeBase = "img";
-                var unique = $"{now:yyyyMMddHHmmssfff}_{Guid.NewGuid():N}".Substring(0, 22);
-                var fileName = $"{safeBase}_{unique}{ext.ToLowerInvariant()}";
-
-                var absPath = Path.Combine(absFolder, fileName);
-                using (var stream = System.IO.File.Create(absPath))
-                    await f.CopyToAsync(stream);
-
-                var relPath = $"{relFolder}/{fileName}".Replace("\\", "/");
-                saved.Add(relPath);
-            }
-
-            Console.WriteLine($"[Upload] Saved images: {saved.Count}");
-            return saved;
-        }
 
         // Dosya adı gövdesini sadeleştirir (ASCII + tire)
         private static string SlugifyFileBase(string? name)
@@ -1301,219 +953,11 @@ namespace kayialp.Controllers
             var arr = csv.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
             return arr.Length > 0 ? arr[0] : "";
         }
-
         private static int GetImageCount(string? csv)
         {
             if (string.IsNullOrWhiteSpace(csv)) return 0;
             return csv.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).Length;
         }
-
-
-
-
-
-        private List<FeatureRowVM> RecoverFeaturesFromForm(List<FeatureRowVM> features)
-        {
-            var list = features?.ToList() ?? new List<FeatureRowVM>();
-            if (Request.Form["Features.Index"].Count > 0)
-            {
-                var rec = new List<FeatureRowVM>();
-                foreach (var idx in Request.Form["Features.Index"])
-                {
-                    var idStr = Request.Form[$"Features[{idx}].Id"].FirstOrDefault() ?? "0";
-                    var txt = Request.Form[$"Features[{idx}].TextTr"].FirstOrDefault();
-                    var ordStr = Request.Form[$"Features[{idx}].Order"].FirstOrDefault() ?? "0";
-                    var delStr = Request.Form[$"Features[{idx}].Delete"].FirstOrDefault();
-
-                    if (string.IsNullOrWhiteSpace(txt) && string.IsNullOrWhiteSpace(delStr)) continue;
-
-                    rec.Add(new FeatureRowVM
-                    {
-                        Id = int.TryParse(idStr, out var idv) ? idv : 0,
-                        TextTr = txt?.Trim() ?? "",
-                        Order = int.TryParse(ordStr, out var ov) ? ov : 0,
-                        Delete = string.Equals(delStr, "true", StringComparison.OrdinalIgnoreCase) ||
-                                 string.Equals(delStr, "on", StringComparison.OrdinalIgnoreCase)
-                    });
-                }
-                if (rec.Count > 0) list = rec;
-            }
-            return list;
-        }
-
-        // Detay upsert (TR + opsiyon diğer diller)
-        private async Task UpsertDetailHtmlAsync(
-            int productId,
-            int order,
-            string trHtml,
-            List<(int Id, string Code)> langs,
-            int trId,
-            bool regenOthers)
-        {
-            // ProductDetails
-            var d = await _context.ProductDetails.FirstOrDefaultAsync(x => x.ProductId == productId && x.Order == order);
-            if (d == null)
-            {
-                d = new ProductDetails { ProductId = productId, Order = order };
-                _context.ProductDetails.Add(d);
-                await _context.SaveChangesAsync();
-            }
-
-            // TR
-            var dtr = await _context.ProductDetailsTranslations
-                .FirstOrDefaultAsync(x => x.ProductDetailsId == d.Id && x.LangCodeId == trId);
-            if (dtr == null)
-                _context.ProductDetailsTranslations.Add(new ProductDetailsTranslations { ProductDetailsId = d.Id, LangCodeId = trId, ValueText = trHtml ?? "" });
-            else
-                dtr.ValueText = trHtml ?? "";
-
-            await _context.SaveChangesAsync();
-
-            if (!regenOthers) return;
-
-            var trPlain = StripHtml(trHtml ?? "");
-            foreach (var lang in langs.Where(l => l.Id != trId))
-            {
-                var row = await _context.ProductDetailsTranslations
-                    .FirstOrDefaultAsync(x => x.ProductDetailsId == d.Id && x.LangCodeId == lang.Id);
-
-                string text = trPlain;
-                try
-                {
-                    var t = await _translator.TranslateAsync(trPlain, "TR", NormalizeToDeepLCode(lang.Code));
-                    if (!string.IsNullOrWhiteSpace(t)) text = t;
-                }
-                catch { /* tr fallback */ }
-
-                if (row == null)
-                    _context.ProductDetailsTranslations.Add(new ProductDetailsTranslations { ProductDetailsId = d.Id, LangCodeId = lang.Id, ValueText = PlainToParagraphs(text) });
-                else
-                    row.ValueText = PlainToParagraphs(text);
-            }
-            await _context.SaveChangesAsync();
-        }
-
-        // Özellik upsert/sil (TR + opsiyon diğer diller)
-        private async Task UpsertFeaturesAsync(
-            int productId,
-            List<FeatureRowVM> features,
-            List<(int Id, string Code)> langs,
-            int trId,
-            bool regenOthers)
-        {
-            // Mevcut feature id’leri
-            var existingIds = await _context.ProductDetailsFeatures
-                .Where(x => x.ProductId == productId)
-                .Select(x => x.Id)
-                .ToListAsync();
-
-            // Update / Delete / Insert
-            foreach (var f in features)
-            {
-                if (f.Id > 0)
-                {
-                    // Mevcut
-                    var row = await _context.ProductDetailsFeatures.FirstOrDefaultAsync(x => x.Id == f.Id && x.ProductId == productId);
-                    if (row == null) continue;
-
-                    if (f.Delete)
-                    {
-                        // çeviriler silinsin
-                        var trs = _context.ProductDetailsFeatureTranslations.Where(t => t.ProductDetailsFeatureId == row.Id);
-                        _context.ProductDetailsFeatureTranslations.RemoveRange(trs);
-                        _context.ProductDetailsFeatures.Remove(row);
-                        await _context.SaveChangesAsync();
-                        continue;
-                    }
-
-                    // update order
-                    row.Order = f.Order;
-
-                    // TR çeviri
-                    var trRow = await _context.ProductDetailsFeatureTranslations
-                        .FirstOrDefaultAsync(t => t.ProductDetailsFeatureId == row.Id && t.LangCodeId == trId);
-                    if (trRow == null)
-                        _context.ProductDetailsFeatureTranslations.Add(new ProductDetailsFeatureTranslations { ProductDetailsFeatureId = row.Id, LangCodeId = trId, ValueText = f.TextTr });
-                    else
-                        trRow.ValueText = f.TextTr;
-
-                    await _context.SaveChangesAsync();
-
-                    if (regenOthers)
-                    {
-                        foreach (var lang in langs.Where(l => l.Id != trId))
-                        {
-                            var r = await _context.ProductDetailsFeatureTranslations
-                                .FirstOrDefaultAsync(t => t.ProductDetailsFeatureId == row.Id && t.LangCodeId == lang.Id);
-
-                            string val = f.TextTr;
-                            try
-                            {
-                                var t = await _translator.TranslateAsync(f.TextTr, "TR", NormalizeToDeepLCode(lang.Code));
-                                if (!string.IsNullOrWhiteSpace(t)) val = t;
-                            }
-                            catch { /* tr fallback */ }
-
-                            if (r == null)
-                                _context.ProductDetailsFeatureTranslations.Add(new ProductDetailsFeatureTranslations { ProductDetailsFeatureId = row.Id, LangCodeId = lang.Id, ValueText = val });
-                            else
-                                r.ValueText = val;
-                        }
-                        await _context.SaveChangesAsync();
-                    }
-                }
-                else
-                {
-                    // Yeni
-                    if (f.Delete || string.IsNullOrWhiteSpace(f.TextTr)) continue;
-
-                    var nf = new ProductDetailsFeatures { ProductId = productId, Order = f.Order };
-                    _context.ProductDetailsFeatures.Add(nf);
-                    await _context.SaveChangesAsync();
-
-                    // TR
-                    _context.ProductDetailsFeatureTranslations.Add(new ProductDetailsFeatureTranslations
-                    {
-                        ProductDetailsFeatureId = nf.Id,
-                        LangCodeId = trId,
-                        ValueText = f.TextTr
-                    });
-
-                    // Diğer diller
-                    foreach (var lang in langs.Where(l => l.Id != trId))
-                    {
-                        string val = f.TextTr;
-                        try
-                        {
-                            var t = await _translator.TranslateAsync(f.TextTr, "TR", NormalizeToDeepLCode(lang.Code));
-                            if (!string.IsNullOrWhiteSpace(t)) val = t;
-                        }
-                        catch { /* tr fallback */ }
-
-                        _context.ProductDetailsFeatureTranslations.Add(new ProductDetailsFeatureTranslations
-                        {
-                            ProductDetailsFeatureId = nf.Id,
-                            LangCodeId = lang.Id,
-                            ValueText = val
-                        });
-                    }
-                    await _context.SaveChangesAsync();
-                }
-            }
-        }
-
-        // --- NEW: paths ---
-        private string GetCategoryFolder(int categoryId)
-            => Path.Combine(_env.WebRootPath, "uploads", "categories", categoryId.ToString());
-
-        private static readonly string[] AllowedImageContentTypes = new[]
-        {
-        "image/jpeg", "image/png", "image/webp"
-    };
-
-        private bool IsAllowedImage(IFormFile? file)
-            => file != null && AllowedImageContentTypes.Contains(file.ContentType) && file.Length > 0 && file.Length <= 10 * 1024 * 1024;
-
         // --- NEW: central crop + exact size + webp save ---
         private async Task<string> SaveWebpVariantAsync(IFormFile file, string folder, string fileNameNoExt, int width, int height)
         {
@@ -1554,6 +998,7 @@ namespace kayialp.Controllers
             }
         }
         #endregion
+
     }
 }
 

@@ -21,6 +21,178 @@ namespace kayialp.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
+            modelBuilder.Entity("ProductModels.ProductAttribute", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("GroupId")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("KeyName")
+                        .IsRequired()
+                        .HasMaxLength(80)
+                        .HasColumnType("nvarchar(80)");
+
+                    b.Property<int>("Order")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("GroupId");
+
+                    b.ToTable("ProductAttributes");
+                });
+
+            modelBuilder.Entity("ProductModels.ProductAttributeGroup", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<int>("Order")
+                        .HasColumnType("int");
+
+                    b.Property<int>("ProductId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProductId");
+
+                    b.ToTable("ProductAttributeGroups");
+                });
+
+            modelBuilder.Entity("ProductModels.ProductAttributeTranslation", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("AttributeId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("LangCodeId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(120)
+                        .HasColumnType("nvarchar(120)");
+
+                    b.Property<string>("Value")
+                        .IsRequired()
+                        .HasMaxLength(400)
+                        .HasColumnType("nvarchar(400)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("LangCodeId");
+
+                    b.HasIndex("AttributeId", "LangCodeId")
+                        .IsUnique();
+
+                    b.ToTable("ProductAttributeTranslations");
+                });
+
+            modelBuilder.Entity("ProductModels.ProductContent", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<int>("Order")
+                        .HasColumnType("int");
+
+                    b.Property<int>("ProductId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProductId");
+
+                    b.ToTable("ProductContents");
+                });
+
+            modelBuilder.Entity("ProductModels.ProductContentBlock", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("BlockType")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<int>("Order")
+                        .HasColumnType("int");
+
+                    b.Property<int>("ProductContentId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProductContentId");
+
+                    b.ToTable("ProductContentBlocks");
+                });
+
+            modelBuilder.Entity("ProductModels.ProductContentBlockTranslation", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("BlockId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Html")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("LangCodeId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Title")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("LangCodeId");
+
+                    b.HasIndex("BlockId", "LangCodeId")
+                        .IsUnique();
+
+                    b.ToTable("ProductContentBlockTranslations");
+                });
+
             modelBuilder.Entity("kayialp.Models.Categories", b =>
                 {
                     b.Property<int>("Id")
@@ -200,102 +372,6 @@ namespace kayialp.Migrations
                     b.ToTable("Pages");
                 });
 
-            modelBuilder.Entity("kayialp.Models.ProductDetails", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("Order")
-                        .HasColumnType("int");
-
-                    b.Property<int>("ProductId")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ProductId");
-
-                    b.ToTable("ProductDetails");
-                });
-
-            modelBuilder.Entity("kayialp.Models.ProductDetailsFeatureTranslations", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("LangCodeId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("ProductDetailsFeatureId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("ValueText")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("LangCodeId");
-
-                    b.HasIndex("ProductDetailsFeatureId");
-
-                    b.ToTable("ProductDetailsFeatureTranslations");
-                });
-
-            modelBuilder.Entity("kayialp.Models.ProductDetailsFeatures", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("Order")
-                        .HasColumnType("int");
-
-                    b.Property<int>("ProductId")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ProductId");
-
-                    b.ToTable("ProductDetailsFeatures");
-                });
-
-            modelBuilder.Entity("kayialp.Models.ProductDetailsTranslations", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("LangCodeId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("ProductDetailsId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("ValueText")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("LangCodeId");
-
-                    b.HasIndex("ProductDetailsId");
-
-                    b.ToTable("ProductDetailsTranslations");
-                });
-
             modelBuilder.Entity("kayialp.Models.Products", b =>
                 {
                     b.Property<int>("Id")
@@ -446,6 +522,88 @@ namespace kayialp.Migrations
                     b.ToTable("Users");
                 });
 
+            modelBuilder.Entity("ProductModels.ProductAttribute", b =>
+                {
+                    b.HasOne("ProductModels.ProductAttributeGroup", "Group")
+                        .WithMany("Attributes")
+                        .HasForeignKey("GroupId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Group");
+                });
+
+            modelBuilder.Entity("ProductModels.ProductAttributeGroup", b =>
+                {
+                    b.HasOne("kayialp.Models.Products", "Product")
+                        .WithMany()
+                        .HasForeignKey("ProductId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Product");
+                });
+
+            modelBuilder.Entity("ProductModels.ProductAttributeTranslation", b =>
+                {
+                    b.HasOne("ProductModels.ProductAttribute", "Attribute")
+                        .WithMany("Translations")
+                        .HasForeignKey("AttributeId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("kayialp.Models.Langs", "LangCode")
+                        .WithMany()
+                        .HasForeignKey("LangCodeId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Attribute");
+
+                    b.Navigation("LangCode");
+                });
+
+            modelBuilder.Entity("ProductModels.ProductContent", b =>
+                {
+                    b.HasOne("kayialp.Models.Products", "Product")
+                        .WithMany()
+                        .HasForeignKey("ProductId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Product");
+                });
+
+            modelBuilder.Entity("ProductModels.ProductContentBlock", b =>
+                {
+                    b.HasOne("ProductModels.ProductContent", "ProductContent")
+                        .WithMany("Blocks")
+                        .HasForeignKey("ProductContentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("ProductContent");
+                });
+
+            modelBuilder.Entity("ProductModels.ProductContentBlockTranslation", b =>
+                {
+                    b.HasOne("ProductModels.ProductContentBlock", "Block")
+                        .WithMany("Translations")
+                        .HasForeignKey("BlockId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("kayialp.Models.Langs", "LangCode")
+                        .WithMany()
+                        .HasForeignKey("LangCodeId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Block");
+
+                    b.Navigation("LangCode");
+                });
+
             modelBuilder.Entity("kayialp.Models.CategoriesTranslations", b =>
                 {
                     b.HasOne("kayialp.Models.Categories", "category")
@@ -503,66 +661,6 @@ namespace kayialp.Migrations
                     b.Navigation("page");
                 });
 
-            modelBuilder.Entity("kayialp.Models.ProductDetails", b =>
-                {
-                    b.HasOne("kayialp.Models.Products", "Product")
-                        .WithMany()
-                        .HasForeignKey("ProductId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Product");
-                });
-
-            modelBuilder.Entity("kayialp.Models.ProductDetailsFeatureTranslations", b =>
-                {
-                    b.HasOne("kayialp.Models.Langs", "LangCode")
-                        .WithMany()
-                        .HasForeignKey("LangCodeId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("kayialp.Models.ProductDetailsFeatures", "productDetailsFeature")
-                        .WithMany()
-                        .HasForeignKey("ProductDetailsFeatureId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("LangCode");
-
-                    b.Navigation("productDetailsFeature");
-                });
-
-            modelBuilder.Entity("kayialp.Models.ProductDetailsFeatures", b =>
-                {
-                    b.HasOne("kayialp.Models.Products", "Product")
-                        .WithMany()
-                        .HasForeignKey("ProductId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Product");
-                });
-
-            modelBuilder.Entity("kayialp.Models.ProductDetailsTranslations", b =>
-                {
-                    b.HasOne("kayialp.Models.Langs", "LangCode")
-                        .WithMany()
-                        .HasForeignKey("LangCodeId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("kayialp.Models.ProductDetails", "productDetail")
-                        .WithMany()
-                        .HasForeignKey("ProductDetailsId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("LangCode");
-
-                    b.Navigation("productDetail");
-                });
-
             modelBuilder.Entity("kayialp.Models.Products", b =>
                 {
                     b.HasOne("kayialp.Models.Categories", "Category")
@@ -610,6 +708,26 @@ namespace kayialp.Migrations
                     b.Navigation("LangCode");
 
                     b.Navigation("slider");
+                });
+
+            modelBuilder.Entity("ProductModels.ProductAttribute", b =>
+                {
+                    b.Navigation("Translations");
+                });
+
+            modelBuilder.Entity("ProductModels.ProductAttributeGroup", b =>
+                {
+                    b.Navigation("Attributes");
+                });
+
+            modelBuilder.Entity("ProductModels.ProductContent", b =>
+                {
+                    b.Navigation("Blocks");
+                });
+
+            modelBuilder.Entity("ProductModels.ProductContentBlock", b =>
+                {
+                    b.Navigation("Translations");
                 });
 #pragma warning restore 612, 618
         }
