@@ -453,9 +453,6 @@ namespace kayialp.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<string>("AboutHtml")
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<string>("AddressLine")
                         .HasMaxLength(300)
                         .HasColumnType("nvarchar(300)");
@@ -480,19 +477,33 @@ namespace kayialp.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("nvarchar(200)");
 
+                    b.Property<string>("FacebookUrl")
+                        .HasMaxLength(300)
+                        .HasColumnType("nvarchar(300)");
+
                     b.Property<string>("Fax")
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
 
                     b.Property<string>("HeroUrl")
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(300)
+                        .HasColumnType("nvarchar(300)");
+
+                    b.Property<string>("InstagramUrl")
+                        .HasMaxLength(300)
+                        .HasColumnType("nvarchar(300)");
 
                     b.Property<string>("LegalName")
                         .HasMaxLength(200)
                         .HasColumnType("nvarchar(200)");
 
+                    b.Property<string>("LinkedInUrl")
+                        .HasMaxLength(300)
+                        .HasColumnType("nvarchar(300)");
+
                     b.Property<string>("LogoUrl")
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(300)
+                        .HasColumnType("nvarchar(300)");
 
                     b.Property<string>("MapEmbedUrl")
                         .HasColumnType("nvarchar(max)");
@@ -500,9 +511,6 @@ namespace kayialp.Migrations
                     b.Property<string>("MersisNo")
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
-
-                    b.Property<string>("MissionHtml")
-                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Name")
                         .HasMaxLength(200)
@@ -524,8 +532,9 @@ namespace kayialp.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
 
-                    b.Property<string>("VisionHtml")
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<string>("TwitterUrl")
+                        .HasMaxLength(300)
+                        .HasColumnType("nvarchar(300)");
 
                     b.Property<string>("Website")
                         .HasMaxLength(200)
@@ -538,9 +547,46 @@ namespace kayialp.Migrations
                     b.Property<string>("WorkingHours")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("YoutubeUrl")
+                        .HasMaxLength(300)
+                        .HasColumnType("nvarchar(300)");
+
                     b.HasKey("Id");
 
                     b.ToTable("CompanyInfos");
+                });
+
+            modelBuilder.Entity("kayialp.Models.CompanyInfoTranslation", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("AboutHtml")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("CompanyInfoId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("LangCodeId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("MissionHtml")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("VisionHtml")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CompanyInfoId");
+
+                    b.ToTable("CompanyInfoTranslations");
                 });
 
             modelBuilder.Entity("kayialp.Models.FairTranslations", b =>
@@ -1067,6 +1113,17 @@ namespace kayialp.Migrations
                     b.Navigation("category");
                 });
 
+            modelBuilder.Entity("kayialp.Models.CompanyInfoTranslation", b =>
+                {
+                    b.HasOne("kayialp.Models.CompanyInfo", "CompanyInfo")
+                        .WithMany("Translations")
+                        .HasForeignKey("CompanyInfoId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("CompanyInfo");
+                });
+
             modelBuilder.Entity("kayialp.Models.FaqTranslations", b =>
                 {
                     b.HasOne("kayialp.Models.Faqs", "faq")
@@ -1169,6 +1226,11 @@ namespace kayialp.Migrations
                 });
 
             modelBuilder.Entity("ProductModels.ProductContentBlock", b =>
+                {
+                    b.Navigation("Translations");
+                });
+
+            modelBuilder.Entity("kayialp.Models.CompanyInfo", b =>
                 {
                     b.Navigation("Translations");
                 });

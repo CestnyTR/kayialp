@@ -13,6 +13,7 @@ using SixLabors.ImageSharp.Formats.Webp;
 using SixLabors.ImageSharp.Processing;
 using ProductModels;
 using System.ComponentModel.DataAnnotations;
+using System.Data.Common;
 
 namespace kayialp.Controllers
 {
@@ -2575,57 +2576,77 @@ namespace kayialp.Controllers
 
         #region Company
         // AdminController.cs içine
-
         [HttpGet("company")]
         public async Task<IActionResult> Company(CancellationToken ct)
         {
-            var entity = await _context.CompanyInfos.FirstOrDefaultAsync(ct);
-            if (entity == null)
-            {
-                entity = new CompanyInfo { Id = 1 };
-                _context.CompanyInfos.Add(entity);
-                await _context.SaveChangesAsync(ct);
-            }
+            var langs = await _context.Langs.AsNoTracking().OrderBy(l => l.Id).ToListAsync(ct);
+            var entity = await _context.CompanyInfos
+                .Include(c => c.Translations)
+                .FirstOrDefaultAsync(ct);
 
-            var vm = new CompanyInfoVM
+            var vm = new CompanyInfoVM();
+            if (entity != null)
             {
-                Id = entity.Id,
-                Name = entity.Name,
-                LegalName = entity.LegalName,
-                TaxNumber = entity.TaxNumber,
-                MersisNo = entity.MersisNo,
-                Email = entity.Email,
-                Email2 = entity.Email2,
-                Phone = entity.Phone,
-                Phone2 = entity.Phone2,
-                Whatsapp = entity.Whatsapp,
-                Fax = entity.Fax,
-                Website = entity.Website,
-                Country = entity.Country,
-                City = entity.City,
-                District = entity.District,
-                AddressLine = entity.AddressLine,
-                PostalCode = entity.PostalCode,
-                MapEmbedUrl = entity.MapEmbedUrl,
-                AboutHtml = entity.AboutHtml,
-                MissionHtml = entity.MissionHtml,
-                VisionHtml = entity.VisionHtml,
-                WorkingHours = entity.WorkingHours,
-                ExistingLogo = entity.LogoUrl,
-                ExistingHero = entity.HeroUrl
-            };
+                vm.Name = entity.Name;
+                vm.LegalName = entity.LegalName;
+                vm.TaxNumber = entity.TaxNumber;
+                vm.MersisNo = entity.MersisNo;
+                vm.Email = entity.Email;
+                vm.Email2 = entity.Email2;
+                vm.Phone = entity.Phone;
+                vm.Phone2 = entity.Phone2;
+                vm.Whatsapp = entity.Whatsapp;
+                vm.Fax = entity.Fax;
+                vm.Website = entity.Website;
+                vm.Country = entity.Country;
+                vm.City = entity.City;
+                vm.District = entity.District;
+                vm.AddressLine = entity.AddressLine;
+                vm.PostalCode = entity.PostalCode;
+                vm.MapEmbedUrl = entity.MapEmbedUrl;
+                vm.WorkingHours = entity.WorkingHours;
+                vm.FacebookUrl = entity.FacebookUrl;
+                vm.TwitterUrl = entity.TwitterUrl;
+                vm.InstagramUrl = entity.InstagramUrl;
+                vm.LinkedInUrl = entity.LinkedInUrl;
+                vm.YoutubeUrl = entity.YoutubeUrl;
+                vm.LogoUrl = entity.LogoUrl;
+                vm.HeroUrl = entity.HeroUrl;
+
+                foreach (var l in langs)
+                {
+                    var tr = entity.Translations.FirstOrDefault(t => t.LangCodeId == l.Id);
+                    vm.Langs.Add(new CompanyInfoLangVM
+                    {
+                        LangCode = l.LangCode,
+                        AboutHtml = tr?.AboutHtml,
+                        MissionHtml = tr?.MissionHtml,
+                        VisionHtml = tr?.VisionHtml
+                    });
+                }
+            }
+            else
+            {
+                foreach (var l in langs)
+                {
+                    vm.Langs.Add(new CompanyInfoLangVM { LangCode = l.LangCode });
+                }
+            }
 
             return View("Company", vm);
         }
-
         [HttpPost("company")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Company(CompanyInfoVM model, CancellationToken ct)
         {
-            var entity = await _context.CompanyInfos.FirstOrDefaultAsync(ct);
-            if (entity == null) { entity = new CompanyInfo { Id = 1 }; _context.CompanyInfos.Add(entity); }
+            var entity = await _context.CompanyInfos.Include(c => c.Translations).FirstOrDefaultAsync(ct);
+            if (entity == null)
+            {
+                entity = new CompanyInfo();
+                _context.CompanyInfos.Add(entity);
+            }
 
-            // Temel alanlar
+            // tekil alanlar
             entity.Name = model.Name;
             entity.LegalName = model.LegalName;
             entity.TaxNumber = model.TaxNumber;
@@ -2643,26 +2664,47 @@ namespace kayialp.Controllers
             entity.AddressLine = model.AddressLine;
             entity.PostalCode = model.PostalCode;
             entity.MapEmbedUrl = model.MapEmbedUrl;
-            entity.AboutHtml = model.AboutHtml;
-            entity.MissionHtml = model.MissionHtml;
-            entity.VisionHtml = model.VisionHtml;
             entity.WorkingHours = model.WorkingHours;
+            entity.FacebookUrl = model.FacebookUrl;
+            entity.TwitterUrl = model.TwitterUrl;
+            entity.InstagramUrl = model.InstagramUrl;
+            entity.LinkedInUrl = model.LinkedInUrl;
+            entity.YoutubeUrl = model.YoutubeUrl;
+
 
             // Görseller
             var folder = Path.Combine(_env.WebRootPath, "uploads", "company");
             Directory.CreateDirectory(folder);
 
-
             if (model.Logo != null && model.Logo.Length > 0)
             {
-                entity.LogoUrl = await SaveWebpVariantAsync(model.Logo, folder, "company", "logo", 400, 400);
-
+                TryDeleteFileByWebPath(entity.LogoUrl);
+                await SaveWebpVariantAsync(model.Logo, folder, "company", "logo", 400, 400);
             }
+
             if (model.Hero != null && model.Hero.Length > 0)
             {
-                entity.HeroUrl = await SaveWebpVariantAsync(model.Hero, folder, "company", "hero", 1920, 600);
-
+                TryDeleteFileByWebPath(entity.HeroUrl);
+                await SaveWebpVariantAsync(model.Hero, folder, "company", "hero", 1920, 600);
             }
+
+            // translations
+            var langs = await _context.Langs.AsNoTracking().ToListAsync(ct);
+            foreach (var l in langs)
+            {
+                var vmLang = model.Langs.FirstOrDefault(x => x.LangCode == l.LangCode);
+                var tr = entity.Translations.FirstOrDefault(x => x.LangCodeId == l.Id);
+                if (tr == null)
+                {
+                    tr = new CompanyInfoTranslation { LangCodeId = l.Id, CompanyInfoId = entity.Id };
+                    entity.Translations.Add(tr);
+                }
+                tr.AboutHtml = vmLang?.AboutHtml ?? "";
+                tr.MissionHtml = vmLang?.MissionHtml ?? "";
+                tr.VisionHtml = vmLang?.VisionHtml ?? "";
+            }
+
+            await _context.SaveChangesAsync(ct);
             TempData["CompanyMsg"] = "Şirket bilgileri güncellendi.";
             return RedirectToAction(nameof(Company));
         }
@@ -2975,10 +3017,14 @@ namespace kayialp.Controllers
 
                 if (model.Cover != null && model.Cover.Length > 0)
                 {
+                    TryDeleteFileByWebPath(s.Cover1920x900);
+
                     s.Cover1920x900 = await SaveWebpVariantAsync(model.Cover, folder, "slides", "cover-1920x900", 1920, 900);
                 }
                 if (model.CoverMobile != null && model.CoverMobile.Length > 0)
                 {
+                    TryDeleteFileByWebPath(s.CoverMobile768x1024);
+
                     s.CoverMobile768x1024 = await SaveWebpVariantAsync(model.CoverMobile, folder, "slides", "cover-mobile-768x1024", 768, 1024);
                 }
                 await _context.SaveChangesAsync(ct);

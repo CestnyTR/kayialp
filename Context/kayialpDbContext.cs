@@ -83,6 +83,7 @@ namespace kayialp.Context
     public DbSet<Fairs> Fairs { get; set; }
     public DbSet<FairTranslations> FairTranslations { get; set; }
     public DbSet<CompanyInfo> CompanyInfos { get; set; }
+    public DbSet<CompanyInfoTranslation> CompanyInfoTranslations { get; set; }
 
 
     //legal page
@@ -91,7 +92,7 @@ namespace kayialp.Context
 
     //HomeSlides 
     public DbSet<HomeSlide> HomeSlides { get; set; }
-public DbSet<HomeSlideTranslation> HomeSlideTranslations { get; set; }
+    public DbSet<HomeSlideTranslation> HomeSlideTranslations { get; set; }
 
 
   }
