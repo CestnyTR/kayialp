@@ -1,0 +1,146 @@
+@{
+    Layout = "/Views/Shared/_AdminLayout.cshtml";
+    ViewData["Title"] = "Fuarlar";
+    var fairs = (IEnumerable<dynamic>)ViewBag.Fairs;
+}
+<h2 class="mb-3">@ViewData["Title"]</h2>
+
+@if (TempData["FairMsg"] is string m)
+{
+    <div class="alert alert-info">@m</div>
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <a href="/admin/create-fair" class="btn btn-success">Yeni Fuar</a>
+    <button class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#quickFairModal">+ Hızlı
+        Ekle</button>
+</div>
+
+<div class="table-responsive">
+    <table class="table table-striped align-middle" id="fairTable">
+        <thead>
+            <tr>
+                <th style="width:44px;"></th>
+                <th>#</th>
+                <th>Kapak</th>
+                <th>Başlık (TR)</th>
+                <th>Tarih</th>
+                <th>Yer</th>
+                <th>Sıra</th>
+                <th>Aktif</th>
+                <th style="width:160px;">İşlemler</th>
+            </tr>
+        </thead>
+        <tbody id="fairTbody">
+            @foreach (var x in fairs.OrderBy(f => (int)f.Order).ThenBy(f => (int)f.Id))
+            {
+                <tr draggable="true" data-id="@x.Id" class="drag-row">
+                    <td class="text-muted" style="cursor:grab;">☰</td>
+                    <td>@x.Id</td>
+                    <td style="width:72px">
+                        @if (!string.IsNullOrWhiteSpace((string?)x.Cover424x460))
+                        {
+                            <img src="@x.Cover424x460" style="width:64px;height:64px;object-fit:cover;border-radius:6px;" />
+                        }
+                    </td>
+                    <td>@x.Title</td>
+                    <td>@(((DateTime)x.StartDate).ToString("dd.MM.yyyy")) - @(((DateTime)x.EndDate).ToString("dd.MM.yyyy"))
+                    </td>
+                    <td>@x.Venue / @x.City / @x.Country</td>
+                    <td class="order-cell">@x.Order</td>
+                    <td>@(((bool)x.IsActive) ? "Evet" : "Hayır")</td>
+                    <td class="d-flex gap-2">
+                        <a href="/admin/update-fair/@x.Id" class="btn btn-sm btn-primary">Düzenle</a>
+                        <form asp-action="DeleteFair" asp-route-id="@x.Id" method="post" class="m-0"
+                            onsubmit="return confirm('Kalıcı olarak silinsin mi?');">
+                            @Html.AntiForgeryToken()
+                            <button class="btn btn-sm btn-danger" type="submit">Sil</button>
+                        </form>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+<div class="d-flex justify-content-end">
+    <button type="button" id="btnSaveOrder" class="btn btn-outline-primary">Sırayı Kaydet</button>
+</div>
+
+<!-- Quick Add Modal -->
+<div class="modal fade" id="quickFairModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Hızlı Fuar Ekle</h5>
+                <button class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-2"><label class="form-label">TR Başlık</label><input id="qfTitle" class="form-control" />
+                </div>
+                <div class="row g-2">
+                    <div class="col"><label class="form-label">Başlangıç</label><input id="qfStart" type="date"
+                            class="form-control" /></div>
+                    <div class="col"><label class="form-label">Bitiş</label><input id="qfEnd" type="date"
+                            class="form-control" /></div>
+                </div>
+                <div class="row g-2 mt-2">
+                    <div class="col"><label class="form-label">Ülke</label><input id="qfCountry" class="form-control" />
+                    </div>
+                    <div class="col"><label class="form-label">Şehir</label><input id="qfCity" class="form-control" />
+                    </div>
+                </div>
+                <div class="mt-2"><label class="form-label">Mekân</label><input id="qfVenue" class="form-control" />
+                </div>
+                <div class="form-check mt-2"><input id="qfActive" class="form-check-input" type="checkbox"
+                        checked /><label class="form-check-label">Aktif</label></div>
+                <div id="qfErr" class="text-danger small mt-2" style="display:none;"></div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" data-bs-dismiss="modal">Kapat</button>
+                <button class="btn btn-primary" id="qfSave">Kaydet</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        (function () {
+            // native drag&drop
+            const tbody = document.getElementById('fairTbody');
+            let dragEl = null;
+            tbody.addEventListener('dragstart', e => { const tr = e.target.closest('tr'); if (!tr) return; dragEl = tr; tr.classList.add('opacity-50'); e.dataTransfer.effectAllowed = 'move'; });
+            tbody.addEventListener('dragover', e => { e.preventDefault(); const tr = e.target.closest('tr'); if (!tr || tr === dragEl) return; const rect = tr.getBoundingClientRect(); const before = (e.clientY - rect.top) < rect.height / 2; tbody.insertBefore(dragEl, before ? tr : tr.nextSibling); });
+            tbody.addEventListener('dragend', () => { if (dragEl) dragEl.classList.remove('opacity-50'); dragEl = null; renumber(); });
+            function renumber() { Array.from(tbody.querySelectorAll('tr')).forEach((r, i) => { const c = r.querySelector('.order-cell'); if (c) c.textContent = i; }); }
+
+            function token() { const t = document.querySelector('input[name="__RequestVerificationToken"]'); return t ? t.value : ''; }
+
+            document.getElementById('btnSaveOrder').addEventListener('click', async () => {
+                const ids = Array.from(tbody.querySelectorAll('tr')).map(tr => parseInt(tr.dataset.id, 10));
+                const res = await fetch('/admin/reorder-fairs', { method: 'POST', headers: { 'Content-Type': 'application/json', 'RequestVerificationToken': token() }, body: JSON.stringify({ ids }) });
+                const j = await res.json().catch(() => ({ ok: false }));
+                if (j.ok) alert('Sıra kaydedildi'); else alert('Hata');
+            });
+
+            // Quick add
+            document.getElementById('qfSave').addEventListener('click', async () => {
+                const payload = {
+                    titleTr: document.getElementById('qfTitle').value || '',
+                    startDate: document.getElementById('qfStart').value,
+                    endDate: document.getElementById('qfEnd').value,
+                    country: document.getElementById('qfCountry').value || '',
+                    city: document.getElementById('qfCity').value || '',
+                    venue: document.getElementById('qfVenue').value || '',
+                    isActive: document.getElementById('qfActive').checked
+                };
+                const res = await fetch('/admin/create-fair-quick', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+                const j = await res.json();
+                const err = document.getElementById('qfErr');
+                if (!j.ok) { err.textContent = j.error || 'Kayıt hatası'; err.style.display = 'block'; return; }
+                location.reload();
+            });
+        })();
+    </script>
+}

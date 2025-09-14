@@ -40,12 +40,20 @@ build_metadata.AdditionalFiles.CssScope =
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQWRtaW5cQmxvZ0luZGV4LmNzaHRtbA==
 build_metadata.AdditionalFiles.CssScope = 
 
+[D:/iş/sipariş-işleri/Kayıalp/kayialp/Views/Admin/Company.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQWRtaW5cQ29tcGFueS5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
 [D:/iş/sipariş-işleri/Kayıalp/kayialp/Views/Admin/CreateBlogCategory.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQWRtaW5cQ3JlYXRlQmxvZ0NhdGVnb3J5LmNzaHRtbA==
 build_metadata.AdditionalFiles.CssScope = 
 
 [D:/iş/sipariş-işleri/Kayıalp/kayialp/Views/Admin/CreateCategory.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQWRtaW5cQ3JlYXRlQ2F0ZWdvcnkuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/iş/sipariş-işleri/Kayıalp/kayialp/Views/Admin/CreateFair.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQWRtaW5cQ3JlYXRlRmFpci5jc2h0bWw=
 build_metadata.AdditionalFiles.CssScope = 
 
 [D:/iş/sipariş-işleri/Kayıalp/kayialp/Views/Admin/CreatePost.cshtml]
@@ -56,8 +64,28 @@ build_metadata.AdditionalFiles.CssScope =
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQWRtaW5cQ3JlYXRlUHJvZHVjdC5jc2h0bWw=
 build_metadata.AdditionalFiles.CssScope = 
 
+[D:/iş/sipariş-işleri/Kayıalp/kayialp/Views/Admin/EditLegal.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQWRtaW5cRWRpdExlZ2FsLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/iş/sipariş-işleri/Kayıalp/kayialp/Views/Admin/EditSlide.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQWRtaW5cRWRpdFNsaWRlLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/iş/sipariş-işleri/Kayıalp/kayialp/Views/Admin/FairsIndex.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQWRtaW5cRmFpcnNJbmRleC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
 [D:/iş/sipariş-işleri/Kayıalp/kayialp/Views/Admin/Index.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQWRtaW5cSW5kZXguY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/iş/sipariş-işleri/Kayıalp/kayialp/Views/Admin/LegalIndex.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQWRtaW5cTGVnYWxJbmRleC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/iş/sipariş-işleri/Kayıalp/kayialp/Views/Admin/Slides.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQWRtaW5cU2xpZGVzLmNzaHRtbA==
 build_metadata.AdditionalFiles.CssScope = 
 
 [D:/iş/sipariş-işleri/Kayıalp/kayialp/Views/Admin/UpdateBlogCategory.cshtml]
@@ -66,6 +94,10 @@ build_metadata.AdditionalFiles.CssScope =
 
 [D:/iş/sipariş-işleri/Kayıalp/kayialp/Views/Admin/UpdateCategory.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQWRtaW5cVXBkYXRlQ2F0ZWdvcnkuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/iş/sipariş-işleri/Kayıalp/kayialp/Views/Admin/UpdateFair.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQWRtaW5cVXBkYXRlRmFpci5jc2h0bWw=
 build_metadata.AdditionalFiles.CssScope = 
 
 [D:/iş/sipariş-işleri/Kayıalp/kayialp/Views/Admin/UpdatePost.cshtml]
@@ -90,6 +122,10 @@ build_metadata.AdditionalFiles.CssScope =
 
 [D:/iş/sipariş-işleri/Kayıalp/kayialp/Views/Home/Privacy.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcSG9tZVxQcml2YWN5LmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/iş/sipariş-işleri/Kayıalp/kayialp/Views/Legal/Legal.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcTGVnYWxcTGVnYWwuY3NodG1s
 build_metadata.AdditionalFiles.CssScope = 
 
 [D:/iş/sipariş-işleri/Kayıalp/kayialp/Views/Products/CategoryProducts.cshtml]

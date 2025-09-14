@@ -1,0 +1,27 @@
+@{
+    Layout = "/Views/Shared/_Layout.cshtml";
+    var html = (string)(ViewBag.Html ?? "");
+}
+<!--==============================
+    Breadcumb
+============================== -->
+<div class="breadcumb-area ">
+    <div class="breadcumb-wrapper" data-bg-src="/img/bg/breadcumb-bg.jpg">
+        <div class="container">
+            <div class="breadcumb-content">
+                <h1 class="breadcumb-title">@ViewData["Title"]</h1>
+                <ul class="breadcumb-menu">
+                    <li><a href="/">ANASAYFA</a></li>
+                    <li>@ViewData["Title"]</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container my-5">
+    <h1 class="mb-4">@ViewData["Title"]</h1>
+    <div class="legal-content">
+        @Html.Raw(html)
+    </div>
+</div>

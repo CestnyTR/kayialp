@@ -1,0 +1,161 @@
+@using kayialp.ViewModels
+@model CompanyInfoVM
+@{
+    Layout = "/Views/Shared/_AdminLayout.cshtml";
+    ViewData["Title"] = "Şirket Bilgileri";
+}
+
+<h2 class="mb-3">@ViewData["Title"]</h2>
+
+<form asp-action="Company" method="post" enctype="multipart/form-data" class="card p-3">
+    @Html.AntiForgeryToken()
+    <input type="hidden" asp-for="Id" />
+
+    <div class="alert alert-success" @(TempData["CompanyMsg"] == null ? "style=display:none" : "")>
+        @TempData["CompanyMsg"]
+    </div>
+
+    <div class="row g-4">
+        <div class="col-12">
+            <h5>Genel</h5>
+            <hr class="mt-0" />
+        </div>
+        <div class="col-md-6">
+            <label class="form-label">Şirket Adı</label>
+            <input asp-for="Name" class="form-control" />
+        </div>
+        <div class="col-md-6">
+            <label class="form-label">Ticari Ünvan</label>
+            <input asp-for="LegalName" class="form-control" />
+        </div>
+        <div class="col-md-4">
+            <label class="form-label">Vergi No</label>
+            <input asp-for="TaxNumber" class="form-control" />
+        </div>
+        <div class="col-md-4">
+            <label class="form-label">Mersis No</label>
+            <input asp-for="MersisNo" class="form-control" />
+        </div>
+        <div class="col-md-4">
+            <label class="form-label">Çalışma Saatleri</label>
+            <input asp-for="WorkingHours" class="form-control" placeholder="Hafta içi 09:00–18:00" />
+        </div>
+
+        <div class="col-12">
+            <h5>İletişim</h5>
+            <hr class="mt-0" />
+        </div>
+        <div class="col-md-4">
+            <label class="form-label">E-posta</label>
+            <input asp-for="Email" class="form-control" />
+        </div>
+        <div class="col-md-4">
+            <label class="form-label">E-posta (2)</label>
+            <input asp-for="Email2" class="form-control" />
+        </div>
+        <div class="col-md-4">
+            <label class="form-label">Website</label>
+            <input asp-for="Website" class="form-control" placeholder="https://..." />
+        </div>
+        <div class="col-md-3">
+            <label class="form-label">Telefon</label>
+            <input asp-for="Phone" class="form-control" />
+        </div>
+        <div class="col-md-3">
+            <label class="form-label">Telefon (2)</label>
+            <input asp-for="Phone2" class="form-control" />
+        </div>
+        <div class="col-md-3">
+            <label class="form-label">WhatsApp</label>
+            <input asp-for="Whatsapp" class="form-control" />
+        </div>
+        <div class="col-md-3">
+            <label class="form-label">Fax</label>
+            <input asp-for="Fax" class="form-control" />
+        </div>
+
+        <div class="col-12">
+            <h5>Adres</h5>
+            <hr class="mt-0" />
+        </div>
+        <div class="col-md-3">
+            <label class="form-label">Ülke</label>
+            <input asp-for="Country" class="form-control" />
+        </div>
+        <div class="col-md-3">
+            <label class="form-label">Şehir</label>
+            <input asp-for="City" class="form-control" />
+        </div>
+        <div class="col-md-3">
+            <label class="form-label">İlçe</label>
+            <input asp-for="District" class="form-control" />
+        </div>
+        <div class="col-md-3">
+            <label class="form-label">Posta Kodu</label>
+            <input asp-for="PostalCode" class="form-control" />
+        </div>
+        <div class="col-md-9">
+            <label class="form-label">Adres</label>
+            <input asp-for="AddressLine" class="form-control" />
+        </div>
+        <div class="col-md-3">
+            <label class="form-label">Harita Embed (Google)</label>
+            <input asp-for="MapEmbedUrl" class="form-control" placeholder="<iframe ...>" />
+        </div>
+
+        <div class="col-12">
+            <h5>İçerik</h5>
+            <hr class="mt-0" />
+        </div>
+        <div class="col-12">
+            <label class="form-label">Hakkımızda</label>
+            <textarea asp-for="AboutHtml" class="form-control editor" rows="5"></textarea>
+        </div>
+        <div class="col-md-6">
+            <label class="form-label">Misyon</label>
+            <textarea asp-for="MissionHtml" class="form-control editor" rows="4"></textarea>
+        </div>
+        <div class="col-md-6">
+            <label class="form-label">Vizyon</label>
+            <textarea asp-for="VisionHtml" class="form-control editor" rows="4"></textarea>
+        </div>
+
+        <div class="col-12">
+            <h5>Görseller</h5>
+            <hr class="mt-0" />
+        </div>
+        <div class="col-md-6">
+            <label class="form-label">Logo (öneri 400×400)</label>
+            <input asp-for="Logo" type="file" class="form-control" />
+            @if (!string.IsNullOrWhiteSpace(Model.ExistingLogo))
+            {
+                <div class="mt-2">
+                    <img src="@Model.ExistingLogo"
+                        style="width:100px;height:100px;object-fit:contain;border:1px solid #eee;border-radius:6px" />
+                </div>
+            }
+        </div>
+        <div class="col-md-6">
+            <label class="form-label">Kapak/Hero (öneri 1920×600)</label>
+            <input asp-for="Hero" type="file" class="form-control" />
+            @if (!string.IsNullOrWhiteSpace(Model.ExistingHero))
+            {
+                <div class="mt-2">
+                    <img src="@Model.ExistingHero"
+                        style="width:220px;height:70px;object-fit:cover;border:1px solid #eee;border-radius:6px" />
+                </div>
+            }
+        </div>
+    </div>
+
+    <div class="d-flex justify-content-end gap-2 mt-3">
+        <a href="/admin" class="btn btn-outline-secondary">İptal</a>
+        <button type="submit" class="btn btn-primary">Kaydet</button>
+    </div>
+</form>
+
+@section Scripts {
+    <script>
+        // Burada WYSIWYG editör başlatabilirsin: .editor
+    </script>
+}

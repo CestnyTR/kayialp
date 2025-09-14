@@ -1,0 +1,36 @@
+@model List<kayialp.ViewModels.LegalListItemVM>
+@{
+    Layout = "/Views/Shared/_AdminLayout.cshtml";
+    ViewData["Title"] = "Yasal Sayfalar";
+}
+<h2 class="mb-3">@ViewData["Title"]</h2>
+
+<div class="card">
+    <div class="card-body table-responsive">
+        <table class="table table-bordered">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Key</th>
+                    <th>Başlık (TR)</th>
+                    <th>Aktif</th>
+                    <th>Düzenle</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var r in Model)
+                {
+                    <tr>
+                        <td>@r.Id</td>
+                        <td>@r.Key</td>
+                        <td>@r.TitleTr</td>
+                        <td>@(r.IsActive ? "Evet" : "Hayır")</td>
+                        <td>
+                            <a class="btn btn-sm btn-primary" href="/admin/legal/@r.Key">Düzenle</a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

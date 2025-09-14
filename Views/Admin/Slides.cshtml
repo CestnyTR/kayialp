@@ -1,0 +1,88 @@
+@model List<kayialp.ViewModels.SlideListItemVM>
+@{
+    Layout = "/Views/Shared/_AdminLayout.cshtml";
+    ViewData["Title"] = "Slaytlar";
+}
+<h2 class="mb-3">@ViewData["Title"]</h2>
+
+<div class="mb-3 d-flex justify-content-between">
+    <a class="btn btn-success" href="/admin/slides/create">+ Yeni Slayt</a>
+    @if (TempData["SlideMsg"] != null)
+    {
+        <div class="alert alert-info m-0">@TempData["SlideMsg"]</div>
+    }
+</div>
+
+<div class="card">
+    <div class="card-body table-responsive">
+        <table class="table table-bordered align-middle" id="slideTable">
+            <thead>
+                <tr>
+                    <th style="width:48px">#</th>
+                    <th style="width:120px">Görsel</th>
+                    <th>Başlık (TR)</th>
+                    <th>Aktif</th>
+                    <th>Sıra</th>
+                    <th style="width:120px">İşlemler</th>
+                </tr>
+            </thead>
+            <tbody id="sortable">
+                @foreach (var r in Model)
+                {
+                    <tr data-id="@r.Id">
+                        <td>@r.Id</td>
+                        <td>
+                            @if (!string.IsNullOrWhiteSpace(r.Cover))
+                            {
+                                <img src="@r.Cover"
+                                    style="width:100px;height:56px;object-fit:cover;border-radius:6px;border:1px solid #eee" />
+                            }
+                        </td>
+                        <td>@r.TitleTr</td>
+                        <td>@(r.IsActive ? "Evet" : "Hayır")</td>
+                        <td>@r.Order</td>
+                        <td class="d-flex gap-2">
+                            <a class="btn btn-sm btn-primary" href="/admin/slides/@r.Id">Düzenle</a>
+                            <form method="post" action="/admin/slides/delete/@r.Id"
+                                onsubmit="return confirm('Silinsin mi?');">
+                                @Html.AntiForgeryToken()
+                                <button class="btn btn-sm btn-danger">Sil</button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // çok basit bir sürükle-bırak (jQuery UI yoksa, plain ile quick)
+        (() => {
+            const tbody = document.getElementById('sortable');
+            let dragging;
+
+            tbody.querySelectorAll('tr').forEach(tr => {
+                tr.draggable = true;
+                tr.addEventListener('dragstart', e => dragging = tr);
+                tr.addEventListener('dragover', e => { e.preventDefault(); const after = e.target.closest('tr'); if (after && after !== dragging) tbody.insertBefore(dragging, after); });
+                tr.addEventListener('drop', e => e.preventDefault());
+            });
+
+            // kaydetmek için: satır bırakıldıktan kısa süre sonra gönder
+            let t;
+            tbody.addEventListener('drop', () => {
+                clearTimeout(t);
+                t = setTimeout(() => {
+                    const ids = Array.from(tbody.querySelectorAll('tr')).map(tr => parseInt(tr.getAttribute('data-id')));
+                    fetch('/admin/slides/reorder', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ ids })
+                    });
+                }, 300);
+            });
+        })();
+    </script>
+}

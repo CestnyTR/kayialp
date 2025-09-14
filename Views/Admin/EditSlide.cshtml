@@ -1,0 +1,122 @@
+@using kayialp.ViewModels
+@model EditSlideVM
+@{
+    Layout = "/Views/Shared/_AdminLayout.cshtml";
+    ViewData["Title"] = Model.Id == null ? "Yeni Slayt" : $"Slayt #{Model.Id}";
+}
+<h2 class="mb-3">@ViewData["Title"]</h2>
+
+<form action="/admin/slides/save" method="post" enctype="multipart/form-data" class="card p-3">
+    @Html.AntiForgeryToken()
+    @if (Model.Id != null)
+    {
+        <input type="hidden" name="Id" value="@Model.Id" />
+    }
+
+    <div class="row g-3">
+        <div class="col-md-2 d-flex align-items-end">
+            <div class="form-check">
+                <input class="form-check-input" asp-for="IsActive" />
+                <label class="form-check-label" for="IsActive">Aktif</label>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <label class="form-label">Sıra</label>
+            <input asp-for="Order" class="form-control" />
+        </div>
+        <div class="col-md-4 d-flex align-items-end">
+            <div class="form-check">
+                <input class="form-check-input" asp-for="AutoTranslate" />
+                <label class="form-check-label" for="AutoTranslate">AutoTranslate (TR → boş alanlar)</label>
+            </div>
+        </div>
+    </div>
+
+    <hr />
+
+    <div class="row g-3">
+        <div class="col-md-6">
+            <label class="form-label">Kapak (1920×900)</label>
+            <input asp-for="Cover" type="file" class="form-control" />
+            @if (!string.IsNullOrWhiteSpace(Model.ExistingCover))
+            {
+                <small class="text-muted d-block mt-1">Mevcut: <code>@Model.ExistingCover</code></small>
+                <img src="@Model.ExistingCover"
+                    style="width:100%;max-width:400px;border-radius:6px;border:1px solid #eee;margin-top:6px" />
+            }
+        </div>
+        <div class="col-md-6">
+            <label class="form-label">Mobil Kapak (768×1024) — opsiyonel</label>
+            <input asp-for="CoverMobile" type="file" class="form-control" />
+            @if (!string.IsNullOrWhiteSpace(Model.ExistingCoverMobile))
+            {
+                <small class="text-muted d-block mt-1">Mevcut: <code>@Model.ExistingCoverMobile</code></small>
+                <img src="@Model.ExistingCoverMobile"
+                    style="width:200px;border-radius:6px;border:1px solid #eee;margin-top:6px" />
+            }
+        </div>
+    </div>
+
+    <hr />
+
+    <ul class="nav nav-tabs" role="tablist">
+        @for (int i = 0; i < Model.Langs.Count; i++)
+        {
+            var lc = Model.Langs[i].LangCode;
+            <li class="nav-item" role="presentation">
+                <button class="nav-link @(i == 0 ? "active" : "")" data-bs-toggle="tab" data-bs-target="#pane-@lc" type="button"
+                    role="tab">
+                    @lc.ToUpperInvariant()
+                </button>
+            </li>
+        }
+    </ul>
+
+    <div class="tab-content border border-top-0 p-3">
+        @for (int i = 0; i < Model.Langs.Count; i++)
+        {
+            var lc = Model.Langs[i].LangCode;
+            <div class="tab-pane fade @(i == 0 ? "show active" : "")" id="pane-@lc" role="tabpanel">
+                <input type="hidden" name="Langs[@i].LangCode" value="@lc" />
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <label class="form-label">Slogan</label>
+                        <input name="Langs[@i].Slogan" value="@(Model.Langs[i].Slogan ?? "")" class="form-control" />
+                    </div>
+                    <div class="col-md-8">
+                        <label class="form-label">Başlık (Title)</label>
+                        <input name="Langs[@i].Title" value="@(Model.Langs[i].Title ?? "")" class="form-control" />
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label">İçerik</label>
+                        <textarea name="Langs[@i].Content" rows="4"
+                        class="form-control">@Html.Raw(Model.Langs[i].Content ?? "")</textarea>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label">CTA 1 Metin</label>
+                        <input name="Langs[@i].Cta1Text" value="@(Model.Langs[i].Cta1Text ?? "")" class="form-control" />
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">CTA 1 URL</label>
+                        <input name="Langs[@i].Cta1Url" value="@(Model.Langs[i].Cta1Url ?? "")" class="form-control" />
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label">CTA 2 Metin</label>
+                        <input name="Langs[@i].Cta2Text" value="@(Model.Langs[i].Cta2Text ?? "")" class="form-control" />
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">CTA 2 URL</label>
+                        <input name="Langs[@i].Cta2Url" value="@(Model.Langs[i].Cta2Url ?? "")" class="form-control" />
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+
+    <div class="d-flex justify-content-end gap-2 mt-3">
+        <a href="/admin/slides" class="btn btn-outline-secondary">Geri</a>
+        <button class="btn btn-primary" type="submit">Kaydet</button>
+    </div>
+</form>

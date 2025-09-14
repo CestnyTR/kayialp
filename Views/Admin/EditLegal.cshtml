@@ -1,0 +1,80 @@
+@using kayialp.ViewModels
+@model EditLegalVM
+@{
+    Layout = "/Views/Shared/_AdminLayout.cshtml";
+    ViewData["Title"] = $"Düzenle — {Model.Key.ToUpperInvariant()}";
+}
+<h2 class="mb-3">@ViewData["Title"]</h2>
+
+<form action="/admin/legal/@Model.Key" method="post" class="card p-3">
+    @Html.AntiForgeryToken()
+    <input type="hidden" asp-for="Id" />
+    <input type="hidden" asp-for="Key" />
+
+    <div class="row g-3">
+        <div class="col-md-2 d-flex align-items-end">
+            <div class="form-check">
+                <input class="form-check-input" asp-for="IsActive" />
+                <label class="form-check-label" for="IsActive">Aktif</label>
+            </div>
+        </div>
+        <div class="col-md-4 d-flex align-items-end">
+            <div class="form-check">
+                <input class="form-check-input" asp-for="AutoTranslate" />
+                <label class="form-check-label" for="AutoTranslate">AutoTranslate (TR → boş alanlar)</label>
+            </div>
+        </div>
+    </div>
+
+    <hr />
+
+    <ul class="nav nav-tabs" role="tablist">
+        @for (int i = 0; i < Model.Langs.Count; i++)
+        {
+            var lc = Model.Langs[i].LangCode;
+            <li class="nav-item" role="presentation">
+                <button class="nav-link @(i == 0 ? "active" : "")" data-bs-toggle="tab" data-bs-target="#pane-@lc" type="button"
+                    role="tab">
+                    @lc.ToUpperInvariant()
+                </button>
+            </li>
+        }
+    </ul>
+
+    <div class="tab-content border border-top-0 p-3">
+        @for (int i = 0; i < Model.Langs.Count; i++)
+        {
+            var lc = Model.Langs[i].LangCode;
+            <div class="tab-pane fade @(i == 0 ? "show active" : "")" id="pane-@lc" role="tabpanel">
+                <input type="hidden" name="Langs[@i].LangCode" value="@lc" />
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label">@lc.ToUpper() Başlık</label>
+                        <input name="Langs[@i].Title" value="@(Model.Langs[i].Title ?? "")" class="form-control" />
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Slug (ops.)</label>
+                        <input name="Langs[@i].Slug" value="@(Model.Langs[i].Slug ?? "")" class="form-control" />
+                        <small class="text-muted">Boş bırakılabilir. Doldurursan dil bazında benzersiz olmalı.</small>
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label">İçerik (HTML)</label>
+                        <textarea name="Langs[@i].Html" class="form-control editor"
+                        rows="10">@Html.Raw(Model.Langs[i].Html ?? "")</textarea>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+
+    <div class="d-flex justify-content-end gap-2 mt-3">
+        <a href="/admin/legal" class="btn btn-outline-secondary">Geri</a>
+        <button type="submit" class="btn btn-primary">Kaydet</button>
+    </div>
+</form>
+
+@section Scripts {
+    <script>
+        // WYSIWYG editörünü .editor class'ına burada başlatabilirsin.
+    </script>
+}

@@ -2218,6 +2218,881 @@ namespace kayialp.Controllers
 
 
         #endregion
+
+
+        #region Fairs sections
+
+        // ===== AdminController.cs — FAIRS Bölümü =====
+        // --- Reorder request tipleri (isim çakışması yaşamamak için ayrı) ---
+        public sealed class FairReorderReq
+        {
+            public List<int> Ids { get; set; } = new();
+        }
+
+        // --- Helpers: KeyName ve Translation upsert ---
+
+        // EN başlıktan camelCase key üret (boş ise yedek)
+        private async Task<string> BuildCanonicalKeyForFairAsync(string trTitle, int fairId, CancellationToken ct)
+        {
+            string enTitle;
+            try { enTitle = await _translator.TranslateAsync(trTitle ?? "", "TR", "EN"); }
+            catch { enTitle = trTitle ?? ""; }
+
+            var key = TextCaseHelper.ToCamelCaseKey(enTitle);
+            if (string.IsNullOrWhiteSpace(key)) key = $"fair{fairId}";
+            if (key.Length > 60) key = key[..60];
+            return key;
+        }
+
+        // Dil bazında slug benzersiz olacak şekilde çeviri kaydı güncelle/ekle
+        private async Task UpsertFairTranslationAsync(
+            int fairId, int langId, string keyName, string title, string? slug, CancellationToken ct)
+        {
+            var normSlug = ToLocalizedSlugSafe(string.IsNullOrWhiteSpace(slug) ? title : slug);
+
+            bool taken = await _context.FairTranslations
+                .AnyAsync(x => x.LangCodeId == langId && x.Slug == normSlug && x.FairId != fairId, ct);
+            if (taken) throw new ValidationException($"Slug zaten kullanılıyor: {normSlug}");
+
+            var tr = await _context.FairTranslations
+                .FirstOrDefaultAsync(x => x.FairId == fairId && x.LangCodeId == langId, ct);
+
+            if (tr == null)
+            {
+                _context.FairTranslations.Add(new FairTranslations
+                {
+                    FairId = fairId,
+                    LangCodeId = langId,
+                    KeyName = keyName,
+                    Title = title,
+                    Slug = normSlug
+                });
+            }
+            else
+            {
+                if (string.IsNullOrWhiteSpace(tr.KeyName))
+                    tr.KeyName = keyName;
+
+                tr.Title = title;
+                tr.Slug = normSlug;
+            }
+        }
+
+        // ========== LIST (Admin) ==========
+        [HttpGet("fairs")]
+        public async Task<IActionResult> FairsIndex(CancellationToken ct)
+        {
+            var trId = await _context.Langs.Where(l => l.LangCode == "tr").Select(l => l.Id).FirstAsync(ct);
+
+            var list = await (from f in _context.Fairs.AsNoTracking()
+                              join t in _context.FairTranslations.AsNoTracking().Where(x => x.LangCodeId == trId)
+                                on f.Id equals t.FairId into jt
+                              from tt in jt.DefaultIfEmpty()
+                              orderby f.Order, f.Id
+                              select new
+                              {
+                                  f.Id,
+                                  f.StartDate,
+                                  f.EndDate,
+                                  f.Country,
+                                  f.City,
+                                  f.Venue,
+                                  f.Order,
+                                  f.IsActive,
+                                  f.Cover424x460,
+                                  Title = tt != null ? tt.Title : "(Başlık yok)"
+                              }).ToListAsync(ct);
+
+            ViewBag.Fairs = list;
+            return View("FairsIndex"); // Razor'ı önceki mesajımda verdim
+        }
+
+        // ========== CREATE GET ==========
+        [HttpGet("create-fair")]
+        public async Task<IActionResult> CreateFair(CancellationToken ct)
+        {
+            var langs = await _context.Langs.AsNoTracking().OrderBy(l => l.Id).ToListAsync(ct);
+            var vm = new CreateFairVM
+            {
+                AutoTranslate = true,
+                Langs = langs.Select(l => new FairLangVM { LangCode = l.LangCode }).ToList()
+            };
+            return View("CreateFair", vm);
+        }
+
+        // ========== CREATE POST ==========
+        [HttpPost("create-fair")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> CreateFair(CreateFairVM model, CancellationToken ct)
+        {
+            var langs = await _context.Langs.AsNoTracking().OrderBy(l => l.Id).ToListAsync(ct);
+            var trLang = langs.First(x => x.LangCode == "tr");
+
+            if (model.Cover == null)
+                ModelState.AddModelError(nameof(model.Cover), "Kapak görseli zorunlu (424×460).");
+
+            if (!ModelState.IsValid) return View("CreateFair", model);
+
+            using var tx = await _context.Database.BeginTransactionAsync(ct);
+            try
+            {
+                var fair = new Fairs
+                {
+                    StartDate = model.StartDate,
+                    EndDate = model.EndDate,
+                    Country = model.Country,
+                    City = model.City,
+                    Venue = model.Venue,
+                    WebsiteUrl = model.WebsiteUrl,
+                    Order = model.Order,
+                    IsActive = model.IsActive
+                };
+                _context.Fairs.Add(fair);
+                await _context.SaveChangesAsync(ct); // Id için
+
+                // Kapak
+                var folder = Path.Combine(_env.WebRootPath, "uploads", "fairs", fair.Id.ToString());
+                Directory.CreateDirectory(folder);
+                fair.Cover424x460 = await SaveWebpVariantAsync(model.Cover!, folder, "fairs", "cover-424x460", 424, 460);
+                await _context.SaveChangesAsync(ct);
+
+                // Diller
+                var postedBy = model.Langs.ToDictionary(x => x.LangCode, x => x, StringComparer.OrdinalIgnoreCase);
+                postedBy.TryGetValue("tr", out var trVm);
+                var trTitle = trVm?.Title ?? model.TitleTr ?? "";
+
+                var keyName = await BuildCanonicalKeyForFairAsync(trTitle, fair.Id, ct);
+
+                // TR
+                await UpsertFairTranslationAsync(fair.Id, trLang.Id, keyName, trTitle, trVm?.Slug, ct);
+
+                // Diğer diller
+                foreach (var l in langs.Where(x => x.Id != trLang.Id))
+                {
+                    postedBy.TryGetValue(l.LangCode, out var vm);
+                    string pick(string? v, string trv) =>
+                        (!model.AutoTranslate || !string.IsNullOrWhiteSpace(v)) ? (v ?? "") : TryTranslate(trv, "tr", l.LangCode);
+
+                    var titleT = pick(vm?.Title, trTitle);
+                    await UpsertFairTranslationAsync(fair.Id, l.Id, keyName, titleT, vm?.Slug, ct);
+                }
+
+                await _context.SaveChangesAsync(ct);
+                await tx.CommitAsync(ct);
+                TempData["FairMsg"] = "Fuar eklendi.";
+                return RedirectToAction(nameof(FairsIndex));
+            }
+            catch (Exception ex)
+            {
+                await tx.RollbackAsync(ct);
+                ModelState.AddModelError("", ex.Message);
+                return View("CreateFair", model);
+            }
+        }
+
+        // ========== UPDATE GET ==========
+        [HttpGet("update-fair/{id:int}")]
+        public async Task<IActionResult> UpdateFair(int id, CancellationToken ct)
+        {
+            var fair = await _context.Fairs.FirstOrDefaultAsync(f => f.Id == id, ct);
+            if (fair == null) return NotFound();
+
+            var langs = await _context.Langs.AsNoTracking().OrderBy(x => x.Id).ToListAsync(ct);
+            var trs = await _context.FairTranslations.Where(x => x.FairId == id).ToListAsync(ct);
+
+            var vm = new UpdateFairVM
+            {
+                Id = fair.Id,
+                StartDate = fair.StartDate,
+                EndDate = fair.EndDate,
+                Country = fair.Country,
+                City = fair.City,
+                Venue = fair.Venue,
+                WebsiteUrl = fair.WebsiteUrl,
+                Order = fair.Order,
+                IsActive = fair.IsActive,
+                ExistingCover = fair.Cover424x460,
+                AutoTranslate = true,
+                Langs = new List<FairLangVM>()
+            };
+
+            foreach (var l in langs)
+            {
+                var t = trs.FirstOrDefault(x => x.LangCodeId == l.Id);
+                vm.Langs.Add(new FairLangVM { LangCode = l.LangCode, Title = t?.Title ?? "", Slug = t?.Slug ?? "" });
+                if (l.LangCode == "tr") vm.TitleTr = t?.Title ?? "";
+            }
+
+            return View("UpdateFair", vm);
+        }
+
+        // ========== UPDATE POST ==========
+        [HttpPost("update-fair/{id:int}")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> UpdateFair(int id, UpdateFairVM model, CancellationToken ct)
+        {
+            if (id != model.Id) return BadRequest();
+            var fair = await _context.Fairs.FirstOrDefaultAsync(f => f.Id == id, ct);
+            if (fair == null) return NotFound();
+
+            var langs = await _context.Langs.AsNoTracking().OrderBy(x => x.Id).ToListAsync(ct);
+            var trLang = langs.First(x => x.LangCode == "tr");
+
+            using var tx = await _context.Database.BeginTransactionAsync(ct);
+            try
+            {
+                fair.StartDate = model.StartDate;
+                fair.EndDate = model.EndDate;
+                fair.Country = model.Country; fair.City = model.City; fair.Venue = model.Venue;
+                fair.WebsiteUrl = model.WebsiteUrl;
+                fair.Order = model.Order; fair.IsActive = model.IsActive;
+                await _context.SaveChangesAsync(ct);
+
+                if (model.Cover != null)
+                {
+                    var folder = Path.Combine(_env.WebRootPath, "uploads", "fairs", fair.Id.ToString());
+                    Directory.CreateDirectory(folder);
+                    fair.Cover424x460 = await SaveWebpVariantAsync(model.Cover!, folder, "fairs", "cover-424x460", 424, 460);
+                    await _context.SaveChangesAsync(ct);
+                }
+
+                var postedBy = model.Langs.ToDictionary(x => x.LangCode, x => x, StringComparer.OrdinalIgnoreCase);
+                postedBy.TryGetValue("tr", out var trVm);
+                var trTitle = trVm?.Title ?? model.TitleTr ?? "";
+
+                var keyName = await BuildCanonicalKeyForFairAsync(trTitle, fair.Id, ct);
+
+                // TR
+                await UpsertFairTranslationAsync(fair.Id, trLang.Id, keyName, trTitle, trVm?.Slug, ct);
+
+                // Diğer diller
+                foreach (var l in langs.Where(x => x.Id != trLang.Id))
+                {
+                    postedBy.TryGetValue(l.LangCode, out var vm);
+                    string pick(string? v, string trv) =>
+                        (!model.AutoTranslate || !string.IsNullOrWhiteSpace(v)) ? (v ?? "") : TryTranslate(trv, "tr", l.LangCode);
+                    var titleT = pick(vm?.Title, trTitle);
+                    await UpsertFairTranslationAsync(fair.Id, l.Id, keyName, titleT, vm?.Slug, ct);
+                }
+
+                await _context.SaveChangesAsync(ct);
+                await tx.CommitAsync(ct);
+                TempData["FairMsg"] = "Fuar güncellendi.";
+                return RedirectToAction(nameof(FairsIndex));
+            }
+            catch (Exception ex)
+            {
+                await tx.RollbackAsync(ct);
+                ModelState.AddModelError("", ex.Message);
+                return View("UpdateFair", model);
+            }
+        }
+
+        // ========== DELETE (sert) ==========
+        [HttpPost("delete-fair/{id:int}")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DeleteFair(int id, CancellationToken ct)
+        {
+            var f = await _context.Fairs.FirstOrDefaultAsync(x => x.Id == id, ct);
+            if (f == null) { TempData["FairMsg"] = "Bulunamadı."; return RedirectToAction(nameof(FairsIndex)); }
+
+            var trs = await _context.FairTranslations.Where(x => x.FairId == id).ToListAsync(ct);
+            _context.FairTranslations.RemoveRange(trs);
+            _context.Fairs.Remove(f);
+            await _context.SaveChangesAsync(ct);
+
+            // klasörü de silmek istersen
+            try
+            {
+                var folder = Path.Combine(_env.WebRootPath, "uploads", "fairs", id.ToString());
+                if (Directory.Exists(folder)) Directory.Delete(folder, true);
+            }
+            catch { /* ignore */ }
+
+            TempData["FairMsg"] = "Silindi.";
+            return RedirectToAction(nameof(FairsIndex));
+        }
+
+        // ========== REORDER (drag&drop) ==========
+        [HttpPost("reorder-fairs")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ReorderFairs([FromBody] FairReorderReq req, CancellationToken ct)
+        {
+            if (req?.Ids == null || req.Ids.Count == 0) return BadRequest();
+
+            var items = await _context.Fairs.Where(x => req.Ids.Contains(x.Id)).ToListAsync(ct);
+            var map = req.Ids.Select((id, i) => (id, i)).ToDictionary(x => x.id, x => x.i);
+
+            foreach (var it in items) if (map.TryGetValue(it.Id, out var ord)) it.Order = ord;
+
+            await _context.SaveChangesAsync(ct);
+            return Json(new { ok = true });
+        }
+
+        // ========== QUICK ADD (modal) ==========
+        [HttpPost("create-fair-quick")]
+        public async Task<IActionResult> CreateFairQuick([FromBody] QuickFairReq req, CancellationToken ct)
+        {
+            try
+            {
+                var langs = await _context.Langs.AsNoTracking().OrderBy(l => l.Id).ToListAsync(ct);
+                var tr = langs.First(x => x.LangCode == "tr");
+
+                var f = new Fairs
+                {
+                    StartDate = req.StartDate,
+                    EndDate = req.EndDate,
+                    Country = req.Country,
+                    City = req.City,
+                    Venue = req.Venue,
+                    Order = req.Order,
+                    IsActive = req.IsActive
+                };
+                _context.Fairs.Add(f);
+                await _context.SaveChangesAsync(ct);
+
+                var trTitle = (req.TitleTr ?? "").Trim();
+                var key = await BuildCanonicalKeyForFairAsync(trTitle, f.Id, ct);
+
+                await UpsertFairTranslationAsync(f.Id, tr.Id, key, trTitle, null, ct);
+                foreach (var l in langs.Where(x => x.Id != tr.Id))
+                {
+                    var titleT = string.IsNullOrWhiteSpace(trTitle) ? "" : TryTranslate(trTitle, "tr", l.LangCode);
+                    await UpsertFairTranslationAsync(f.Id, l.Id, key, titleT, null, ct);
+                }
+                await _context.SaveChangesAsync(ct);
+
+                return Json(new { ok = true, id = f.Id });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { ok = false, error = ex.Message });
+            }
+        }
+
+
+        #endregion
+
+        #region Company
+        // AdminController.cs içine
+
+        [HttpGet("company")]
+        public async Task<IActionResult> Company(CancellationToken ct)
+        {
+            var entity = await _context.CompanyInfos.FirstOrDefaultAsync(ct);
+            if (entity == null)
+            {
+                entity = new CompanyInfo { Id = 1 };
+                _context.CompanyInfos.Add(entity);
+                await _context.SaveChangesAsync(ct);
+            }
+
+            var vm = new CompanyInfoVM
+            {
+                Id = entity.Id,
+                Name = entity.Name,
+                LegalName = entity.LegalName,
+                TaxNumber = entity.TaxNumber,
+                MersisNo = entity.MersisNo,
+                Email = entity.Email,
+                Email2 = entity.Email2,
+                Phone = entity.Phone,
+                Phone2 = entity.Phone2,
+                Whatsapp = entity.Whatsapp,
+                Fax = entity.Fax,
+                Website = entity.Website,
+                Country = entity.Country,
+                City = entity.City,
+                District = entity.District,
+                AddressLine = entity.AddressLine,
+                PostalCode = entity.PostalCode,
+                MapEmbedUrl = entity.MapEmbedUrl,
+                AboutHtml = entity.AboutHtml,
+                MissionHtml = entity.MissionHtml,
+                VisionHtml = entity.VisionHtml,
+                WorkingHours = entity.WorkingHours,
+                ExistingLogo = entity.LogoUrl,
+                ExistingHero = entity.HeroUrl
+            };
+
+            return View("Company", vm);
+        }
+
+        [HttpPost("company")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Company(CompanyInfoVM model, CancellationToken ct)
+        {
+            var entity = await _context.CompanyInfos.FirstOrDefaultAsync(ct);
+            if (entity == null) { entity = new CompanyInfo { Id = 1 }; _context.CompanyInfos.Add(entity); }
+
+            // Temel alanlar
+            entity.Name = model.Name;
+            entity.LegalName = model.LegalName;
+            entity.TaxNumber = model.TaxNumber;
+            entity.MersisNo = model.MersisNo;
+            entity.Email = model.Email;
+            entity.Email2 = model.Email2;
+            entity.Phone = model.Phone;
+            entity.Phone2 = model.Phone2;
+            entity.Whatsapp = model.Whatsapp;
+            entity.Fax = model.Fax;
+            entity.Website = model.Website;
+            entity.Country = model.Country;
+            entity.City = model.City;
+            entity.District = model.District;
+            entity.AddressLine = model.AddressLine;
+            entity.PostalCode = model.PostalCode;
+            entity.MapEmbedUrl = model.MapEmbedUrl;
+            entity.AboutHtml = model.AboutHtml;
+            entity.MissionHtml = model.MissionHtml;
+            entity.VisionHtml = model.VisionHtml;
+            entity.WorkingHours = model.WorkingHours;
+
+            // Görseller
+            var folder = Path.Combine(_env.WebRootPath, "uploads", "company");
+            Directory.CreateDirectory(folder);
+
+
+            if (model.Logo != null && model.Logo.Length > 0)
+            {
+                entity.LogoUrl = await SaveWebpVariantAsync(model.Logo, folder, "company", "logo", 400, 400);
+
+            }
+            if (model.Hero != null && model.Hero.Length > 0)
+            {
+                entity.HeroUrl = await SaveWebpVariantAsync(model.Hero, folder, "company", "hero", 1920, 600);
+
+            }
+            TempData["CompanyMsg"] = "Şirket bilgileri güncellendi.";
+            return RedirectToAction(nameof(Company));
+        }
+
+        #endregion
+        #region LEGAL (KVKK & Privacy)
+
+        // Liste
+        [HttpGet("legal")]
+        public async Task<IActionResult> LegalIndex(CancellationToken ct)
+        {
+            var trId = await _context.Langs.Where(l => l.LangCode == "tr").Select(l => l.Id).FirstAsync(ct);
+
+            // yoksa 2 kayıt oluştur (privacy/kvkk)
+            async Task EnsureRowAsync(string key)
+            {
+                var exists = await _context.LegalPages.AnyAsync(x => x.Key == key, ct);
+                if (!exists)
+                {
+                    var p = new LegalPage { Key = key, IsActive = true, Order = key == "privacy" ? 0 : 1 };
+                    _context.LegalPages.Add(p);
+                    await _context.SaveChangesAsync(ct);
+                    _context.LegalPageTranslations.Add(new LegalPageTranslation
+                    {
+                        LegalPageId = p.Id,
+                        LangCodeId = trId,
+                        Title = key.ToUpperInvariant(),
+                        Html = ""
+                    });
+                    await _context.SaveChangesAsync(ct);
+                }
+            }
+            await EnsureRowAsync("privacy");
+            await EnsureRowAsync("kvkk");
+
+            var list = await (from p in _context.LegalPages.AsNoTracking()
+                              join t in _context.LegalPageTranslations.AsNoTracking().Where(x => x.LangCodeId == trId)
+                                on p.Id equals t.LegalPageId into jt
+                              from tt in jt.DefaultIfEmpty()
+                              orderby p.Order, p.Id
+                              select new LegalListItemVM
+                              {
+                                  Id = p.Id,
+                                  Key = p.Key,
+                                  IsActive = p.IsActive,
+                                  Order = p.Order,
+                                  TitleTr = tt != null ? tt.Title : "(Başlık yok)"
+                              }).ToListAsync(ct);
+
+            return View("LegalIndex", list);
+        }
+
+        // Düzenle GET
+        [HttpGet("legal/{key}")]
+        public async Task<IActionResult> EditLegal(string key, CancellationToken ct)
+        {
+            key = (key ?? "").ToLowerInvariant();
+            if (key != "privacy" && key != "kvkk") return NotFound();
+
+            var page = await _context.LegalPages.FirstOrDefaultAsync(x => x.Key == key, ct);
+            if (page == null) return RedirectToAction(nameof(LegalIndex)); // güvenli
+
+            var langs = await _context.Langs.AsNoTracking().OrderBy(l => l.Id).ToListAsync(ct);
+            var trs = await _context.LegalPageTranslations.Where(x => x.LegalPageId == page.Id).ToListAsync(ct);
+
+            var vm = new EditLegalVM
+            {
+                Id = page.Id,
+                Key = page.Key,
+                IsActive = page.IsActive,
+                AutoTranslate = true,
+                Langs = new()
+            };
+
+            foreach (var l in langs)
+            {
+                var t = trs.FirstOrDefault(x => x.LangCodeId == l.Id);
+                vm.Langs.Add(new EditLegalLangVM
+                {
+                    LangCode = l.LangCode,
+                    Title = t?.Title ?? "",
+                    Html = t?.Html ?? "",
+                    Slug = t?.Slug
+                });
+                if (l.LangCode == "tr")
+                {
+                    vm.TitleTr = t?.Title ?? "";
+                    vm.HtmlTr = t?.Html ?? "";
+                }
+            }
+            return View("EditLegal", vm);
+        }
+
+        // Yardımcı: Upsert translation + (opsiyonel) slug kontrolü (dil bazında benzersiz)
+        private async Task UpsertLegalTranslationAsync(
+            int pageId, int langId, string title, string html, string? slug, CancellationToken ct)
+        {
+            string? normSlug = null;
+            if (!string.IsNullOrWhiteSpace(slug))
+            {
+                normSlug = ToLocalizedSlugSafe(slug);
+                var taken = await _context.LegalPageTranslations
+                    .AnyAsync(x => x.LangCodeId == langId && x.Slug == normSlug && x.LegalPageId != pageId, ct);
+                if (taken) throw new ValidationException($"Slug çakışması: {normSlug}");
+            }
+
+            var row = await _context.LegalPageTranslations
+                .FirstOrDefaultAsync(x => x.LegalPageId == pageId && x.LangCodeId == langId, ct);
+            if (row == null)
+            {
+                _context.LegalPageTranslations.Add(new LegalPageTranslation
+                {
+                    LegalPageId = pageId,
+                    LangCodeId = langId,
+                    Title = title ?? "",
+                    Html = html ?? "",
+                    Slug = normSlug
+                });
+            }
+            else
+            {
+                row.Title = title ?? "";
+                row.Html = html ?? "";
+                row.Slug = normSlug;
+            }
+        }
+
+        // Düzenle POST
+        [HttpPost("legal/{key}")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> EditLegal(string key, EditLegalVM model, CancellationToken ct)
+        {
+            key = (key ?? "").ToLowerInvariant();
+            if (key != "privacy" && key != "kvkk") return NotFound();
+
+            var page = await _context.LegalPages.FirstOrDefaultAsync(x => x.Id == model.Id && x.Key == key, ct);
+            if (page == null) return NotFound();
+
+            var langs = await _context.Langs.AsNoTracking().OrderBy(l => l.Id).ToListAsync(ct);
+            var trLang = langs.First(x => x.LangCode == "tr");
+
+            using var tx = await _context.Database.BeginTransactionAsync(ct);
+            try
+            {
+                page.IsActive = model.IsActive;
+                page.UpdatedAt = DateTime.UtcNow;
+                await _context.SaveChangesAsync(ct);
+
+                var postedBy = model.Langs.ToDictionary(x => x.LangCode, x => x, StringComparer.OrdinalIgnoreCase);
+                postedBy.TryGetValue("tr", out var trVm);
+                var trTitle = trVm?.Title ?? model.TitleTr ?? "";
+                var trHtml = trVm?.Html ?? model.HtmlTr ?? "";
+
+                // TR
+                await UpsertLegalTranslationAsync(page.Id, trLang.Id, trTitle, trHtml, trVm?.Slug, ct);
+
+                // Diğer diller: AutoTranslate sadece BOŞ alanları TR’den doldurur
+                foreach (var l in langs.Where(x => x.Id != trLang.Id))
+                {
+                    postedBy.TryGetValue(l.LangCode, out var vm);
+
+                    string pick(string? v, string trv) =>
+                        (!model.AutoTranslate || !string.IsNullOrWhiteSpace(v)) ? (v ?? "") : TryTranslate(trv, "tr", l.LangCode);
+
+                    var titleT = pick(vm?.Title, trTitle);
+                    var htmlT = pick(vm?.Html, trHtml);
+
+                    await UpsertLegalTranslationAsync(page.Id, l.Id, titleT, htmlT, vm?.Slug, ct);
+                }
+
+                await _context.SaveChangesAsync(ct);
+                await tx.CommitAsync(ct);
+
+                TempData["LegalMsg"] = $"{key.ToUpperInvariant()} güncellendi.";
+                return RedirectToAction(nameof(LegalIndex));
+            }
+            catch (ValidationException vex)
+            {
+                await tx.RollbackAsync(ct);
+                ModelState.AddModelError("", vex.Message);
+                return View("EditLegal", model);
+            }
+            catch (Exception ex)
+            {
+                await tx.RollbackAsync(ct);
+                ModelState.AddModelError("", $"Hata: {ex.Message}");
+                return View("EditLegal", model);
+            }
+        }
+        #endregion
+
+        #region SLIDES
+
+        [HttpGet("slides")]
+        public async Task<IActionResult> Slides(CancellationToken ct)
+        {
+            var trId = await _context.Langs.Where(l => l.LangCode == "tr").Select(l => l.Id).FirstAsync(ct);
+
+            var list = await (from s in _context.HomeSlides.AsNoTracking()
+                              join t in _context.HomeSlideTranslations.AsNoTracking().Where(x => x.LangCodeId == trId)
+                                on s.Id equals t.HomeSlideId into jt
+                              from tt in jt.DefaultIfEmpty()
+                              orderby s.Order, s.Id
+                              select new SlideListItemVM
+                              {
+                                  Id = s.Id,
+                                  IsActive = s.IsActive,
+                                  Order = s.Order,
+                                  Cover = s.Cover1920x900,
+                                  TitleTr = tt != null ? (tt.Title ?? "") : ""
+                              }).ToListAsync(ct);
+
+            return View("Slides", list);
+        }
+
+        [HttpGet("slides/create")]
+        public async Task<IActionResult> CreateSlide(CancellationToken ct)
+        {
+            var langs = await _context.Langs.AsNoTracking().OrderBy(l => l.Id).ToListAsync(ct);
+            var vm = new EditSlideVM
+            {
+                IsActive = true,
+                AutoTranslate = true,
+                Langs = langs.Select(l => new EditSlideLangVM { LangCode = l.LangCode }).ToList()
+            };
+            return View("EditSlide", vm);
+        }
+
+        [HttpGet("slides/{id:int}")]
+        public async Task<IActionResult> UpdateSlide(int id, CancellationToken ct)
+        {
+            var s = await _context.HomeSlides.FirstOrDefaultAsync(x => x.Id == id, ct);
+            if (s == null) return NotFound();
+
+            var langs = await _context.Langs.AsNoTracking().OrderBy(l => l.Id).ToListAsync(ct);
+            var trs = await _context.HomeSlideTranslations.Where(x => x.HomeSlideId == id).ToListAsync(ct);
+
+            var vm = new EditSlideVM
+            {
+                Id = s.Id,
+                IsActive = s.IsActive,
+                Order = s.Order,
+                AutoTranslate = true,
+                ExistingCover = s.Cover1920x900,
+                ExistingCoverMobile = s.CoverMobile768x1024,
+                Langs = new()
+            };
+
+            foreach (var l in langs)
+            {
+                var t = trs.FirstOrDefault(x => x.LangCodeId == l.Id);
+                vm.Langs.Add(new EditSlideLangVM
+                {
+                    LangCode = l.LangCode,
+                    Slogan = t?.Slogan,
+                    Title = t?.Title,
+                    Content = t?.Content,
+                    Cta1Text = t?.Cta1Text,
+                    Cta1Url = t?.Cta1Url,
+                    Cta2Text = t?.Cta2Text,
+                    Cta2Url = t?.Cta2Url
+                });
+
+                if (l.LangCode == "tr")
+                {
+                    vm.SloganTr = t?.Slogan; vm.TitleTr = t?.Title; vm.ContentTr = t?.Content;
+                    vm.Cta1TextTr = t?.Cta1Text; vm.Cta1UrlTr = t?.Cta1Url;
+                    vm.Cta2TextTr = t?.Cta2Text; vm.Cta2UrlTr = t?.Cta2Url;
+                }
+            }
+            return View("EditSlide", vm);
+        }
+
+        [HttpPost("slides/save")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> SaveSlide(EditSlideVM model, CancellationToken ct)
+        {
+            var langs = await _context.Langs.AsNoTracking().OrderBy(l => l.Id).ToListAsync(ct);
+            var trLang = langs.First(l => l.LangCode == "tr");
+
+            // Create'de kapak zorunlu
+            if (model.Id == null && (model.Cover == null || model.Cover.Length == 0))
+                ModelState.AddModelError(nameof(model.Cover), "Kapak görseli (1920x900) zorunlu.");
+
+            if (!ModelState.IsValid)
+                return View("EditSlide", model);
+
+            using var tx = await _context.Database.BeginTransactionAsync(ct);
+            try
+            {
+                HomeSlide s;
+                if (model.Id == null)
+                {
+                    s = new HomeSlide { IsActive = model.IsActive, Order = model.Order };
+                    _context.HomeSlides.Add(s);
+                    await _context.SaveChangesAsync(ct);
+                }
+                else
+                {
+                    s = await _context.HomeSlides.FirstAsync(x => x.Id == model.Id.Value, ct);
+                    s.IsActive = model.IsActive;
+                    s.Order = model.Order;
+                    s.UpdatedAt = DateTime.UtcNow;
+                    await _context.SaveChangesAsync(ct);
+                }
+
+                // Görseller
+                var folder = Path.Combine(_env.WebRootPath, "uploads", "slides", s.Id.ToString());
+                Directory.CreateDirectory(folder);
+
+                if (model.Cover != null && model.Cover.Length > 0)
+                {
+                    s.Cover1920x900 = await SaveWebpVariantAsync(model.Cover, folder, "slides", "cover-1920x900", 1920, 900);
+                }
+                if (model.CoverMobile != null && model.CoverMobile.Length > 0)
+                {
+                    s.CoverMobile768x1024 = await SaveWebpVariantAsync(model.CoverMobile, folder, "slides", "cover-mobile-768x1024", 768, 1024);
+                }
+                await _context.SaveChangesAsync(ct);
+
+                // TR kaynak
+                var byLang = model.Langs.ToDictionary(x => x.LangCode, x => x, StringComparer.OrdinalIgnoreCase);
+                byLang.TryGetValue("tr", out var trVm);
+
+                string pick(string? v, string trv, string to) =>
+                    (!model.AutoTranslate || !string.IsNullOrWhiteSpace(v)) ? (v ?? "") : TryTranslate(trv, "tr", to);
+
+                var trSlogan = trVm?.Slogan ?? model.SloganTr ?? "";
+                var trTitle = trVm?.Title ?? model.TitleTr ?? "";
+                var trCont = trVm?.Content ?? model.ContentTr ?? "";
+
+                await UpsertSlideTrAsync(s.Id, trLang.Id, trSlogan, trTitle, trCont,
+                    trVm?.Cta1Text ?? model.Cta1TextTr,
+                    trVm?.Cta1Url ?? model.Cta1UrlTr,
+                    trVm?.Cta2Text ?? model.Cta2TextTr,
+                    trVm?.Cta2Url ?? model.Cta2UrlTr, ct);
+
+                foreach (var l in langs.Where(x => x.Id != trLang.Id))
+                {
+                    byLang.TryGetValue(l.LangCode, out var vm);
+
+                    var sl = pick(vm?.Slogan, trSlogan, l.LangCode);
+                    var ti = pick(vm?.Title, trTitle, l.LangCode);
+                    var co = pick(vm?.Content, trCont, l.LangCode);
+
+                    var c1t = string.IsNullOrWhiteSpace(vm?.Cta1Text) && model.AutoTranslate && !string.IsNullOrWhiteSpace(model.Cta1TextTr)
+                                ? TryTranslate(model.Cta1TextTr!, "tr", l.LangCode) : (vm?.Cta1Text ?? "");
+                    var c2t = string.IsNullOrWhiteSpace(vm?.Cta2Text) && model.AutoTranslate && !string.IsNullOrWhiteSpace(model.Cta2TextTr)
+                                ? TryTranslate(model.Cta2TextTr!, "tr", l.LangCode) : (vm?.Cta2Text ?? "");
+
+                    await UpsertSlideTrAsync(s.Id, l.Id, sl, ti, co,
+                        c1t, vm?.Cta1Url, c2t, vm?.Cta2Url, ct);
+                }
+
+                await _context.SaveChangesAsync(ct);
+                await tx.CommitAsync(ct);
+
+                TempData["SlideMsg"] = model.Id == null ? "Slayt oluşturuldu." : "Slayt güncellendi.";
+                return RedirectToAction(nameof(Slides));
+            }
+            catch (Exception ex)
+            {
+                await tx.RollbackAsync(ct);
+                ModelState.AddModelError("", $"Kaydetme hatası: {ex.Message}");
+                return View("EditSlide", model);
+            }
+        }
+
+        private async Task UpsertSlideTrAsync(
+            int slideId, int langId, string? slogan, string? title, string? content,
+            string? cta1Text, string? cta1Url, string? cta2Text, string? cta2Url, CancellationToken ct)
+        {
+            var row = await _context.HomeSlideTranslations
+                .FirstOrDefaultAsync(x => x.HomeSlideId == slideId && x.LangCodeId == langId, ct);
+
+            if (row == null)
+            {
+                _context.HomeSlideTranslations.Add(new HomeSlideTranslation
+                {
+                    HomeSlideId = slideId,
+                    LangCodeId = langId,
+                    Slogan = slogan,
+                    Title = title,
+                    Content = content,
+                    Cta1Text = cta1Text,
+                    Cta1Url = cta1Url,
+                    Cta2Text = cta2Text,
+                    Cta2Url = cta2Url
+                });
+            }
+            else
+            {
+                row.Slogan = slogan; row.Title = title; row.Content = content;
+                row.Cta1Text = cta1Text; row.Cta1Url = cta1Url; row.Cta2Text = cta2Text; row.Cta2Url = cta2Url;
+            }
+        }
+
+        [HttpPost("slides/delete/{id:int}")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DeleteSlide(int id, CancellationToken ct)
+        {
+            var s = await _context.HomeSlides.FirstOrDefaultAsync(x => x.Id == id, ct);
+            if (s == null) return NotFound();
+
+            _context.HomeSlides.Remove(s);
+            await _context.SaveChangesAsync(ct);
+
+            // klasörü de temizlemek istersen (opsiyonel)
+            var folder = Path.Combine(_env.WebRootPath, "uploads", "slides", id.ToString());
+            if (Directory.Exists(folder)) Directory.Delete(folder, recursive: true);
+
+            TempData["SlideMsg"] = "Slayt silindi.";
+            return RedirectToAction(nameof(Slides));
+        }
+
+        [HttpPost("slides/reorder")]
+        public async Task<IActionResult> ReorderSlides([FromBody] ReorderIdsReq req, CancellationToken ct)
+        {
+            var items = await _context.HomeSlides.Where(p => req.Ids.Contains(p.Id)).ToListAsync(ct);
+            int order = 0;
+            foreach (var id in req.Ids)
+            {
+                var it = items.FirstOrDefault(x => x.Id == id);
+                if (it != null) it.Order = order++;
+            }
+            await _context.SaveChangesAsync(ct);
+            return Ok(new { ok = true });
+        }
+
+        #endregion
         #region helpers
         // ===== Helpers =====
 
@@ -2427,7 +3302,7 @@ namespace kayialp.Controllers
 
 
         private static readonly HashSet<string> _allowedImageExts =
-            new(StringComparer.OrdinalIgnoreCase) { ".jpg", ".jpeg", ".png", ".webp", ".jfif" };
+            new(StringComparer.OrdinalIgnoreCase) { ".jpg", ".jpeg", ".png", ".webp", ".jfif", ".svg" };
 
         // 10 MB
         private const long MAX_IMAGE_BYTES = 10 * 1024 * 1024;
@@ -2476,7 +3351,7 @@ namespace kayialp.Controllers
             return csv.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).Length;
         }
         // --- NEW: central crop + exact size + webp save ---
-        private async Task<string> SaveWebpVariantAsync(IFormFile file, string folder, string relFolder, string fileNameNoExt, int width, int height)
+        private async Task<string> SaveWebpVariantAsync(IFormFile file, string folder, string? relFolder, string fileNameNoExt, int width, int height)
         {
             Directory.CreateDirectory(folder);
             var targetPath = Path.Combine(folder, $"{fileNameNoExt}.webp");
@@ -2501,6 +3376,8 @@ namespace kayialp.Controllers
             await image.SaveAsWebpAsync(targetPath, encoder);
 
             // return web-relative path
+            // var rel = $"/uploads/{relFolder}/{fileNameNoExt}.webp";
+            // return rel;
             var rel = $"/uploads/{relFolder}/{Path.GetFileName(folder)}/{fileNameNoExt}.webp";
             return rel.Replace("\\", "/");
         }

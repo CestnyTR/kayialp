@@ -1,0 +1,110 @@
+@using kayialp.ViewModels
+@model CreateFairVM
+@{
+    Layout = "/Views/Shared/_AdminLayout.cshtml";
+    ViewData["Title"] = "Yeni Fuar";
+}
+
+<h2 class="mb-3">@ViewData["Title"]</h2>
+
+<form action="/admin/create-fair" method="post" enctype="multipart/form-data" class="card p-3">
+    @Html.AntiForgeryToken()
+
+    <div class="alert alert-danger" asp-validation-summary="All"
+         style="display:@(ViewData.ModelState.IsValid ? "none" : "block")"></div>
+
+    <div class="row g-3">
+        <div class="col-md-3">
+            <label class="form-label">Başlangıç</label>
+            <input asp-for="StartDate" type="date" class="form-control" />
+        </div>
+        <div class="col-md-3">
+            <label class="form-label">Bitiş</label>
+            <input asp-for="EndDate" type="date" class="form-control" />
+        </div>
+        <div class="col-md-2">
+            <label class="form-label">Sıra</label>
+            <input asp-for="Order" class="form-control" />
+        </div>
+        <div class="col-md-2 d-flex align-items-end">
+            <div class="form-check">
+                <input class="form-check-input" asp-for="IsActive" />
+                <label class="form-check-label" for="IsActive">Aktif</label>
+            </div>
+        </div>
+        <div class="col-md-2 d-flex align-items-end">
+            <div class="form-check">
+                <input class="form-check-input" asp-for="AutoTranslate" />
+                <label class="form-check-label" for="AutoTranslate">AutoTranslate (TR → boş alanlar)</label>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <label class="form-label">Ülke</label>
+            <input asp-for="Country" class="form-control" />
+        </div>
+        <div class="col-md-4">
+            <label class="form-label">Şehir</label>
+            <input asp-for="City" class="form-control" />
+        </div>
+        <div class="col-md-4">
+            <label class="form-label">Mekân (Venue)</label>
+            <input asp-for="Venue" class="form-control" />
+        </div>
+        <div class="col-md-6">
+            <label class="form-label">Website (ops.)</label>
+            <input asp-for="WebsiteUrl" class="form-control" />
+        </div>
+
+        <div class="col-md-6">
+            <label class="form-label">Kapak (424×460)</label>
+            <input asp-for="Cover" type="file" class="form-control" />
+            <span asp-validation-for="Cover" class="text-danger"></span>
+        </div>
+    </div>
+
+    <hr />
+
+    <!-- Dil sekmeleri -->
+    <ul class="nav nav-tabs" id="langTabs" role="tablist">
+        @for (int i = 0; i < Model.Langs.Count; i++)
+        {
+            var lc = Model.Langs[i].LangCode;
+            <li class="nav-item" role="presentation">
+                <button class="nav-link @(i == 0 ? "active" : "")" id="tab-@lc" data-bs-toggle="tab"
+                        data-bs-target="#pane-@lc" type="button" role="tab">@lc.ToUpperInvariant()</button>
+            </li>
+        }
+    </ul>
+    <div class="tab-content border border-top-0 p-3">
+        @for (int i = 0; i < Model.Langs.Count; i++)
+        {
+            var lc = Model.Langs[i].LangCode;
+            <div class="tab-pane fade @(i == 0 ? "show active" : "")" id="pane-@lc" role="tabpanel">
+                <input type="hidden" name="Langs[@i].LangCode" value="@lc" />
+                <div class="row g-3">
+                    <div class="col-md-8">
+                        <label class="form-label">@lc.ToUpper() Başlık (Title)</label>
+                        <input name="Langs[@i].Title" value="@(Model.Langs[i].Title ?? "")" class="form-control" />
+                        @* TR için kısa yol alanın varsa kullanışlı olsun diye gösterelim *@
+                        @if (lc == "tr")
+                        {
+                            <small class="text-muted">İstersen TR başlığı üst kısayoldan da doldurabilirsin.</small>
+                            <input type="hidden" asp-for="TitleTr" />
+                        }
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Slug</label>
+                        <input name="Langs[@i].Slug" value="@(Model.Langs[i].Slug ?? "")" class="form-control" />
+                        <small class="text-muted">Boşsa başlıktan türetilir. Çakışırsa hata verir.</small>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+
+    <div class="d-flex justify-content-end gap-2 mt-3">
+        <a href="/admin/fairs" class="btn btn-outline-secondary">İptal</a>
+        <button type="submit" class="btn btn-primary">Kaydet</button>
+    </div>
+</form>

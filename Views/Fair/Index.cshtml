@@ -1,9 +1,75 @@
+@model kayialp.ViewModels.FairsFilterVM
+@{
+    Layout = "/Views/Shared/_Layout.cshtml";
+    ViewData["Title"] = "Fairs";
+    string Local(string s) => s;
+}
+
+<div class="breadcumb-area ">
+    <div class="breadcumb-wrapper" data-bg-src="/img/bg/breadcumb-bg.jpg">
+        <div class="container">
+            <div class="breadcumb-content">
+                <h1 class="breadcumb-title">FUAR</h1>
+                <ul class="breadcumb-menu">
+                    <li><a href="/">ANASAYFA</a></li>
+                    <li>Fuar</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<section class="container my-5">
+    <div class="d-flex justify-content-between align-items-end mb-4">
+        <h2 class="m-0">Fairs</h2>
+        <form method="get" class="d-flex gap-2">
+            <select name="year" class="form-select" style="width:160px">
+                <option value="">@Local("All Years")</option>
+                @foreach (var y in Model.Years)
+                {
+                    <option value="@y" selected="@(Model.Year == y ? "selected" : null)">@y</option>
+                }
+            </select>
+
+            <select name="country" class="form-select" style="width:220px">
+                <option value="">@Local("All Countries")</option>
+                @foreach (var c in Model.Countries)
+                {
+                    <option value="@c" selected="@(Model.Country == c ? "selected" : null)">@c</option>
+                }
+            </select>
+
+            <button class="btn btn-primary">@Local("Filter")</button>
+        </form>
+    </div>
+
+    <div class="row row-cols-1 row-cols-md-3 g-4">
+        @foreach (var card in Model.Cards)
+        {
+            <div class="col">
+                <div class="card fair-card rounded-0">
+                    <img src="@card.CoverUrl" class="card-img-top fair-card-img-top rounded-0" alt="@card.Title" />
+                    <div class="card-body fair-card-body">
+                        <h5 class="card-title fair-name">@Html.Localize($"fairs.{card.Title}")</h5>
+                        <p class="card-text fair-place">Fair Name:@Html.Localize($"fairs.{card.Title}")</p>
+                        <p class="card-text fair-date">Date: @card.DateRange</p>
+                        <p class="card-text fair-place">Place: @card.Venue / @card.City / @card.Country</p>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</section>
+
+@* 
+<!--
 @{
     ViewData["Title"] = "FUAR";
     Layout = "/Views/Shared/_Layout.cshtml";
 
 }
-<!--==============================
+<!--
+==============================
     Breadcumb
 ============================== -->
 <div class="breadcumb-area ">
@@ -26,7 +92,7 @@ Gallery Area
 ==============================-->
 <div class="container my-5">
     <div class="row row-cols-1 row-cols-md-3 g-4">
-        
+
         <div class="col">
             <div class="card fair-card rounded-0">
                 <img src="/img/project/project-inner4.jpg" class="card-img-top fair-card-img-top rounded-0" alt="...">
@@ -65,3 +131,4 @@ Gallery Area
 
     </div>
 </div>
+--> *@

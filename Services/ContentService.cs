@@ -56,6 +56,12 @@ namespace kayialp.Services
                         .FirstOrDefault(t => t.KeyName == key && t.LangCodeId == langId);
                     result = categoryTranslation?.ValueText;
                     break;
+                case "fairs":
+                    // Key formatı: "categories.key_name"
+                    var fairsTranslation = _context.FairTranslations
+                        .FirstOrDefault(t => t.KeyName == key && t.LangCodeId == langId);
+                    result = fairsTranslation?.Title;
+                    break;
                 case "products":
                     // Key formatı: "products.key_name"
                     // ProductTranslations modelinize göre sorgunuzu buraya ekleyebilirsiniz.
