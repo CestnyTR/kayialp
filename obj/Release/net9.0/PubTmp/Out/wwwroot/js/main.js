@@ -1688,7 +1688,7 @@
         });
     }
 
-    if ($('.text-anime-style-2').length) {
+     if ($('.text-anime-style-2').length) {
         let staggerAmount = 0.03,
             translateXValue = 20,
             delayValue = 0.1,
@@ -1696,12 +1696,10 @@
             animatedTextElements = document.querySelectorAll('.text-anime-style-2');
 
         animatedTextElements.forEach((element) => {
-            let animationSplitText2 = new SplitText(element, {
+            let animationSplitText = new SplitText(element, {
                 type: "chars, words"
             });
-
-            // Basit bir test animasyonu
-            gsap.from(animationSplitText2.chars, {
+            gsap.from(animationSplitText.chars, {
                 duration: 2,
                 delay: delayValue,
                 x: translateXValue,
@@ -2068,30 +2066,30 @@
     window.addEventListener("resize", enableOrDisableLenis);
 
 
-    // /*----------- 00. Right Click Disable ----------*/ 
-    // //   window.addEventListener('contextmenu', function (e) {
-    // //     // do something here...
-    // //     e.preventDefault();  
-    // //   }, false);  
+    // // /*----------- 00. Right Click Disable ----------*/ 
+    //     window.addEventListener('contextmenu', function (e) {
+    //         // do something here...
+    //         e.preventDefault();  
+    //     }, false);  
 
-    // // /*----------- 00. Inspect Element Disable ----------*/   
-    // //   document.onkeydown = function (e) {   
-    // //     if (event.keyCode == 123) {  
-    // //       return false;
-    // //     }
-    // //     if (e.ctrlKey && e.shiftKey && e.keyCode == 'I'.charCodeAt(0)) {
-    // //       return false;
-    // //     }
-    // //     if (e.ctrlKey && e.shiftKey && e.keyCode == 'C'.charCodeAt(0)) {
-    // //       return false;
-    // //     }
-    // //     if (e.ctrlKey && e.shiftKey && e.keyCode == 'J'.charCodeAt(0)) {
-    // //       return false;
-    // //     }
-    // //     if (e.ctrlKey && e.keyCode == 'U'.charCodeAt(0)) {  
-    // //       return false;
-    // //     } 
-    // //   }   
+    //     /*----------- 00. Inspect Element Disable ----------*/   
+    //     document.onkeydown = function (e) {   
+    //         if (event.keyCode == 123) {  
+    //         return false;
+    //         }
+    //         if (e.ctrlKey && e.shiftKey && e.keyCode == 'I'.charCodeAt(0)) {
+    //         return false;
+    //         }
+    //         if (e.ctrlKey && e.shiftKey && e.keyCode == 'C'.charCodeAt(0)) {
+    //         return false;
+    //         }
+    //         if (e.ctrlKey && e.shiftKey && e.keyCode == 'J'.charCodeAt(0)) {
+    //         return false;
+    //         }
+    //         if (e.ctrlKey && e.keyCode == 'U'.charCodeAt(0)) {  
+    //         return false;
+    //         } 
+    //     }   
 
 })(jQuery);
 

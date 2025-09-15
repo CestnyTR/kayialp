@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("kayialp")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Release")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+ef895f453b26b9ac29cb680d8076b0666d5be0b3")]
 [assembly: System.Reflection.AssemblyProductAttribute("kayialp")]
 [assembly: System.Reflection.AssemblyTitleAttribute("kayialp")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

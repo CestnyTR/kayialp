@@ -37,6 +37,7 @@ D:\iş\sipariş-işleri\Kayıalp\kayialp\obj\Release\net9.0\PubTmp\Out\Microsoft
 D:\iş\sipariş-işleri\Kayıalp\kayialp\obj\Release\net9.0\PubTmp\Out\Microsoft.Win32.SystemEvents.dll
 D:\iş\sipariş-işleri\Kayıalp\kayialp\obj\Release\net9.0\PubTmp\Out\Newtonsoft.Json.dll
 D:\iş\sipariş-işleri\Kayıalp\kayialp\obj\Release\net9.0\PubTmp\Out\Newtonsoft.Json.Bson.dll
+D:\iş\sipariş-işleri\Kayıalp\kayialp\obj\Release\net9.0\PubTmp\Out\SixLabors.ImageSharp.dll
 D:\iş\sipariş-işleri\Kayıalp\kayialp\obj\Release\net9.0\PubTmp\Out\System.ClientModel.dll
 D:\iş\sipariş-işleri\Kayıalp\kayialp\obj\Release\net9.0\PubTmp\Out\System.Configuration.ConfigurationManager.dll
 D:\iş\sipariş-işleri\Kayıalp\kayialp\obj\Release\net9.0\PubTmp\Out\System.Drawing.Common.dll

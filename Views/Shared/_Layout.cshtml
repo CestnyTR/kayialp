@@ -9,7 +9,7 @@
 }
 
 <!doctype html>
-<html class="no-js"  lang=@ViewData["Culture"] style="--theme-color: #182129;">
+<html class="no-js" lang=@ViewData["Culture"] style="--theme-color: #182129;">
 
 <head>
     <meta charset="utf-8">
@@ -72,7 +72,8 @@
         <div class="th-menu-area text-center">
             <button class="th-menu-toggle"><i class="fal fa-times"></i></button>
             <div class="mobile-logo">
-                <a href="index.html"><img src="~/img/logo-mobile.png" alt="Atek"></a>
+                <a class="@(currentController == "Home" ? "active" : "")" href="/"><img src="~/img/logo-mobile.png"
+                        alt="logo mobile"></a>
             </div>
             <div class="th-mobile-menu allow-natural-scroll">
                 <ul>
@@ -88,7 +89,8 @@
                             class="@(currentController == "Fair" ? "active" : "")">@Html.Localize("pages.layout.fairs")</a>
                     </li>
                     <li><a asp-controller="Contact" asp-action="Index" asp-route-culture="@ViewData["Culture"]"
-                            class="@(currentController == "Contact" ? "active" : "")">@Html.Localize(key: "pages.layout.communication")</a>
+                            class="@(currentController == "Contact" ? "active" : "")">@Html.Localize(key:
+                                                        "pages.layout.communication")</a>
                     </li>
                 </ul>
                 <div class="sticky-bottom">
@@ -151,7 +153,7 @@
                                                                                         })
                                             {
                                                 <button type="submit" name="culture" class="language-option @if(currentCulture == lang.Code) {
-                                                                                        <text>selected</text>
+                                                                                            <text>selected</text>
                                                 }
 " value="@lang.Code" id="@lang.Code">
                                                 <img src="@lang.FlagUrl" alt="@lang.Name" class="flag-img" />
@@ -223,7 +225,8 @@
                                 </button>
                                 <a asp-controller="Contact" asp-action="Index" asp-route-culture="@ViewData["Culture"]"
                                     class="th-btn th-icon">
-                                    @Html.Localize("pages.layout.contact_us") <i class="fa-light fa-arrow-right-long"></i></a>
+                                    @Html.Localize("pages.layout.contact_us") <i
+                                        class="fa-light fa-arrow-right-long"></i></a>
                             </div>
 
                         </div>

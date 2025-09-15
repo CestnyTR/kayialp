@@ -2,8 +2,8 @@
 <!-- https://go.microsoft.com/fwlink/?LinkID=208121. -->
 <Project>
   <PropertyGroup>
-    <_PublishTargetUrl>C:\Users\Hasan\Desktop\publish</_PublishTargetUrl>
-    <History>True|2025-08-28T21:42:03.5493548Z||;True|2025-08-28T13:42:00.1975746+03:00||;True|2025-08-28T13:33:42.2343656+03:00||;True|2025-08-28T09:49:18.0264516+03:00||;True|2025-08-27T16:23:43.6994569+03:00||;</History>
+    <_PublishTargetUrl>C:\Users\Hasan\Desktop\project_publish\kayialp</_PublishTargetUrl>
+    <History>True|2025-09-15T10:36:53.2520718Z||;</History>
     <LastFailureDetails />
   </PropertyGroup>
 </Project>
