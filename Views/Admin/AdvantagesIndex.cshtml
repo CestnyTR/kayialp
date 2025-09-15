@@ -1,0 +1,38 @@
+@model IEnumerable<dynamic>
+@{
+    Layout = "/Views/Shared/_AdminLayout.cshtml";
+    ViewData["Title"] = "Avantajlar";
+}
+<h2>Avantajlar</h2>
+<a href="/admin/create-advantage" class="btn btn-success mb-3">+ Yeni Avantaj</a>
+<table class="table">
+    <thead>
+        <tr>
+            <th>#</th>
+            <th>Görsel</th>
+            <th>Başlık (TR)</th>
+            <th>Sıra</th>
+            <th>Aktif</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var a in Model)
+        {
+            <tr>
+                <td>@a.Id</td>
+                <td><img src="@a.Image313Url" style="width:60px;height:60px;object-fit:cover" /></td>
+                <td>@a.Title</td>
+                <td>@a.Order</td>
+                <td>@(a.IsActive ? "✓" : "—")</td>
+                <td>
+                    <a href="/admin/update-advantage/@a.Id" class="btn btn-info btn-sm">Düzenle</a>
+                    <form asp-action="DeleteAdvantage" asp-route-id="@a.Id" method="post" style="display:inline">
+                        @Html.AntiForgeryToken()
+                        <button type="submit" class="btn btn-danger btn-sm">Sil</button>
+                    </form>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

@@ -1,0 +1,139 @@
+@model kayialp.ViewModels.Slider.SliderViewModel
+@using System.Linq
+
+@{
+    var menuItems = string.Join(", ", Enumerable.Repeat("\"\"", Model?.Items?.Count ?? 0));
+    var sliderOptionsJson =
+        $"{{\"effect\":\"fade\",\"menu\": [{menuItems}],\"heroSlide1\": {{\"swiper-container\": {{\"pagination\": {{\"el\": \".swiper-pagination\", \"clickable\": true }}}}}}}}";
+}
+
+@if (Model?.Items != null && Model.Items.Any())
+{
+    <div class="th-hero-wrapper hero-1" id="hero">
+        <div class="swiper th-slider hero-slider-1" id="heroSlide1" data-slider-options='@Html.Raw(sliderOptionsJson)'>
+            <div class="swiper-wrapper">
+
+                @foreach (var slide in Model.Items)
+                {
+                    <div class="swiper-slide">
+                        <div class="hero-inner">
+                            <!-- NOT: Temanın yapısını bozmadık. Sadece ek data-* ekledik. -->
+                            <div class="th-hero-bg"
+                                 data-bg-src="@slide.DesktopImageUrl"            
+                                 data-bg-src-desktop="@slide.DesktopImageUrl"     
+                                 data-bg-src-mobile="@slide.MobileImageUrl">     
+                            </div>
+
+                            <div class="hero-1-shape d-none d-lg-block" data-ani="slideinleft" data-ani-delay="0.4s">
+                                <img src="/img/shape/hero-1-shape.png" alt="hero-shape">
+                            </div>
+
+                            <div class="container">
+                                <div class="row">
+                                    <div class="col-xl-9 col-lg-8">
+                                        <div class="hero-style1">
+                                            @if (!string.IsNullOrWhiteSpace(slide.Slogan))
+                                            {
+                                                <span class="sub-title style1" data-ani="slideinup" data-ani-delay="0.2s">
+                                                    @slide.Slogan
+                                                </span>
+                                            }
+
+                                            @if (!string.IsNullOrWhiteSpace(slide.Title))
+                                            {
+                                                <h1 class="hero-title" data-ani="slideinup" data-ani-delay="0.4s">
+                                                    @slide.Title
+                                                </h1>
+                                            }
+
+                                            @if (!string.IsNullOrWhiteSpace(slide.Content))
+                                            {
+                                                <p class="hero-text text-white" data-ani="slideinup" data-ani-delay="0.6s">
+                                                    @Html.Raw(slide.Content)
+                                                </p>
+                                            }
+
+                                            <div class="btn-group" data-ani="slideinup" data-ani-delay="0.8s">
+                                                @if (!string.IsNullOrWhiteSpace(slide.Cta1Text))
+                                                {
+                                                    <a href="@(string.IsNullOrWhiteSpace(slide.Cta1Url) ? "#" : slide.Cta1Url)"
+                                                       class="th-btn style7 th-icon">
+                                                        @slide.Cta1Text <i class="fa-light fa-arrow-right-long"></i>
+                                                    </a>
+                                                }
+                                                @if (!string.IsNullOrWhiteSpace(slide.Cta2Text))
+                                                {
+                                                    <a href="@(string.IsNullOrWhiteSpace(slide.Cta2Url) ? "#" : slide.Cta2Url)"
+                                                       class="th-btn style2 th-icon">
+                                                        @slide.Cta2Text <i class="fa-light fa-arrow-right-long"></i>
+                                                    </a>
+                                                }
+                                            </div>
+
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                }
+
+            </div>
+
+            <div class="th-swiper-custom">
+                <button data-slider-prev="#heroSlide1" class="slider-arrow slider-prev">
+                    <img src="/img/icon/right-arrow.svg" alt="">
+                </button>
+                <div class="slider-pagination"></div>
+                <button data-slider-next="#heroSlide1" class="slider-arrow slider-next">
+                    <img src="/img/icon/left-arrow.svg" alt="">
+                </button>
+            </div>
+        </div>
+    </div>
+
+    @* EKRAN GENİŞLİĞİNE GÖRE BG SEÇİMİ — CSS'e dokunmadan *@
+    <script>
+        (function () {
+            var mql = window.matchMedia('(max-width: 768px)');
+
+            function setHeroBackgrounds() {
+                var isMobile = mql.matches;
+                document.querySelectorAll('#hero .th-hero-bg').forEach(function (bg) {
+                    var desk = bg.getAttribute('data-bg-src-desktop');
+                    var mob  = bg.getAttribute('data-bg-src-mobile');
+                    var url  = (isMobile && mob) ? mob : desk;
+
+                    if (!url) return;
+
+                    // Temanın JS'i background'ı data-bg-src'tan da alıyor olabilir;
+                    // biz style.backgroundImage'ı set ederek kesinleştiriyoruz:
+                    if (!bg.style.backgroundImage || !bg.style.backgroundImage.includes(url)) {
+                        bg.style.backgroundImage = "url('" + url + "')";
+                    }
+
+                    // Temanın kendi loader'ı kullanıyorsa ona da aynı URL'yi veriyoruz:
+                    bg.setAttribute('data-bg-src', url);
+                });
+            }
+
+            // DOM hazır + tüm kaynaklar yüklendiğinde çalıştır:
+            document.addEventListener('DOMContentLoaded', setHeroBackgrounds);
+            window.addEventListener('load', setHeroBackgrounds);
+
+            // Resize'da çok sık tetiklenmesin diye basit debounce:
+            var t;
+            window.addEventListener('resize', function () {
+                clearTimeout(t);
+                t = setTimeout(setHeroBackgrounds, 150);
+            });
+
+            // Bazı temalarda slide değişince iç DOM yeniden ölçümleniyor olabilir;
+            // periyodik bir güvence (hafif) — istersen kaldırabilirsin:
+            var guard = setInterval(setHeroBackgrounds, 1200);
+            // 10 sn sonra otomatik kapatalım:
+            setTimeout(function(){ clearInterval(guard); }, 10000);
+        })();
+    </script>
+}

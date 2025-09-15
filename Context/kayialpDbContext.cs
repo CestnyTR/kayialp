@@ -9,7 +9,7 @@ namespace kayialp.Context
     public kayialpDbContext(DbContextOptions<kayialpDbContext> options) : base(options)
     {
     }
-    
+
     protected override void OnModelCreating(ModelBuilder mb)
     {
       base.OnModelCreating(mb);
@@ -39,9 +39,19 @@ namespace kayialp.Context
       mb.Entity<BlogCategoriesTranslations>()
         .HasIndex(x => new { x.LangCodeId, x.Slug })
         .IsUnique();
+
+      mb.Entity<AdvantageTranslation>()
+    .HasIndex(x => new { x.AdvantageId, x.LangCodeId })
+    .IsUnique();
+
+      mb.Entity<AdvantageTranslation>()
+        .HasOne(t => t.Lang)
+        .WithMany()                 // Langs tarafında koleksiyon yoksa
+        .HasForeignKey(t => t.LangCodeId)
+        .OnDelete(DeleteBehavior.Restrict);
     }
 
-// Localization start
+    // Localization start
     public DbSet<CategoriesTranslations> CategoriesTranslations { get; set; }
     public DbSet<FaqTranslations> FaqTranslations { get; set; }
     public DbSet<PageTranslations> PageTranslations { get; set; }
@@ -86,7 +96,10 @@ namespace kayialp.Context
     //HomeSlides 
     public DbSet<HomeSlide> HomeSlides { get; set; }
     public DbSet<HomeSlideTranslation> HomeSlideTranslations { get; set; }
+    //Advantage 
 
+    public DbSet<Advantage> Advantages { get; set; }
+    public DbSet<AdvantageTranslation> AdvantageTranslations { get; set; }
 
   }
 }

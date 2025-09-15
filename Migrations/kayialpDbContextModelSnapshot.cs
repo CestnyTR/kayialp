@@ -194,6 +194,61 @@ namespace kayialp.Migrations
                     b.ToTable("ProductContentBlockTranslations");
                 });
 
+            modelBuilder.Entity("kayialp.Models.Advantage", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Image313Url")
+                        .HasMaxLength(300)
+                        .HasColumnType("nvarchar(300)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<int>("Order")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Advantages");
+                });
+
+            modelBuilder.Entity("kayialp.Models.AdvantageTranslation", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("AdvantageId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Content")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("LangCodeId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("LangCodeId");
+
+                    b.HasIndex("AdvantageId", "LangCodeId")
+                        .IsUnique();
+
+                    b.ToTable("AdvantageTranslations");
+                });
+
             modelBuilder.Entity("kayialp.Models.BlogCategories", b =>
                 {
                     b.Property<int>("Id")
@@ -485,7 +540,7 @@ namespace kayialp.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
 
-                    b.Property<string>("HeroUrl")
+                    b.Property<string>("IconUrl")
                         .HasMaxLength(300)
                         .HasColumnType("nvarchar(300)");
 
@@ -511,6 +566,10 @@ namespace kayialp.Migrations
                     b.Property<string>("MersisNo")
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("MobilLogoUrl")
+                        .HasMaxLength(300)
+                        .HasColumnType("nvarchar(300)");
 
                     b.Property<string>("Name")
                         .HasMaxLength(200)
@@ -1094,6 +1153,25 @@ namespace kayialp.Migrations
                     b.Navigation("LangCode");
                 });
 
+            modelBuilder.Entity("kayialp.Models.AdvantageTranslation", b =>
+                {
+                    b.HasOne("kayialp.Models.Advantage", "Advantage")
+                        .WithMany("Translations")
+                        .HasForeignKey("AdvantageId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("kayialp.Models.Langs", "Lang")
+                        .WithMany()
+                        .HasForeignKey("LangCodeId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Advantage");
+
+                    b.Navigation("Lang");
+                });
+
             modelBuilder.Entity("kayialp.Models.CategoriesTranslations", b =>
                 {
                     b.HasOne("kayialp.Models.Categories", "category")
@@ -1226,6 +1304,11 @@ namespace kayialp.Migrations
                 });
 
             modelBuilder.Entity("ProductModels.ProductContentBlock", b =>
+                {
+                    b.Navigation("Translations");
+                });
+
+            modelBuilder.Entity("kayialp.Models.Advantage", b =>
                 {
                     b.Navigation("Translations");
                 });

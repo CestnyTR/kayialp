@@ -2611,7 +2611,11 @@ namespace kayialp.Controllers
                 vm.LinkedInUrl = entity.LinkedInUrl;
                 vm.YoutubeUrl = entity.YoutubeUrl;
                 vm.LogoUrl = entity.LogoUrl;
-                vm.HeroUrl = entity.HeroUrl;
+                vm.MobilLogoUrl = entity.MobilLogoUrl;
+                vm.IconUrl = entity.IconUrl;
+                vm.LogoUrl = entity.LogoUrl;
+                vm.MobilLogoUrl = entity.MobilLogoUrl;
+                vm.IconUrl = entity.IconUrl;
 
                 foreach (var l in langs)
                 {
@@ -2679,13 +2683,17 @@ namespace kayialp.Controllers
             if (model.Logo != null && model.Logo.Length > 0)
             {
                 TryDeleteFileByWebPath(entity.LogoUrl);
-                await SaveWebpVariantAsync(model.Logo, folder, "company", "logo", 400, 400);
+                await SaveWebpVariantAsync(model.Logo, folder, "company", "Logo", 146, 44);
             }
-
-            if (model.Hero != null && model.Hero.Length > 0)
+            if (model.MobilLogo != null && model.MobilLogo.Length > 0)
             {
-                TryDeleteFileByWebPath(entity.HeroUrl);
-                await SaveWebpVariantAsync(model.Hero, folder, "company", "hero", 1920, 600);
+                TryDeleteFileByWebPath(entity.MobilLogoUrl);
+                await SaveWebpVariantAsync(model.MobilLogo, folder, "company", "MobilLogo", 268, 113);
+            }
+            if (model.Icon != null && model.Icon.Length > 0)
+            {
+                TryDeleteFileByWebPath(entity.IconUrl);
+                await SaveWebpVariantAsync(model.Icon, folder, "company", "Icon", 192, 192);
             }
 
             // translations
@@ -3139,6 +3147,163 @@ namespace kayialp.Controllers
         }
 
         #endregion
+
+        // AdminController.cs (ilgili kısma ekle)
+        #region Advantages
+
+        [HttpGet("advantages")]
+        public async Task<IActionResult> Advantages()
+        {
+            var list = await _context.Advantages
+                .OrderBy(a => a.Order)
+                .Select(a => new
+                {
+                    a.Id,
+                    a.IsActive,
+                    a.Order,
+                    a.Image313Url,
+                    Title = a.Translations.FirstOrDefault(t => t.Lang.LangCode == "tr")!.Title
+                })
+                .ToListAsync();
+
+            return View("AdvantagesIndex", list);
+        }
+
+        [HttpGet("create-advantage")]
+        public async Task<IActionResult> CreateAdvantage()
+        {
+            var langs = await _context.Langs.OrderBy(x => x.Id).ToListAsync();
+            var vm = new CreateAdvantageVM
+            {
+                Langs = langs.Select(l => new AdvantageLangVM { LangCode = l.LangCode }).ToList()
+            };
+            return View(vm);
+        }
+
+        [HttpPost("create-advantage")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> CreateAdvantage(CreateAdvantageVM model, CancellationToken ct)
+        {
+            if (!ModelState.IsValid) return View(model);
+
+            var entity = new Advantage { Order = model.Order, IsActive = model.IsActive };
+            _context.Advantages.Add(entity);
+            await _context.SaveChangesAsync(ct);
+
+            // görsel
+            if (model.Image != null)
+            {
+                var folder = Path.Combine(_env.WebRootPath, "uploads", "advantages", entity.Id.ToString());
+                Directory.CreateDirectory(folder);
+                entity.Image313Url = await SaveWebpVariantAsync(model.Image, folder, "advantages/" , "img", 313, 313);
+
+            }
+
+            var langs = await _context.Langs.OrderBy(x => x.Id).ToListAsync(ct);
+            foreach (var l in langs)
+            {
+                var vmLang = model.Langs.FirstOrDefault(x => x.LangCode == l.LangCode);
+                var trText = model.Langs.FirstOrDefault(x => x.LangCode == "tr")?.Title ?? "";
+
+                string pick(string? v, string trv) =>
+                    (!model.AutoTranslate || !string.IsNullOrWhiteSpace(v)) ? (v ?? "") : TryTranslate(trv, "tr", l.LangCode);
+
+                _context.AdvantageTranslations.Add(new AdvantageTranslation
+                {
+                    AdvantageId = entity.Id,
+                    LangCodeId = l.Id,
+                    Title = pick(vmLang?.Title, trText),
+                    Content = pick(vmLang?.Content, model.Langs.FirstOrDefault(x => x.LangCode == "tr")?.Content ?? "")
+                });
+            }
+
+            await _context.SaveChangesAsync(ct);
+            TempData["Msg"] = "Avantaj eklendi.";
+            return RedirectToAction(nameof(Advantages));
+        }
+
+        [HttpGet("update-advantage/{id:int}")]
+        public async Task<IActionResult> UpdateAdvantage(int id)
+        {
+            var adv = await _context.Advantages.Include(a => a.Translations).FirstOrDefaultAsync(a => a.Id == id);
+            if (adv == null) return NotFound();
+
+            var langs = await _context.Langs.OrderBy(x => x.Id).ToListAsync();
+            var vm = new UpdateAdvantageVM
+            {
+                Id = adv.Id,
+                ExistingImage = adv.Image313Url,
+                Order = adv.Order,
+                IsActive = adv.IsActive,
+                Langs = langs.Select(l =>
+                {
+                    var t = adv.Translations.FirstOrDefault(x => x.LangCodeId == l.Id);
+                    return new AdvantageLangVM { LangCode = l.LangCode, Title = t?.Title, Content = t?.Content };
+                }).ToList()
+            };
+
+            return View(vm);
+        }
+
+        [HttpPost("update-advantage/{id:int}")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> UpdateAdvantage(int id, UpdateAdvantageVM model, CancellationToken ct)
+        {
+            if (id != model.Id) return BadRequest();
+            var adv = await _context.Advantages.Include(a => a.Translations).FirstOrDefaultAsync(a => a.Id == id);
+            if (adv == null) return NotFound();
+
+            adv.Order = model.Order;
+            adv.IsActive = model.IsActive;
+
+            var folder = Path.Combine(_env.WebRootPath, "uploads", "advantages", adv.Id.ToString());
+            Directory.CreateDirectory(folder);
+
+            if (model.Image != null)
+            {
+                TryDeleteFileByWebPath(adv.Image313Url);
+                adv.Image313Url = await SaveWebpVariantAsync(model.Image, folder, "advantages/" + adv.Id, "img", 313, 313);
+                adv.Image313Url = adv.Image313Url.Replace($"/uploads/advantages/{adv.Id}/{adv.Id}", $"/uploads/products/{adv.Id}");
+
+            }
+
+            foreach (var vmLang in model.Langs)
+            {
+                var lang = await _context.Langs.FirstAsync(x => x.LangCode == vmLang.LangCode, ct);
+                var tr = adv.Translations.FirstOrDefault(x => x.LangCodeId == lang.Id);
+                if (tr == null)
+                {
+                    tr = new AdvantageTranslation { AdvantageId = adv.Id, LangCodeId = lang.Id };
+                    adv.Translations.Add(tr);
+                }
+                tr.Title = vmLang.Title ?? "";
+                tr.Content = vmLang.Content ?? "";
+            }
+
+            await _context.SaveChangesAsync(ct);
+            TempData["Msg"] = "Avantaj güncellendi.";
+            return RedirectToAction(nameof(Advantages));
+        }
+
+        [HttpPost("delete-advantage/{id:int}")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DeleteAdvantage(int id, CancellationToken ct)
+        {
+            var adv = await _context.Advantages.FindAsync(new object[] { id }, ct);
+            if (adv == null) return NotFound();
+
+            TryDeleteFileByWebPath(adv.Image313Url);
+            _context.Advantages.Remove(adv);
+            await _context.SaveChangesAsync(ct);
+
+            TempData["Msg"] = "Avantaj silindi.";
+            return RedirectToAction(nameof(Advantages));
+        }
+
+        #endregion
+
+
+
         #region helpers
         // ===== Helpers =====
 

@@ -31,10 +31,12 @@ namespace kayialp.ViewModels
         public string? LinkedInUrl { get; set; }
         public string? YoutubeUrl { get; set; }
         public string? LogoUrl { get; set; }
-        public string? HeroUrl { get; set; }
+        public string? MobilLogoUrl { get; set; }
+        public string? IconUrl { get; set; }
 
         public IFormFile? Logo { get; set; }
-        public IFormFile? Hero { get; set; }
+        public IFormFile? MobilLogo { get; set; }
+        public IFormFile? Icon { get; set; }
 
         public List<CompanyInfoLangVM> Langs { get; set; } = new();
     }

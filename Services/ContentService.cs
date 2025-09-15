@@ -1,116 +1,145 @@
 ﻿using kayialp.Context;
-using Microsoft.AspNetCore.Localization;
-using System;
 using System.Globalization;
-using static System.Collections.Specialized.BitVector32;
+
 namespace kayialp.Services
 {
     public class ContentService
     {
-
         private readonly kayialpDbContext _context;
-        private readonly IHttpContextAccessor _httpContextAccessor;
 
-        public ContentService(kayialpDbContext context, IHttpContextAccessor httpContextAccessor)
+        public ContentService(kayialpDbContext context)
         {
             _context = context;
-            _httpContextAccessor = httpContextAccessor;
         }
 
+        // Aktif dilin Langs.Id’sini getir
+        private int? GetCurrentLangId()
+        {
+            var culture = CultureInfo.CurrentUICulture.TwoLetterISOLanguageName;
+            return _context.Langs.FirstOrDefault(l => l.LangCode == culture)?.Id;
+        }
+
+        // Verilen culture için Langs.Id
+        private int? GetLangIdFor(string twoLetter)
+        {
+            return _context.Langs.FirstOrDefault(l => l.LangCode == twoLetter)?.Id;
+        }
+
+        // Genel metin çözümleyici: pages.*, categories.*, fairs.*, homeslide.* ...
         public string GetText(string compoundKey)
         {
-            var culture = CultureInfo.CurrentCulture.TwoLetterISOLanguageName;
-            var langId = _context.Langs.FirstOrDefault(l => l.LangCode == culture)?.Id;
-
-            if (string.IsNullOrWhiteSpace(compoundKey) || !compoundKey.Contains('.') || langId == null)
+            var langId = GetCurrentLangId();
+            if (string.IsNullOrWhiteSpace(compoundKey) || langId == null)
                 return $"[[{compoundKey}]]";
 
             var parts = compoundKey.Split('.');
-            var tableKey = parts[0].ToLower(); // Örnek: "pages", "categories", "products"
+            if (parts.Length < 2)
+                return $"[[{compoundKey}]]";
 
-            // Her zaman ikinci parçayı anahtar olarak kullanacağız.
-            var key = parts.Last();
+            var tableKey = parts[0].ToLowerInvariant();
             string result = null;
 
-            // Hangi tablodan veri çekileceğini belirle
             switch (tableKey)
             {
                 case "pages":
-                    // Key formatı: "pages.page_name.key"
+                    // "pages.pageName.keyName"
                     if (parts.Length < 3) return $"[[{compoundKey}]]";
-
-                    var pageName = parts[1];
-                    var page = _context.Pages.FirstOrDefault(p => p.PageName.ToLower() == pageName);
-
-                    if (page != null)
-                    {
-                        var translation = _context.PageTranslations
-                            .FirstOrDefault(t => t.PageId == page.Id && t.LangCodeId == langId && t.KeyName == key);
-                        result = translation?.ValueText;
-                    }
+                    result = GetPageText(parts[1], parts[2], langId.Value);
                     break;
 
                 case "categories":
-                    // Key formatı: "categories.key_name"
-                    var categoryTranslation = _context.CategoriesTranslations
-                        .FirstOrDefault(t => t.KeyName == key && t.LangCodeId == langId);
-                    result = categoryTranslation?.ValueText;
-                    break;
-                case "fairs":
-                    // Key formatı: "categories.key_name"
-                    var fairsTranslation = _context.FairTranslations
-                        .FirstOrDefault(t => t.KeyName == key && t.LangCodeId == langId);
-                    result = fairsTranslation?.Title;
-                    break;
-                case "products":
-                    // Key formatı: "products.key_name"
-                    // ProductTranslations modelinize göre sorgunuzu buraya ekleyebilirsiniz.
-                    // Örneğin: var productTranslation = _context.ProductTranslations...
-                    // result = productTranslation?.Value;
+                    // "categories.keyName"
+                    result = GetCategoryText(parts[1], langId.Value);
                     break;
 
-                // Diğer tabloları buraya ekleyebiliriz...
+                case "fairs":
+                    // "fairs.keyName"  -> Title alanını döndürüyoruz
+                    result = GetFairTitle(parts[1], langId.Value);
+                    break;
+
+                case "homeslide":
+                    // "homeslide.{slideId}.{field}"  field: slogan|title|content|cta1text|cta1url|cta2text|cta2url
+                    if (parts.Length < 3) return $"[[{compoundKey}]]";
+                    if (!int.TryParse(parts[1], out var slideId)) return $"[[{compoundKey}]]";
+                    var field = parts[2].ToLowerInvariant();
+                    result = GetHomeSlideField(slideId, field, langId.Value);
+                    break;
+
+                case "products":
+                    // İleride ihtiyaç olursa doldurulabilir
+                    return $"[[products resolver not implemented]]";
 
                 default:
                     return $"[[Unsupported Table: {tableKey}]]";
             }
 
-            // Eğer çeviri bulunamazsa, varsayılan dili (en) dene
-            if (string.IsNullOrEmpty(result) && langId != _context.Langs.FirstOrDefault(l => l.LangCode == "en")?.Id)
+            if (!string.IsNullOrEmpty(result))
+                return result;
+
+            // Fallback: en (yoksa ilk dil)
+            var defaultLangId = GetLangIdFor("en") ?? _context.Langs.Select(x => (int?)x.Id).FirstOrDefault();
+            if (defaultLangId == null || defaultLangId == langId)
+                return $"[[{compoundKey}]]";
+
+            // Aynı anahtarı default dilde tekrar çöz
+            switch (tableKey)
             {
-                var defaultLangId = _context.Langs.FirstOrDefault(l => l.LangCode == "en")?.Id;
-                if (defaultLangId != null)
-                {
-                    // Varsayılan dil için sorguyu tekrar çalıştır.
-                    // Basitlik için switch içinde tekrar yazıyoruz,
-                    // ancak daha temiz bir çözüm için refactor edilebilir.
-                    switch (tableKey)
-                    {
-                        case "pages":
-                            var pageName = parts[1];
-                            var page = _context.Pages.FirstOrDefault(p => p.PageName.ToLower() == pageName);
-                            if (page != null)
-                            {
-                                var translation = _context.PageTranslations
-                                    .FirstOrDefault(t => t.PageId == page.Id && t.LangCodeId == defaultLangId && t.KeyName == key);
-                                result = translation?.ValueText;
-                            }
-                            break;
-
-                        case "categories":
-                            var categoryTranslation = _context.CategoriesTranslations
-                                .FirstOrDefault(t => t.KeyName == key && t.LangCodeId == defaultLangId);
-                            result = categoryTranslation?.ValueText;
-                            break;
-
-                        case "products":
-                            // ... products tablosu için varsayılan dil kodu
-                            break;
-                    }
-                }
+                case "pages":
+                    return GetPageText(parts[1], parts[2], defaultLangId.Value) ?? $"[[{compoundKey}]]";
+                case "categories":
+                    return GetCategoryText(parts[1], defaultLangId.Value) ?? $"[[{compoundKey}]]";
+                case "fairs":
+                    return GetFairTitle(parts[1], defaultLangId.Value) ?? $"[[{compoundKey}]]";
+                case "homeslide":
+                    return GetHomeSlideField(int.Parse(parts[1]), parts[2], defaultLangId.Value) ?? $"[[{compoundKey}]]";
+                default:
+                    return $"[[{compoundKey}]]";
             }
+        }
 
-            return result ?? $"[[{compoundKey}]]";
+        private string GetPageText(string pageName, string keyName, int langId)
+        {
+            var page = _context.Pages.FirstOrDefault(p => p.PageName.ToLower() == pageName.ToLower());
+            if (page == null) return null;
+
+            var t = _context.PageTranslations
+                .FirstOrDefault(x => x.PageId == page.Id && x.LangCodeId == langId && x.KeyName == keyName);
+            return t?.ValueText;
+        }
+
+        private string GetCategoryText(string keyName, int langId)
+        {
+            var t = _context.CategoriesTranslations
+                .FirstOrDefault(x => x.KeyName == keyName && x.LangCodeId == langId);
+            return t?.ValueText;
+        }
+
+        private string GetFairTitle(string keyName, int langId)
+        {
+            var t = _context.FairTranslations
+                .FirstOrDefault(x => x.KeyName == keyName && x.LangCodeId == langId);
+            return t?.Title;
+        }
+
+        private string GetHomeSlideField(int slideId, string field, int langId)
+        {
+            // Translation tablosunda ilgili kaydı bul
+            var t = _context.HomeSlideTranslations
+                .FirstOrDefault(x => x.HomeSlideId == slideId && x.LangCodeId == langId);
+
+            if (t == null) return null;
+
+            return field switch
+            {
+                "slogan" => t.Slogan,
+                "title" => t.Title,
+                "content" => t.Content,
+                "cta1text" => t.Cta1Text,
+                "cta1url" => t.Cta1Url,
+                "cta2text" => t.Cta2Text,
+                "cta2url" => t.Cta2Url,
+                _ => null
+            };
         }
     }
 }

@@ -1663,6 +1663,7 @@ D:\iş\sipariş-işleri\Kayıalp\kayialp\obj\Debug\net9.0\compressed\xfrfwk4p6h-
 D:\iş\sipariş-işleri\Kayıalp\kayialp\obj\Debug\net9.0\compressed\d4m8pw9kwi-hm9ywbb0zc.gz
 D:\iş\sipariş-işleri\Kayıalp\kayialp\obj\Debug\net9.0\compressed\882zotrk42-bvsi1dmk15.gz
 D:\iş\sipariş-işleri\Kayıalp\kayialp\obj\Debug\net9.0\compressed\ivd0vkg316-1weurddlay.gz
+D:\iş\sipariş-işleri\Kayıalp\kayialp\obj\Debug\net9.0\compressed\6bapuqzc78-l7ujkd4epg.gz
 D:\iş\sipariş-işleri\Kayıalp\kayialp\obj\Debug\net9.0\compressed\vcncab123f-uifejclxqw.gz
 D:\iş\sipariş-işleri\Kayıalp\kayialp\obj\Debug\net9.0\compressed\z4sn6csexl-ssfp6exkbg.gz
 D:\iş\sipariş-işleri\Kayıalp\kayialp\obj\Debug\net9.0\compressed\ta9mzxc524-61n19gt1b8.gz
@@ -2016,4 +2017,3 @@ D:\iş\sipariş-işleri\Kayıalp\kayialp\obj\Debug\net9.0\refint\kayialp.dll
 D:\iş\sipariş-işleri\Kayıalp\kayialp\obj\Debug\net9.0\kayialp.pdb
 D:\iş\sipariş-işleri\Kayıalp\kayialp\obj\Debug\net9.0\kayialp.genruntimeconfig.cache
 D:\iş\sipariş-işleri\Kayıalp\kayialp\obj\Debug\net9.0\ref\kayialp.dll
-D:\iş\sipariş-işleri\Kayıalp\kayialp\obj\Debug\net9.0\compressed\6bapuqzc78-l7ujkd4epg.gz

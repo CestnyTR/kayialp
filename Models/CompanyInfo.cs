@@ -26,7 +26,8 @@ namespace kayialp.Models
         public string? MapEmbedUrl { get; set; }
 
         [MaxLength(300)] public string? LogoUrl { get; set; }
-        [MaxLength(300)] public string? HeroUrl { get; set; }
+        [MaxLength(300)] public string? MobilLogoUrl { get; set; }
+        [MaxLength(300)] public string? IconUrl { get; set; }
 
         [MaxLength(300)] public string? FacebookUrl { get; set; }
         [MaxLength(300)] public string? TwitterUrl { get; set; }
