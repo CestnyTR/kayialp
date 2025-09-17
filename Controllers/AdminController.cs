@@ -2696,21 +2696,62 @@ namespace kayialp.Controllers
                 await SaveWebpVariantAsync(model.Icon, folder, "company", "Icon", 192, 192);
             }
 
-            // translations
+            // === Çeviri doldurma: boş gelen alanları TR'den türet ===
+            // TR kaynaklarını al
+            static string Norm(string? s) => (s ?? "").Trim();
+            var trVm = model.Langs.FirstOrDefault(x => (x.LangCode ?? "").ToLower() == "tr");
+
+            var srcAbout = Norm(trVm?.AboutHtml);
+            var srcMission = Norm(trVm?.MissionHtml);
+            var srcVision = Norm(trVm?.VisionHtml);
+
             var langs = await _context.Langs.AsNoTracking().ToListAsync(ct);
+
+            // küçük yardımcı: boşsa TR'den çevir
+            async Task<string> FromTrIfEmptyAsync(string? targetVal, string trVal, string targetLangCode)
+            {
+                var v = Norm(targetVal);
+                if (!string.IsNullOrEmpty(v)) return v;            // kullanıcı doldurmuş → aynen kullan
+                if (string.IsNullOrEmpty(trVal)) return "";        // TR de boşsa boş geç
+                if (targetLangCode.Equals("tr", StringComparison.OrdinalIgnoreCase)) return trVal;
+
+                // DeepL koduna çevirici (projede varsa onu kullan)
+                string DeeplCode(string lc) => lc.ToUpperInvariant(); // ör: "en","ru","ar" → "EN","RU","AR"
+                try
+                {
+                    return await _translator.TranslateAsync(trVal, "TR", DeeplCode(targetLangCode));
+                }
+                catch
+                {
+                    return trVal; // çeviri hatası → TR fallback
+                }
+            }
+
             foreach (var l in langs)
             {
-                var vmLang = model.Langs.FirstOrDefault(x => x.LangCode == l.LangCode);
-                var tr = entity.Translations.FirstOrDefault(x => x.LangCodeId == l.Id);
-                if (tr == null)
+                var vmLang = model.Langs.FirstOrDefault(x => (x.LangCode ?? "").ToLower() == l.LangCode.ToLower());
+                var row = entity.Translations.FirstOrDefault(x => x.LangCodeId == l.Id);
+                if (row == null)
                 {
-                    tr = new CompanyInfoTranslation { LangCodeId = l.Id, CompanyInfoId = entity.Id };
-                    entity.Translations.Add(tr);
+                    row = new CompanyInfoTranslation { LangCodeId = l.Id, CompanyInfoId = entity.Id };
+                    entity.Translations.Add(row);
                 }
-                tr.AboutHtml = vmLang?.AboutHtml ?? "";
-                tr.MissionHtml = vmLang?.MissionHtml ?? "";
-                tr.VisionHtml = vmLang?.VisionHtml ?? "";
+
+                // TR ise doğrudan TR kaynağı yaz; değilse boş alanları TR'den çevir
+                if (l.LangCode.Equals("tr", StringComparison.OrdinalIgnoreCase))
+                {
+                    row.AboutHtml = srcAbout;
+                    row.MissionHtml = srcMission;
+                    row.VisionHtml = srcVision;
+                }
+                else
+                {
+                    row.AboutHtml = await FromTrIfEmptyAsync(vmLang?.AboutHtml, srcAbout, l.LangCode);
+                    row.MissionHtml = await FromTrIfEmptyAsync(vmLang?.MissionHtml, srcMission, l.LangCode);
+                    row.VisionHtml = await FromTrIfEmptyAsync(vmLang?.VisionHtml, srcVision, l.LangCode);
+                }
             }
+
 
             await _context.SaveChangesAsync(ct);
             TempData["CompanyMsg"] = "Şirket bilgileri güncellendi.";
@@ -3195,7 +3236,7 @@ namespace kayialp.Controllers
             {
                 var folder = Path.Combine(_env.WebRootPath, "uploads", "advantages", entity.Id.ToString());
                 Directory.CreateDirectory(folder);
-                entity.Image313Url = await SaveWebpVariantAsync(model.Image, folder, "advantages/" , "img", 313, 313);
+                entity.Image313Url = await SaveWebpVariantAsync(model.Image, folder, "advantages/", "img", 313, 313);
 
             }
 

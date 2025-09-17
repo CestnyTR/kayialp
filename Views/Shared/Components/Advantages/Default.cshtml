@@ -1,0 +1,40 @@
+@model kayialp.ViewModels.Advantages.AdvantagesViewModel
+
+<section class="category-area bg-top-center space overflow-hidden" data-bg-src="@Model.SectionBg">
+    <div class="container th-container">
+        <div class="title-area mb-60 text-center">
+            <span class="sub-title text-anime-style-2">@Model.SubTitle</span>
+            <h2 class="sec-title text-anime-style-3">@Model.Title</h2>
+        </div>
+
+        <div class="swiper th-slider categorySlider" id="categorySlider1"
+            data-slider-options='{"breakpoints":{"0":{"slidesPerView":1},"576":{"slidesPerView":"1"},"768":{"slidesPerView":"2"},"992":{"slidesPerView":"3"},"1200":{"slidesPerView":"3"},"1400":{"spaceBetween":45,"slidesPerView":"5"}}}'>
+            <div class="swiper-wrapper">
+
+                @foreach (var item in Model.Items)
+                {
+                    <div class="swiper-slide">
+                        <div class="category-card single">
+                            <div class="box-img global-img">
+                                <img src="@item.ImageUrl"
+                                    alt="@(string.IsNullOrWhiteSpace(item.Title) ? "Image" : item.Title)">
+                            </div>
+
+                            <h3 class="box-title">
+                                <a href="@(string.IsNullOrWhiteSpace(item.LinkUrl) ? "service.html" : item.LinkUrl)">
+                                    @(string.IsNullOrWhiteSpace(item.Title) ? "" : item.Title)
+                                </a>
+                            </h3>
+
+                            @if (!string.IsNullOrWhiteSpace(item.Description))
+                            {
+                                <p class="sec-text">@item.Description</p>
+                            }
+                        </div>
+                    </div>
+                }
+
+            </div>
+        </div>
+    </div>
+</section>

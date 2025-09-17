@@ -64,6 +64,13 @@ namespace kayialp.Services
                     var field = parts[2].ToLowerInvariant();
                     result = GetHomeSlideField(slideId, field, langId.Value);
                     break;
+                case "advantages":
+                    // "advantages.{advantageId}.{field}"  field: title | desc | linktext (opsiyonel)
+                    if (parts.Length < 3) return $"[[{compoundKey}]]";
+                    if (!int.TryParse(parts[1], out var advId)) return $"[[{compoundKey}]]";
+                    var advantagesFields = parts[2].ToLowerInvariant();
+                    result = GetAdvantageField(advId, advantagesFields, langId.Value);
+                    break;
 
                 case "products":
                     // İleride ihtiyaç olursa doldurulabilir
@@ -138,6 +145,22 @@ namespace kayialp.Services
                 "cta1url" => t.Cta1Url,
                 "cta2text" => t.Cta2Text,
                 "cta2url" => t.Cta2Url,
+                _ => null
+            };
+        }
+
+        private string GetAdvantageField(int advantageId, string field, int langId)
+        {
+            // Varsayım: AdvantageTranslations tablosu: AdvantageId, LangCodeId, Title, Description, LinkText (ops)
+            var t = _context.AdvantageTranslations
+                .FirstOrDefault(x => x.AdvantageId == advantageId && x.LangCodeId == langId);
+
+            if (t == null) return null;
+
+            return field switch
+            {
+                "title" => t.Title,
+                "desc" => t.Content,
                 _ => null
             };
         }

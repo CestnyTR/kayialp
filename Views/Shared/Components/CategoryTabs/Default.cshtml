@@ -1,0 +1,70 @@
+@model kayialp.ViewModels.Categories.CategoryTabsViewModel
+
+<div class="case-area position-relative overflow-hidden space">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-xl-5">
+                <div class="title-area case-title-box text-center text-xl-start">
+                    <span class="sub-title mb-15  text-anime-style-2">@Model.SectionSubTitle</span>
+                    <h2 class="sec-title  text-anime-style-3">@Model.SectionTitle</h2>
+                </div>
+            </div>
+            <div class="col-xl-7">
+                <div class="nav nav-tabs case-tabs" id="nav-tab" role="tablist">
+                    @for (int i = 0; i < Model.Tabs.Count; i++)
+                    {
+                        var t = Model.Tabs[i];
+                        <button class="nav-link th-btn @(i==0 ? "active" : "")"
+                                id="@(t.TabId)-tab"
+                                data-bs-toggle="tab"
+                                data-bs-target="#@t.TabId"
+                                type="button">
+                            @t.TabTitle
+                        </button>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <div class="tab-content" id="nav-tabContent">
+            @for (int i = 0; i < Model.Tabs.Count; i++)
+            {
+                var t = Model.Tabs[i];
+                <div class="tab-pane fade @(i==0 ? "active show" : "")" id="@t.TabId" role="tabpanel">
+                    <div class="slider-area case-slider slider-drag-wrap">
+                        <div class="swiper th-slider case-slider" id="aboutSlider@(i+1)"
+                             data-slider-options='{"breakpoints":{"0":{"slidesPerView":1},"576":{"slidesPerView":"2"},"992":{"slidesPerView":"3"},"1200":{"slidesPerView":"3"}},"effect":"coverflow","coverflowEffect":{"rotate":"0","stretch":"95","depth":"212","modifier":"1"},"centeredSlides":"true"}'>
+                            <div class="swiper-wrapper">
+                                @foreach (var item in t.Items)
+                                {
+                                    <div class="swiper-slide">
+                                        <div class="case-box">
+                                            <div class="case-img">
+                                                <img src="@item.ImageUrl" alt="@(string.IsNullOrWhiteSpace(item.Title) ? "case image" : item.Title)">
+                                                <div class="case-content">
+                                                    <div class="media-left">
+                                                        <h4 class="box-title">
+                                                            <a href="@item.LinkUrl">@item.Title</a>
+                                                        </h4>
+                                                        @if (!string.IsNullOrWhiteSpace(item.SubTitle))
+                                                        {
+                                                            <span class="case-subtitle">@item.SubTitle</span>
+                                                        }
+                                                    </div>
+                                                </div>
+                                                <div class="case-action">
+                                                    <a href="@item.LinkUrl" class="case-btn"><i class="fa-light fa-arrow-right-long"></i></a>
+                                                </div>
+                                                
+                                            </div>
+                                        </div>
+                                    </div>
+                                }
+                            </div> <!-- .swiper-wrapper -->
+                        </div> <!-- .swiper -->
+                    </div> <!-- .slider-area -->
+                </div> <!-- .tab-pane -->
+            }
+        </div> <!-- .tab-content -->
+    </div>
+</div>

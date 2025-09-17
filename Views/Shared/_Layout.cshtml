@@ -50,12 +50,12 @@
 
 <body class="@ViewBag.BodyClass" lang="@ViewData["Culture"]">
 
-    <div class="preloader ">
+    @* <div class="preloader ">
         <button class="th-btn preloaderCls">Ön yüklemeyi iptal et</button>
         <div class="preloader-inner">
             <img src="/img/logo.webp" alt="img">
         </div>
-    </div>
+    </div> *@
 
     <div class="sidemenu-wrapper sidemenu-info ">
     </div>
@@ -153,7 +153,7 @@
                                                                                         })
                                             {
                                                 <button type="submit" name="culture" class="language-option @if(currentCulture == lang.Code) {
-                                                                                            <text>selected</text>
+                                                                                                    <text>selected</text>
                                                 }
 " value="@lang.Code" id="@lang.Code">
                                                 <img src="@lang.FlagUrl" alt="@lang.Name" class="flag-img" />
@@ -243,110 +243,7 @@
         @RenderBody()
     </main>
 
-    <footer class="footer-wrapper footer-layout1 black-bg space-top">
-        <div class="widget-area">
-            <div class="container">
-                <div class="newsletter-area">
-                    <div class="newsletter-top">
-                        <div class="row gy-4 align-items-center">
-                            <div class="col-lg-5">
-                                <h2 class="newsletter-title text-white text-capitalize mb-0">E-Bülten Aboneliği</h2>
-                            </div>
-                            <div class="col-lg-7">
-                                <form class="newsletter-form">
-                                    <input class="form-control" type="email" placeholder="Mail Adresinizi Giriniz."
-                                        required="">
-                                    <button type="submit" class="th-btn style3">Şimdi Abone Ol <img
-                                            src="/img/icon/plane.svg" alt=""></button>
-                                </form>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="row justify-content-between">
-                    <div class="col-md-6 col-xl-3">
-                        <div class="widget footer-widget">
-                            <div class="th-widget-about">
-                                <div class="about-logo">
-                                    <a href="/"><img src="/img/logo.webp" alt="KayiAlp" width="148px" height="46px"></a>
-                                </div>
-                                <p class="about-text">Hakkımızda texti. Contrary to popular belief, Lorem Ipsum is not
-                                    simply random text. It has roots in a piece of classical Latin literature from 45
-                                    BC, making it over 2000 years old. Richard McClintock</p>
-                                <div class="th-social">
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-6 col-xl-auto">
-                        <div class="widget widget_nav_menu footer-widget">
-                            <h3 class="widget_title">Faydalı Linkler</h3>
-                            <div class="menu-all-pages-container">
-                                <ul class="menu">
-                                    <li><a href="/Home">Anasayfa</a></li>
-                                    <li><a href="/About">Hakımızda</a></li>
-                                    <li><a href="/">Ürünler</a></li>
-                                    <li><a href="/">Fuarlar</a></li>
-                                    <li><a href="/">İletişim</a></li>
-                                </ul>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-6 col-xl-auto">
-                        <div class="widget footer-widget">
-                            <h3 class="widget_title">İletşimde kal</h3>
-                            <div class="th-widget-contact">
-                                <div class="info-box_text">
-                                    <div class="icon">
-                                        <img src="~/img/icon/phone.svg" alt="img">
-                                    </div>
-                                    <div class="details">
-                                        <p><a href="tel:+903325012218" class="info-box_link">+90 332 501 22 18</a></p>
-                                    </div>
-                                </div>
-                                <div class="info-box_text">
-                                    <div class="icon">
-                                        <img src="~/img/icon/envelope.svg" alt="img">
-                                    </div>
-                                    <div class="details">
-                                        <p><a href="mailto:info@kayialp.com" class="info-box_link">info@kayialp.com</a>
-                                        </p>
-                                    </div>
-                                </div>
-                                <div class="info-box_text">
-                                    <div class="icon"><img src="~/img/icon/location-dot.svg" alt="img"></div>
-                                    <div class="details">
-                                        <p>FEVZİÇAKMAK MAH. ŞEHİT ATİLLA DEMİRELLİ CAD. B.BLOK NO: 2B KARATAY/KONYA</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-6 col-xl-auto">
-                        <div class="widget footer-widget">
-                            <h3 class="widget_title">Instagram Post</h3>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="copyright-wrap">
-            <div class="container">
-                <div class="row justify-content-lg-between align-items-center">
-                    <div class="col-lg-6">
-                        <p class="copyright-text">Copyright © 2025 <a href="/">KayiAlp</a>. All Rights Reserved.</p>
-                    </div>
-                    <div class="col-lg-6 text-center text-lg-end">
-                        <div class="footer-links">
-                            <ul>
-                                <li><a href="/">Yasal bilgilendirme için tıklayınız</a></li>
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </footer>
+@await Component.InvokeAsync("SiteFooter")
 
     <div class="scroll-top">
         <svg class="progress-circle svg-content" width="100%" height="100%" viewBox="-1 -1 102 102">

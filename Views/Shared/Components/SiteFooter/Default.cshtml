@@ -1,0 +1,167 @@
+@model kayialp.ViewModels.Layout.FooterViewModel
+
+<footer class="footer-wrapper footer-layout1 black-bg space-top">
+    <div class="widget-area">
+        <div class="container">
+            <!-- Newsletter -->
+            <div class="newsletter-area">
+                <div class="newsletter-top">
+                    <div class="row gy-4 align-items-center">
+                        <div class="col-lg-5">
+                            <h2 class="newsletter-title text-white text-capitalize mb-0">E-Bülten Aboneliği</h2>
+                        </div>
+                        <div class="col-lg-7">
+                            <form class="newsletter-form">
+                                <input class="form-control" type="email" placeholder="Mail Adresinizi Giriniz." required>
+                                <button type="submit" class="th-btn style3">
+                                    Şimdi Abone Ol <img src="/img/icon/plane.svg" alt="">
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 4 sütunlu içerik -->
+            <div class="row justify-content-between">
+                <!-- Hakkımızda -->
+                <div class="col-md-6 col-xl-3">
+                    <div class="widget footer-widget">
+                        <div class="th-widget-about">
+                            <div class="about-logo mb-3">
+                                <a href="/"><img src="@(string.IsNullOrWhiteSpace(Model.LogoUrl) ? "/img/logo.webp" : Model.LogoUrl)" alt="KayiAlp" width="148" height="46"></a>
+                            </div>
+                            @if (!string.IsNullOrWhiteSpace(Model.AboutHtml))
+                            {
+                                <div class="about-text">@Html.Raw(Model.AboutHtml)</div>
+                            }
+                            <div class="th-social d-none"><!-- eski alan; artık 'Sosyal Medya'da --></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Faydalı Linkler -->
+                <div class="col-md-6 col-xl-3 col-xxl-2">
+                    <div class="widget widget_nav_menu footer-widget">
+                        <h3 class="widget_title">Faydalı Linkler</h3>
+                        <div class="menu-all-pages-container">
+                            <ul class="menu">
+                                <li><a asp-controller="Home" asp-action="Index" asp-route-culture="@ViewData["Culture"]">@Html.Localize("pages.layout.index")</a></li>
+                                <li><a asp-controller="About" asp-action="Index" asp-route-culture="@ViewData["Culture"]">@Html.Localize("pages.layout.about")</a></li>
+                                <li><a asp-controller="Fair" asp-action="Index" asp-route-culture="@ViewData["Culture"]">@Html.Localize("pages.layout.products")</a></li>
+                                <li><a asp-controller="Products" asp-action="CategoryProducts" asp-route-culture="@ViewData["Culture"]">@Html.Localize("pages.layout.fairs")</a></li>
+                                <li><a asp-controller="Contact" asp-action="Index" asp-route-culture="@ViewData["Culture"]">@Html.Localize("pages.layout.communication")</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- İletişimde kal -->
+                <div class="col-md-6 col-xl-3">
+                    <div class="widget footer-widget">
+                        <h3 class="widget_title">İletşimde kal</h3>
+                        <div class="th-widget-contact">
+                            @if (!string.IsNullOrWhiteSpace(Model.Phone))
+                            {
+                                <div class="info-box_text">
+                                    <div class="icon"><img src="~/img/icon/phone.svg" alt="phone"></div>
+                                    <div class="details">
+                                        <p><a href="tel:@Model.Phone" class="info-box_link">@Model.Phone</a></p>
+                                    </div>
+                                </div>
+                            }
+                            @if (!string.IsNullOrWhiteSpace(Model.Email))
+                            {
+                                <div class="info-box_text">
+                                    <div class="icon"><img src="~/img/icon/envelope.svg" alt="email"></div>
+                                    <div class="details">
+                                        <p><a href="mailto:@Model.Email" class="info-box_link">@Model.Email</a></p>
+                                    </div>
+                                </div>
+                            }
+                            @if (!string.IsNullOrWhiteSpace(Model.Address))
+                            {
+                                <div class="info-box_text">
+                                    <div class="icon"><img src="~/img/icon/location-dot.svg" alt="location"></div>
+                                    <div class="details"><p>@Model.Address</p></div>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sosyal Medya -->
+                <div class="col-md-6 col-xl-3">
+                    <div class="widget footer-widget">
+                        <h3 class="widget_title">Sosyal Medya</h3>
+                        <ul class="list-unstyled m-0">
+                            @if (!string.IsNullOrWhiteSpace(Model.InstagramUrl))
+                            {
+                                <li class="d-flex align-items-center mb-2">
+                                    <i class="fab fa-instagram me-2"></i>
+                                    <a href="@Model.InstagramUrl" class="text-white-50" target="_blank" rel="noopener">Instagram</a>
+                                </li>
+                            }
+                            @if (!string.IsNullOrWhiteSpace(Model.FacebookUrl))
+                            {
+                                <li class="d-flex align-items-center mb-2">
+                                    <i class="fab fa-facebook-f me-2"></i>
+                                    <a href="@Model.FacebookUrl" class="text-white-50" target="_blank" rel="noopener">Facebook</a>
+                                </li>
+                            }
+                            @if (!string.IsNullOrWhiteSpace(Model.LinkedInUrl))
+                            {
+                                <li class="d-flex align-items-center mb-2">
+                                    <i class="fab fa-linkedin-in me-2"></i>
+                                    <a href="@Model.LinkedInUrl" class="text-white-50" target="_blank" rel="noopener">LinkedIn</a>
+                                </li>
+                            }
+                            @if (!string.IsNullOrWhiteSpace(Model.TwitterUrl))
+                            {
+                                <li class="d-flex align-items-center mb-2">
+                                    <i class="fab fa-x me-2"></i>
+                                    <a href="@Model.TwitterUrl" class="text-white-50" target="_blank" rel="noopener">Twitter</a>
+                                </li>
+                            }
+                            @if (!string.IsNullOrWhiteSpace(Model.YoutubeUrl))
+                            {
+                                <li class="d-flex align-items-center mb-2">
+                                    <i class="fab fa-youtube me-2"></i>
+                                    <a href="@Model.YoutubeUrl" class="text-white-50" target="_blank" rel="noopener">YouTube</a>
+                                </li>
+                            }
+                            @if (!string.IsNullOrWhiteSpace(Model.Whatsapp))
+                            {
+                                <li class="d-flex align-items-center">
+                                    <i class="fab fa-whatsapp me-2"></i>
+                                    <a href="https://wa.me/@Model.Whatsapp" class="text-white-50" target="_blank" rel="noopener">WhatsApp</a>
+                                </li>
+                            }
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <!-- /row -->
+        </div>
+    </div>
+
+    <!-- Alt bant -->
+    <div class="copyright-wrap py-3">
+        <div class="container">
+            <div class="row align-items-center justify-content-between">
+                <div class="col-md-6">
+                    <p class="copyright-text m-0">
+                        Copyright © @DateTime.UtcNow.Year <a href="/">KayiAlp</a>. All Rights Reserved.
+                    </p>
+                </div>
+                <div class="col-md-6 text-md-end mt-3 mt-md-0">
+                    <ul class="list-inline m-0">
+                        <li class="list-inline-item">
+                            <a href="/">Yasal bilgilendirme için tıklayınız</a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</footer>
