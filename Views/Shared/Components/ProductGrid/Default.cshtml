@@ -1,0 +1,83 @@
+@model kayialp.ViewComponents.ProductGridListVM
+
+<div class="row gy-40">
+@if (Model.Items.Any())
+{
+    @foreach (var p in Model.Items)
+    {
+        <div class="col-xl-4 col-sm-6">
+            <div class="th-product product-grid">
+                <div class="product-img">
+                    <img src="@Url.Content(p.ImageUrl)" alt="@p.Name">
+                    <span class="product-tag">@p.CategoryName</span>
+                    <div class="actions">
+                        <a class="icon-btn"
+                           asp-controller="Products"
+                           asp-action="ProductDetails"
+                           asp-route-culture="@Model.Culture"
+                           asp-route-id="@p.Id"
+                           asp-route-slug="@p.Slug">
+                            <i class="far fa-eye"></i>
+                        </a>
+                    </div>
+                </div>
+                <div class="product-content">
+                    <h3 class="product-title">
+                        <a asp-controller="Products"
+                           asp-action="ProductDetails"
+                           asp-route-culture="@Model.Culture"
+                           asp-route-id="@p.Id"
+                           asp-route-slug="@p.Slug">
+                            @p.Name
+                        </a>
+                    </h3>
+                </div>
+            </div>
+        </div>
+    }
+}
+else
+{
+    <div class="col-12 text-center">
+        <em>Bu kategori için ürün bulunamadı.</em>
+    </div>
+}
+</div>
+
+@if (Model.TotalPages > 1)
+{
+    <div class="th-pagination mt-60 text-center pt-50">
+        <ul>
+            @for (int i = 1; i <= Model.TotalPages; i++)
+            {
+                <li>
+                    <a class="@(i == Model.Page ? "active" : null)"
+                       asp-controller="Products"
+                       asp-action="CategoryProducts"
+                       asp-route-culture="@Model.Culture"
+                       asp-route-page="@i"
+                       asp-route-pageSize="@Model.PageSize"
+                       asp-route-id="@Model.CategoryId"
+                       asp-route-slug="@Model.CategorySlug">
+                        @i
+                    </a>
+                </li>
+            }
+            @if (Model.Page < Model.TotalPages)
+            {
+                <li>
+                    <a class="next-page"
+                       asp-controller="Products"
+                       asp-action="CategoryProducts"
+                       asp-route-culture="@Model.Culture"
+                       asp-route-page="@(Model.Page + 1)"
+                       asp-route-pageSize="@Model.PageSize"
+                       asp-route-id="@Model.CategoryId"
+                       asp-route-slug="@Model.CategorySlug">
+                        <i class="fa-sharp fa-light fa-arrow-right"></i>
+                    </a>
+                </li>
+            }
+        </ul>
+    </div>
+}

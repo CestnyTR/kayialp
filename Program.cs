@@ -20,7 +20,7 @@ builder.Services.AddHttpClient<DeepLTranslationService>();
 builder.Services.AddScoped<ITranslationService, DeepLTranslationService>();
 
 builder.Services.AddMemoryCache();
-builder.Services.AddScoped<ILangResolver, LangResolver>();  
+builder.Services.AddScoped<ILangResolver, LangResolver>();
 
 var app = builder.Build();
 

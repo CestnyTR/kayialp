@@ -45,6 +45,7 @@
     <link rel="stylesheet" href="~/css/swiper-bundle.min.css">
     <link rel="stylesheet" href="~/css/style.css">
     <link rel="stylesheet" href="~/css/custom.css">
+    @await RenderSectionAsync("Style", required: false)
 
 </head>
 
@@ -168,8 +169,8 @@
                             </div>
                             <div class="header-links">
                                 <ul>
-                                    <li class="d-none d-md-inline-block"><a href="/sss">S.S.S</a></li>
-                                    <li class="d-none d-md-inline-block"><a href="/contact">İLETİŞİM</a></li>
+                                    <li class="d-none d-md-inline-block"><a href="/sss">@Html.Localize("pages.layout.faq")</a></li>
+                                    <li class="d-none d-md-inline-block"><a href="/contact">@Html.Localize("pages.layout.communication")</a></li>
                                 </ul>
                             </div>
                         </div>

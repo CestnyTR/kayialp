@@ -1,0 +1,149 @@
+@model kayialp.ViewModels.Product.ProductDetailsVM
+
+<div class="row gx-60">
+    <!-- GALERİ -->
+    <div class="col-lg-6">
+        <div id="pdGallery" class="carousel slide" data-bs-ride="false">
+            <div class="carousel-inner rounded-3 shadow-sm">
+                @{
+                    var allImages = new List<string>();
+                    if (!string.IsNullOrWhiteSpace(Model.CoverImage)) allImages.Add(Model.CoverImage);
+                    if (Model.GalleryImages != null && Model.GalleryImages.Count > 0)
+                        allImages.AddRange(Model.GalleryImages);
+
+                    var allAlts = Model.GalleryAlts ?? new List<string>();
+                    while (allAlts.Count < allImages.Count) allAlts.Add(Model.Title);
+                }
+
+                @for (int i = 0; i < allImages.Count; i++)
+                {
+                    var active = i == 0 ? "active" : "";
+                    var alt    = allAlts.Count > i ? allAlts[i] : Model.Title;
+                    <div class="carousel-item @active">
+                        <img src="@allImages[i]" alt="@alt" class="d-block w-100"
+                             style="aspect-ratio: 1.25/1; object-fit: contain; background:#f6f7fb" loading="lazy" />
+                    </div>
+                }
+            </div>
+
+            @if (allImages.Count > 1)
+            {
+                <button class="carousel-control-prev" type="button" data-bs-target="#pdGallery" data-bs-slide="prev">
+                    <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                    <span class="visually-hidden">Prev</span>
+                </button>
+                <button class="carousel-control-next" type="button" data-bs-target="#pdGallery" data-bs-slide="next">
+                    <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                    <span class="visually-hidden">Next</span>
+                </button>
+
+                <!-- thumbnails -->
+                <div class="d-flex flex-wrap gap-2 mt-3">
+                    @for (int i = 0; i < allImages.Count; i++)
+                    {
+                        var alt = allAlts.Count > i ? allAlts[i] : Model.Title;
+                        <button type="button"
+                                class="btn p-0 border rounded overflow-hidden thumb-btn"
+                                data-bs-target="#pdGallery" data-bs-slide-to="@i"
+                                aria-label="slide @i">
+                            <img src="@allImages[i]" alt="@alt"
+                                 style="width:84px;height:84px;object-fit:cover" loading="lazy" />
+                        </button>
+                    }
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- SAĞ BLOK -->
+    <div class="col-lg-6 align-self-center">
+        <div class="product-about">
+            <h2 class="product-title">@Model.Title</h2>
+
+            @if (!string.IsNullOrWhiteSpace(Model.ShortDescHtml))
+            {
+                <div class="text">@Html.Raw(Model.ShortDescHtml)</div>
+            }
+
+            <div class="mt-2 link-inherit">
+                <p>
+                    <strong class="text-title me-3">Stokta :</strong>
+                    @if (Model.InStock)
+                    {
+                        <span class="stock in-stock"><i class="far fa-check-square me-2 ms-1"></i>var</span>
+                    }
+                    else
+                    {
+                        <span class="stock out-of-stock">yok</span>
+                    }
+                </p>
+                @if (!string.IsNullOrWhiteSpace(Model.CategoryName))
+                {
+                    <p class="mb-0"><strong class="text-title me-2">Kategori:</strong>@Model.CategoryName</p>
+                }
+            </div>
+
+            <div class="actions my-3">
+                <a class="th-btn" href="http://wa.me/903325012218" target="_blank">İLETİŞİM</a>
+            </div>
+
+            @if (Model.Attributes != null && Model.Attributes.Count > 0)
+            {
+                <div class="product_meta mt-3">
+                    <h5 class="mb-2">Ürün Özellikleri</h5>
+                    <ul class="list-unstyled mb-0">
+                        @foreach (var pair in Model.Attributes)
+                        {
+                            <li class="d-flex justify-content-between border-bottom py-1">
+                                <span class="fw-semibold">@pair.Name</span>
+                                <span>@pair.Value</span>
+                            </li>
+                        }
+                    </ul>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<!-- SEKME İÇERİKLERİ -->
+<ul class="nav product-tab-style2 mt-5" id="productTab" role="tablist">
+    <li class="nav-item" role="presentation">
+        <a class="nav-link active" id="description-tab" data-bs-toggle="tab" href="#description" role="tab"
+           aria-controls="description" aria-selected="true">Açıklama</a>
+    </li>
+    <li class="nav-item" role="presentation">
+        <a class="nav-link" id="additional-tab" data-bs-toggle="tab" href="#additional" role="tab"
+           aria-controls="additional" aria-selected="false">Ürün Hakkında</a>
+    </li>
+</ul>
+
+<div class="tab-content" id="productTabContent">
+    <div class="tab-pane fade show active" id="description" role="tabpanel" aria-labelledby="description-tab">
+        @if (!string.IsNullOrWhiteSpace(Model.DescriptionHtml))
+        {
+            @Html.Raw(Model.DescriptionHtml)
+        }
+        else
+        {
+            <p>—</p>
+        }
+    </div>
+
+    <div class="tab-pane fade" id="additional" role="tabpanel" aria-labelledby="additional-tab">
+        @if (!string.IsNullOrWhiteSpace(Model.AboutHtml))
+        {
+            @Html.Raw(Model.AboutHtml)
+        }
+        else
+        {
+            <p>—</p>
+        }
+    </div>
+</div>
+
+<style>
+    /* küçük dokunuş */
+    .thumb-btn { transition: transform .15s ease; }
+    .thumb-btn:hover { transform: scale(1.03); }
+</style>

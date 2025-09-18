@@ -8,13 +8,13 @@
                 <div class="newsletter-top">
                     <div class="row gy-4 align-items-center">
                         <div class="col-lg-5">
-                            <h2 class="newsletter-title text-white text-capitalize mb-0">E-Bülten Aboneliği</h2>
+                            <h2 class="newsletter-title text-white text-capitalize mb-0">@Html.Localize("pages.layout.footer_newsletter")</h2>
                         </div>
                         <div class="col-lg-7">
                             <form class="newsletter-form">
-                                <input class="form-control" type="email" placeholder="Mail Adresinizi Giriniz." required>
+                                <input class="form-control" type="email" placeholder="@Html.Localize("pages.layout.footer_newsletter_placeholder")" required>
                                 <button type="submit" class="th-btn style3">
-                                    Şimdi Abone Ol <img src="/img/icon/plane.svg" alt="">
+                                    @Html.Localize("pages.layout.footer_newsletter_cta") <img src="/img/icon/plane.svg" alt="">
                                 </button>
                             </form>
                         </div>
@@ -43,7 +43,7 @@
                 <!-- Faydalı Linkler -->
                 <div class="col-md-6 col-xl-3 col-xxl-2">
                     <div class="widget widget_nav_menu footer-widget">
-                        <h3 class="widget_title">Faydalı Linkler</h3>
+                        <h3 class="widget_title">@Html.Localize("pages.layout.footer_useful_links")</h3>
                         <div class="menu-all-pages-container">
                             <ul class="menu">
                                 <li><a asp-controller="Home" asp-action="Index" asp-route-culture="@ViewData["Culture"]">@Html.Localize("pages.layout.index")</a></li>
@@ -59,7 +59,7 @@
                 <!-- İletişimde kal -->
                 <div class="col-md-6 col-xl-3">
                     <div class="widget footer-widget">
-                        <h3 class="widget_title">İletşimde kal</h3>
+                        <h3 class="widget_title">@Html.Localize("pages.layout.footer_contact")</h3>
                         <div class="th-widget-contact">
                             @if (!string.IsNullOrWhiteSpace(Model.Phone))
                             {
@@ -93,7 +93,7 @@
                 <!-- Sosyal Medya -->
                 <div class="col-md-6 col-xl-3">
                     <div class="widget footer-widget">
-                        <h3 class="widget_title">Sosyal Medya</h3>
+                        <h3 class="widget_title">@Html.Localize("pages.layout.footer_social_media")</h3>
                         <ul class="list-unstyled m-0">
                             @if (!string.IsNullOrWhiteSpace(Model.InstagramUrl))
                             {
@@ -157,7 +157,7 @@
                 <div class="col-md-6 text-md-end mt-3 mt-md-0">
                     <ul class="list-inline m-0">
                         <li class="list-inline-item">
-                            <a href="/">Yasal bilgilendirme için tıklayınız</a>
+                            <a href="/">@Html.Localize("pages.layout.footer_legal_notice")</a>
                         </li>
                     </ul>
                 </div>

@@ -1,0 +1,41 @@
+@model List<kayialp.ViewComponents.CategoryVM>
+
+<div class="service-area">
+    <div class="row gy-30 justify-content-center">
+        @foreach (var c in Model)
+        {
+            <div class="col-xl-3 col-md-6">
+                <div class="service-box service-style-1">
+                    <div class="service-img">
+                        <a asp-controller="Products"
+                           asp-action="CategoryProducts"
+                           asp-route-culture="@ViewData["Culture"]"
+                           asp-route-slug="@c.Slug"
+                           asp-route-id="@c.Id">
+                            <img src=@c.ImageUrl alt="@c.Name" />
+                        </a>
+                    </div>
+                    <div class="service-content">
+                        <h3 class="box-title">
+                            <a asp-controller="Products"
+                               asp-action="CategoryProducts"
+                               asp-route-culture="@ViewData["Culture"]"
+                               asp-route-slug="@c.Slug"
+                               asp-route-id="@c.Id">
+                                @c.Name
+                            </a>
+                        </h3>
+                        <a class="th-btn style4"
+                           asp-controller="Products"
+                           asp-action="CategoryProducts"
+                           asp-route-culture="@ViewData["Culture"]"
+                           asp-route-slug="@c.Slug"
+                           asp-route-id="@c.Id">
+                            Daha Fazla Ürün<i class="fa-light fa-arrow-right-long"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</div>
