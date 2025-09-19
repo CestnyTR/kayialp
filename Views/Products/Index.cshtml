@@ -2,17 +2,22 @@
     ViewData["Title"] = "Products";
     Layout = "/Views/Shared/_Layout.cshtml";
 }
-<section class="position-relative bg-top-center overflow-hidden space-top" id="service-sec">
-    <div class="container">
-        <div class="row justify-content-center">
-            <div class="col-lg-8">
-                <div class="title-area service-title-box text-center">
-                    <h2 class="sec-title">Ürün Kategorileri</h2>
-                    <p class="sec-text mb-50">İhtiyacınıza uygun kategorileri keşfedin.</p>
-                </div>
+<div class="breadcumb-area ">
+    <div class="breadcumb-wrapper" data-bg-src="/img/bg/breadcumb-bg.jpg">
+        <div class="container">
+            <div class="breadcumb-content">
+                <h1 class="breadcumb-title">@Html.Localize(key:"pages.layout.productCategory")</h1>
+                <ul class="breadcumb-menu">
+                    <li><a href="/">@Html.Localize("pages.layout.index")</a></li>
+                    <li>@Html.Localize(key:"pages.layout.productCategory")</li>
+                </ul>
             </div>
         </div>
+    </div>
+</div>
 
+<section class="position-relative bg-top-center overflow-hidden space-top" id="service-sec">
+    <div class="container">
         @await Component.InvokeAsync("CategoryList")
     </div>
 </section>

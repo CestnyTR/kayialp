@@ -9,10 +9,10 @@
     <div class="breadcumb-wrapper" data-bg-src="/img/bg/breadcumb-bg.jpg">
         <div class="container">
             <div class="breadcumb-content">
-                <h1 class="breadcumb-title">FUAR</h1>
+                <h1 class="breadcumb-title">@Html.Localize(key:"pages.layout.fairs")</h1>
                 <ul class="breadcumb-menu">
-                    <li><a href="/">ANASAYFA</a></li>
-                    <li>Fuar</li>
+                    <li><a href="/">@Html.Localize("pages.layout.index")</a></li>
+                    <li>@Html.Localize(key:"pages.layout.fairs")</li>
                 </ul>
             </div>
         </div>
@@ -21,7 +21,7 @@
 
 <section class="container my-5">
     <div class="d-flex justify-content-between align-items-end mb-4">
-        <h2 class="m-0">Fairs</h2>
+        <h2 class="m-0">@Html.Localize(key:"pages.layout.fairs")</h2>
         <form method="get" class="d-flex gap-2">
             <select name="year" class="form-select" style="width:160px">
                 <option value="">@Local("All Years")</option>
@@ -51,9 +51,9 @@
                     <img src="@card.CoverUrl" class="card-img-top fair-card-img-top rounded-0" alt="@card.Title" />
                     <div class="card-body fair-card-body">
                         <h5 class="card-title fair-name">@Html.Localize($"fairs.{card.Title}")</h5>
-                        <p class="card-text fair-place">Fair Name:@Html.Localize($"fairs.{card.Title}")</p>
-                        <p class="card-text fair-date">Date: @card.DateRange</p>
-                        <p class="card-text fair-place">Place: @card.Venue / @card.City / @card.Country</p>
+                        <p class="card-text fair-place">@Html.Localize(key:"pages.fair.fairName")@Html.Localize($"fairs.{card.Title}")</p>
+                        <p class="card-text fair-date">@Html.Localize(key:"pages.fair.date") @card.DateRange</p>
+                        <p class="card-text fair-place">@Html.Localize(key:"pages.fair.place") @card.Venue / @card.City / @card.Country</p>
                     </div>
                 </div>
             </div>

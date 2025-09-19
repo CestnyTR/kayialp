@@ -9,6 +9,20 @@
 }
 
 <!-- … breadcumb kısmın aynı … -->
+<div class="breadcumb-area ">
+    <div class="breadcumb-wrapper" data-bg-src="/img/bg/breadcumb-bg.jpg">
+        <div class="container">
+            <div class="breadcumb-content">
+                <h1 class="breadcumb-title">@Html.Localize(key:"pages.layout.products")</h1>
+                <ul class="breadcumb-menu">
+                    <li><a href="/">@Html.Localize("pages.layout.index")</a></li>
+                    <li><a asp-controller="Products" asp-action="Index" asp-route-culture="@ViewData["Culture"]">@Html.Localize(key:"pages.layout.productCategory")</a></li>
+                    <li>@Html.Localize(key:"pages.layout.products")</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
 
 <section class="space-top space-extra-bottom">
   <div class="container">
