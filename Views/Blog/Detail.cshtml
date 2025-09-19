@@ -1,0 +1,20 @@
+@using kayialp.ViewModels
+@model BlogDetailViewModel
+
+<div class="container py-5">
+    <div class="row">
+        <div class="col-lg-8 offset-lg-2">
+            <h1 class="mb-3">@Model.Title</h1>
+            <img src="@Model.ImageUrl" alt="@Model.ImageAlt" class="img-fluid mb-4" />
+
+            <h5 class="text-secondary">@Html.Raw(Model.Summary)</h5>
+            <div class="content">
+                @Html.Raw(Model.Body)
+            </div>
+
+            <a href="/@ViewData["Culture"]/blog" class="btn btn-outline-primary mt-4">
+                ← Tüm Bloglar
+            </a>
+        </div>
+    </div>
+</div>

@@ -39,18 +39,15 @@
                       { <p class="hero-text text-white" data-ani="slideinup" data-ani-delay="0.6s">@Html.Raw(slide.Content)</p> }
 
                       <div class="btn-group" data-ani="slideinup" data-ani-delay="0.8s">
-                        @if (!string.IsNullOrWhiteSpace(slide.Cta1Text))
-                        {
-                          <a href="@(string.IsNullOrWhiteSpace(slide.Cta1Url) ? "#" : slide.Cta1Url)" class="th-btn style7 th-icon">
-                            @slide.Cta1Text <i class="fa-light fa-arrow-right-long"></i>
+                        
+                          <a asp-controller="Category" asp-action="Index" asp-route-culture="@ViewData["Culture"]" class="th-btn style7 th-icon">
+                           @Html.Localize("pages.layout.products") <i class="fa-light fa-arrow-right-long"></i>
                           </a>
-                        }
-                        @if (!string.IsNullOrWhiteSpace(slide.Cta2Text))
-                        {
-                          <a href="@(string.IsNullOrWhiteSpace(slide.Cta2Url) ? "#" : slide.Cta2Url)" class="th-btn style2 th-icon">
-                            @slide.Cta2Text <i class="fa-light fa-arrow-right-long"></i>
+                        
+                          <a asp-controller="Contact" asp-action="Index" asp-route-culture="@ViewData["Culture"]" class="th-btn style2 th-icon">
+                          @Html.Localize("pages.layout.communication")<i class="fa-light fa-arrow-right-long"></i>
                           </a>
-                        }
+                        
                       </div>
                     </div>
                   </div>

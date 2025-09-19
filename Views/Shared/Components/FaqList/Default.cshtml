@@ -1,0 +1,21 @@
+@model IEnumerable<kayialp.ViewModels.Faq.FaqViewModel>
+
+<div class="accordion" id="faqAccordion">
+    @foreach (var faq in Model)
+    {
+        <div class="accordion-card style4">
+            <div class="accordion-header" id="collapse-item-@faq.Id">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                    data-bs-target="#collapse-@faq.Id" aria-expanded="false" aria-controls="collapse-@faq.Id">
+                    @faq.Question
+                </button>
+            </div>
+            <div id="collapse-@faq.Id" class="accordion-collapse collapse" aria-labelledby="collapse-item-@faq.Id"
+                data-bs-parent="#faqAccordion">
+                <div class="accordion-body">
+                    <p class="faq-text">@Html.Raw(faq.Answer)</p>
+                </div>
+            </div>
+        </div>
+    }
+</div>

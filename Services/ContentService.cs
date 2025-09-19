@@ -1,5 +1,7 @@
 ﻿using kayialp.Context;
+using kayialp.Models;
 using System.Globalization;
+using System.Reflection;
 
 namespace kayialp.Services
 {
@@ -72,9 +74,11 @@ namespace kayialp.Services
                     result = GetAdvantageField(advId, advantagesFields, langId.Value);
                     break;
 
-                case "products":
-                    // İleride ihtiyaç olursa doldurulabilir
-                    return $"[[products resolver not implemented]]";
+                case "companyinfo":
+                    // "companyinfo.about" | "companyinfo.mission" | "companyinfo.vision"
+                    if (parts.Length < 2) return $"[[{compoundKey}]]";
+                    result = GetCompanyInfoField(parts[1].ToLowerInvariant(), langId.Value);
+                    break;
 
                 default:
                     return $"[[Unsupported Table: {tableKey}]]";
@@ -99,6 +103,7 @@ namespace kayialp.Services
                     return GetFairTitle(parts[1], defaultLangId.Value) ?? $"[[{compoundKey}]]";
                 case "homeslide":
                     return GetHomeSlideField(int.Parse(parts[1]), parts[2], defaultLangId.Value) ?? $"[[{compoundKey}]]";
+
                 default:
                     return $"[[{compoundKey}]]";
             }
@@ -164,5 +169,65 @@ namespace kayialp.Services
                 _ => null
             };
         }
+
+        private string GetCompanyInfoField(string field, int langId)
+        {
+            var info = _context.CompanyInfos.FirstOrDefault();
+            if (info == null) return null;
+
+            // Translation tablosu
+            var t = _context.CompanyInfoTranslations
+                .FirstOrDefault(x => x.CompanyInfoId == info.Id && x.LangCodeId == langId);
+
+            // Önce translation üzerinde dene
+            var transProp = typeof(CompanyInfoTranslation).GetProperty(
+                CultureInfo.CurrentCulture.TextInfo.ToTitleCase(field),
+                BindingFlags.Public | BindingFlags.Instance | BindingFlags.IgnoreCase
+            );
+            if (transProp != null && t != null)
+            {
+                return transProp.GetValue(t)?.ToString();
+            }
+
+            if (field.Equals("address", StringComparison.OrdinalIgnoreCase))
+            {
+                // Adresi formatlıyoruz
+                var parts = new List<string>();
+                if (!string.IsNullOrWhiteSpace(info.AddressLine)) parts.Add(info.AddressLine);
+                if (!string.IsNullOrWhiteSpace(info.District)) parts.Add(info.District);
+                if (!string.IsNullOrWhiteSpace(info.City)) parts.Add(info.City);
+                if (!string.IsNullOrWhiteSpace(info.Country)) parts.Add(info.Country);
+                if (!string.IsNullOrWhiteSpace(info.PostalCode)) parts.Add(info.PostalCode);
+
+                return string.Join(", ", parts);
+            }
+            // Eğer translation'da yoksa CompanyInfo üzerinde dene
+            var infoProp = typeof(CompanyInfo).GetProperty(
+                CultureInfo.CurrentCulture.TextInfo.ToTitleCase(field),
+                BindingFlags.Public | BindingFlags.Instance | BindingFlags.IgnoreCase
+            );
+            if (infoProp != null)
+            {
+                return infoProp.GetValue(info)?.ToString();
+            }
+            if (field.Equals("mapurl", StringComparison.OrdinalIgnoreCase))
+            {
+                if (!string.IsNullOrWhiteSpace(info.MapEmbedUrl))
+                {
+                    // Admin'in girdiği hazır embed linki
+                    return info.MapEmbedUrl;
+                }
+                else
+                {
+                    // Adresten otomatik Google Maps linki üret
+                    var address = GetCompanyInfoField("address", langId);
+                    if (string.IsNullOrWhiteSpace(address)) return null;
+                    return $"https://www.google.com/maps?q={Uri.EscapeDataString(address)}&output=embed";
+                }
+            }
+            return null;
+        }
+
+
     }
 }

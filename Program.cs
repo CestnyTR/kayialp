@@ -1,4 +1,5 @@
 using kayialp.Context;
+using kayialp.Helpers;
 using kayialp.Services;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.AspNetCore.Localization.Routing;
@@ -21,6 +22,13 @@ builder.Services.AddScoped<ITranslationService, DeepLTranslationService>();
 
 builder.Services.AddMemoryCache();
 builder.Services.AddScoped<ILangResolver, LangResolver>();
+builder.Services.AddControllersWithViews()
+    .AddRazorOptions(options =>
+    {
+        options.ViewLocationFormats.Add("/Views/Admin/{1}/{0}.cshtml");
+        options.ViewLocationFormats.Add("/Views/Admin/Shared/{0}.cshtml");
+    });
+builder.Services.AddScoped<AdminHelper>();
 
 var app = builder.Build();
 

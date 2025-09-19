@@ -5,9 +5,7 @@
     var currentCulture = System.Globalization.CultureInfo.CurrentCulture.TwoLetterISOLanguageName;
     var currentController = ViewContext.RouteData.Values["controller"]?.ToString();
     var bodyClass = ViewBag.BodyClass != null ? $" class=\"{ViewBag.BodyClass}\"" : "";
-
 }
-
 <!doctype html>
 <html class="no-js" lang=@ViewData["Culture"] style="--theme-color: #182129;">
 
@@ -88,6 +86,8 @@
                     @await Component.InvokeAsync("CategoryNavigation")
                     <li><a asp-controller="Fair" asp-action="Index" asp-route-culture="@ViewData["Culture"]"
                             class="@(currentController == "Fair" ? "active" : "")">@Html.Localize("pages.layout.fairs")</a>
+                    <li><a asp-controller="Blog" asp-action="Index" asp-route-culture="@ViewData["Culture"]"
+                            class="@(currentController == "Blog" ? "active" : "")">@Html.Localize("pages.layout.blog")</a>
                     </li>
                     <li><a asp-controller="Contact" asp-action="Index" asp-route-culture="@ViewData["Culture"]"
                             class="@(currentController == "Contact" ? "active" : "")">@Html.Localize(key:
@@ -109,7 +109,6 @@
                                 </option>
                             }
                         </select>
-
                         <input type="hidden" name="returnUrl" value="@Context.Request.Path" />
                     </form>
 
@@ -127,13 +126,13 @@
                             <ul>
                                 <li class="d-none d-xl-inline-block">
                                     <i class="fa-sharp fa-regular fa-location-dot"></i>
-                                    <span>FEVZİÇAKMAK MAH. ŞEHİT ATİLLA DEMİRELLİ CAD. B.BLOK NO: 2B KARATAY /
-                                        KONYA
+                                    <span>@Html.Localize("CompanyInfo.address")
                                     </span>
                                 </li>
                                 <li class="d-none d-xl-inline-block">
                                     <i class="fa-regular fa-clock"></i>
-                                    <span>Pazartesi - Cuma : 09.00 - 18.00 </span>
+                                    <span>@Html.Localize("CompanyInfo.WorkingDays")
+                                        @Html.Localize("CompanyInfo.WorkingHours")</span>
                                 </li>
                             </ul>
                         </div>
@@ -154,7 +153,7 @@
                                                                                         })
                                             {
                                                 <button type="submit" name="culture" class="language-option @if(currentCulture == lang.Code) {
-                                                                                                    <text>selected</text>
+                                                                                                        <text>selected</text>
                                                 }
 " value="@lang.Code" id="@lang.Code">
                                                 <img src="@lang.FlagUrl" alt="@lang.Name" class="flag-img" />
@@ -169,8 +168,10 @@
                             </div>
                             <div class="header-links">
                                 <ul>
-                                    <li class="d-none d-md-inline-block"><a href="/sss">@Html.Localize("pages.layout.faq")</a></li>
-                                    <li class="d-none d-md-inline-block"><a href="/contact">@Html.Localize("pages.layout.communication")</a></li>
+                                    <li class="d-none d-md-inline-block"><a
+                                            href="/sss">@Html.Localize("pages.layout.faq")</a></li>
+                                    <li class="d-none d-md-inline-block"><a
+                                            href="/contact">@Html.Localize("pages.layout.communication")</a></li>
                                 </ul>
                             </div>
                         </div>
@@ -208,6 +209,10 @@
                                             asp-route-culture="@ViewData["Culture"]"
                                             class="@(currentController == "Fair" ? "active" : "")">@Html.Localize("pages.layout.fairs")</a>
                                     </li>
+                                    <li><a asp-controller="Blog" asp-action="Index"
+                                            asp-route-culture="@ViewData["Culture"]"
+                                            class="@(currentController == "Blog" ? "active" : "")">@Html.Localize("pages.layout.blog")</a>
+                                    </li>
                                     <li><a asp-controller="Contact" asp-action="Index"
                                             asp-route-culture="@ViewData["Culture"]"
                                             class="@(currentController == "Contact" ? "active" : "")">@Html.Localize("pages.layout.communication")</a>
@@ -244,7 +249,7 @@
         @RenderBody()
     </main>
 
-@await Component.InvokeAsync("SiteFooter")
+    @await Component.InvokeAsync("SiteFooter")
 
     <div class="scroll-top">
         <svg class="progress-circle svg-content" width="100%" height="100%" viewBox="-1 -1 102 102">

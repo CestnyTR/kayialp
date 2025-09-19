@@ -1,0 +1,62 @@
+@model kayialp.ViewModels.FaqEditViewModel
+
+@{
+    Layout = "/Views/Shared/_AdminLayout.cshtml";
+    ViewData["Title"] = Model.Id == 0 ? "Yeni SSS Ekle" : "SSS Düzenle";
+}
+
+<h1 class="h3 mb-3">@ViewData["Title"]</h1>
+
+<form asp-action="@(Model.Id == 0 ? "Create" : "Edit")" method="post">
+    @Html.AntiForgeryToken()
+    <input type="hidden" asp-for="Id" />
+
+    <div class="mb-3">
+        <label asp-for="Order" class="form-label">Sıra</label>
+        <input asp-for="Order" class="form-control" />
+    </div>
+<div class="form-check mb-3">
+    <input class="form-check-input" asp-for="AutoTranslate" type="checkbox" />
+    <label class="form-check-label" asp-for="AutoTranslate">
+        Boş alanları otomatik çevir (TR’den)
+    </label>
+</div>
+
+    <ul class="nav nav-tabs" id="langTabs" role="tablist">
+        @for (int i = 0; i < Model.Translations.Count; i++)
+        {
+            var tr = Model.Translations[i];
+            <li class="nav-item" role="presentation">
+                <button class="nav-link @(i==0?"active":"")" id="tab-@tr.LangCode" data-bs-toggle="tab" data-bs-target="#content-@tr.LangCode" type="button" role="tab">
+                    @tr.LangCode.ToUpper()
+                </button>
+            </li>
+        }
+    </ul>
+
+    <div class="tab-content border p-3" id="langTabsContent">
+        @for (int i = 0; i < Model.Translations.Count; i++)
+        {
+            var tr = Model.Translations[i];
+            <div class="tab-pane fade @(i==0?"show active":"")" id="content-@tr.LangCode" role="tabpanel">
+                <input type="hidden" asp-for="Translations[@i].LangCodeId" />
+                <input type="hidden" asp-for="Translations[@i].LangCode" />
+
+                <div class="mb-3">
+                    <label class="form-label">Soru (@tr.LangCode.ToUpper())</label>
+                    <input asp-for="Translations[@i].Question" class="form-control" />
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Cevap (@tr.LangCode.ToUpper())</label>
+                    <textarea asp-for="Translations[@i].Answer" class="form-control" rows="3"></textarea>
+                </div>
+
+               
+            </div>
+        }
+    </div>
+
+    <button type="submit" class="btn btn-success mt-3">Kaydet</button>
+    <a asp-action="Index" class="btn btn-secondary mt-3">Geri</a>
+</form>

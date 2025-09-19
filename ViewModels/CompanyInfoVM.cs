@@ -47,6 +47,7 @@ namespace kayialp.ViewModels
         public string? AboutHtml { get; set; }
         public string? MissionHtml { get; set; }
         public string? VisionHtml { get; set; }
+        public string? WorkingDays { get; set; }
     }
 
 }

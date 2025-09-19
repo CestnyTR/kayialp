@@ -1,19 +1,21 @@
 @{
     ViewData["Title"] = "Contact";
     Layout = "/Views/Shared/_Layout.cshtml";
-
+    var address = Html.Localize("companyinfo.address");
+    var encodedAddress = Uri.EscapeDataString(address);
+    var mapUrl = $"https://www.google.com/maps?q={encodedAddress}&output=embed";
 }
-<!--==============================
+<!-- ==============================
     Breadcumb
 ============================== -->
 <div class="breadcumb-area ">
     <div class="breadcumb-wrapper" data-bg-src="/img/bg/breadcumb-bg.jpg">
         <div class="container">
             <div class="breadcumb-content">
-                <h1 class="breadcumb-title">@Html.Localize(key:"pages.layout.communication")</h1>
+                <h1 class="breadcumb-title">@Html.Localize(key: "pages.layout.communication")</h1>
                 <ul class="breadcumb-menu">
                     <li><a href="/">@Html.Localize("pages.layout.index")</a></li>
-                    <li>@Html.Localize(key:"pages.layout.communication")</li>
+                    <li>@Html.Localize(key: "pages.layout.communication")</li>
                 </ul>
             </div>
         </div>
@@ -33,9 +35,9 @@ Contact Area
                         <i class="fa-solid fa-headphones-simple"></i>
                     </span>
                     <div class="about-contact-details">
-                        <span class="sec-text">@Html.Localize(key:"pages.contact.phone")</span>
+                        <span class="sec-text">@Html.Localize(key: "pages.contact.phone")</span>
                         <p class="about-contact-details-text">
-                            <a href="tel:+903325012218"> +90 332 501 22 18</a>
+                            <a href="tel:+903325012218">@Html.Localize("CompanyInfo.Phone")</a>
                         </p>
                     </div>
                 </div>
@@ -44,9 +46,10 @@ Contact Area
                         <i class="fa-light fa-envelope-open-text"></i>
                     </span>
                     <div class="about-contact-details">
-                        <span class="sec-text">@Html.Localize(key:"pages.contact.email")</span>
+                        <span class="sec-text">@Html.Localize(key: "pages.contact.email")</span>
                         <p class="about-contact-details-text">
-                            <a href="mailto:info@kayialp.com">info@kayialp.com</a>
+                            <a href="mailto:info@kayialp.com">@Html.Localize("CompanyInfo.EMail")</a>
+                            <a href="mailto:info@kayialp.com">@Html.Localize("CompanyInfo.EMail2")</a>
                         </p>
                     </div>
                 </div>
@@ -55,10 +58,10 @@ Contact Area
                         <i class="fa-thin fa-map-location-dot"></i>
                     </span>
                     <div class="about-contact-details">
-                        <span class="sec-text">@Html.Localize(key:"pages.contact.address")</span>
+                        <span class="sec-text">@Html.Localize(key: "pages.contact.address")</span>
                         <p class="about-contact-details-text">
-                            <a href="#">FEVZİÇAKMAK MAH.<br /> ŞEHİT ATİLLA DEMİRELLİ CAD.<br /> B.BLOK NO: 2B
-                                KARATAY/KONYA </a>
+                            <a href="#">@Html.Localize("CompanyInfo.address")</a>
+                            </a>
                         </p>
                     </div>
                 </div>
@@ -71,32 +74,34 @@ Contact Area
                         <form action="mail.php" method="POST" class="contact-form ajax-contact">
                             <div class="row">
                                 <div class="col-sm-6 form-group">
-                                    <input type="text" class="form-control" name="name" id="name3" placeholder="@Html.Localize(key:"pages.contact.ph_firstname")">
+                                    <input type="text" class="form-control" name="name" id="name3"
+                                        placeholder="@Html.Localize(key: "pages.contact.ph_firstname")">
                                     <img src="assets/img/icon/user.svg" alt="">
                                 </div>
                                 <div class="col-sm-6 form-group">
                                     <input type="text" class="form-control" name="surname" id="surname"
-                                        placeholder="@Html.Localize(key:"pages.contact.ph_lastname")">
+                                        placeholder="@Html.Localize(key: "pages.contact.ph_lastname")">
                                     <img src="assets/img/icon/user.svg" alt="">
                                 </div>
                                 <div class="col-sm-6 form-group">
                                     <input type="email" class="form-control" name="email" id="email"
-                                        placeholder="@Html.Localize(key:"pages.contact.ph_email")">
+                                        placeholder="@Html.Localize(key: "pages.contact.ph_email")">
                                     <img src="assets/img/icon/mail.svg" alt="">
                                 </div>
                                 <div class="col-sm-6 form-group">
                                     <input type="text" class="form-control" name="number" id="number"
-                                        placeholder="@Html.Localize(key:"pages.contact.ph_phone")">
+                                        placeholder="@Html.Localize(key: "pages.contact.ph_phone")">
                                     <img src="assets/img/icon/call.svg" alt="">
                                 </div>
                                 <div class="form-group col-12">
                                     <textarea name="message" id="message" cols="30" rows="3" class="form-control"
-                                        placeholder="@Html.Localize(key:"pages.contact.ph_message")"></textarea>
+                                        placeholder="@Html.Localize(key: "pages.contact.ph_message")"></textarea>
                                     <img src="assets/img/icon/chat.svg" alt="">
                                 </div>
                                 <div class="form-btn col-12">
                                     <button type="submit" class="th-btn">
-                                        @Html.Localize(key:"pages.contact.ph_submit") <img src="assets/img/icon/plane4.svg" alt="">
+                                        @Html.Localize(key: "pages.contact.ph_submit") <img
+                                            src="assets/img/icon/plane4.svg" alt="">
                                     </button>
                                 </div>
                             </div>
@@ -112,14 +117,12 @@ Contact Area
             </div>
         </div>
     </div>
-</div><!--==============================
-Map Area  
+</div>
+<!--==============================
+Map Area
 ==============================-->
 <div class="">
     <div class="contact-map style2">
-
-        <iframe
-            src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3644.7310056272386!2d89.2286059153658!3d24.00527418490799!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x39fe9b97badc6151%3A0x30b048c9fb2129bc!2sAngfuztheme!5e0!3m2!1sen!2sbd!4v1651028958211!5m2!1sen!2sbd"
-            allowfullscreen="" loading="lazy"></iframe>
+        <iframe src="@Html.Localize("companyinfo.mapurl")" allowfullscreen="" loading="lazy"></iframe>
     </div>
 </div>

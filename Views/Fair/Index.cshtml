@@ -9,126 +9,58 @@
     <div class="breadcumb-wrapper" data-bg-src="/img/bg/breadcumb-bg.jpg">
         <div class="container">
             <div class="breadcumb-content">
-                <h1 class="breadcumb-title">@Html.Localize(key:"pages.layout.fairs")</h1>
+                <h1 class="breadcumb-title">@Html.Localize(key: "pages.layout.fairs")</h1>
                 <ul class="breadcumb-menu">
                     <li><a href="/">@Html.Localize("pages.layout.index")</a></li>
-                    <li>@Html.Localize(key:"pages.layout.fairs")</li>
+                    <li>@Html.Localize(key: "pages.layout.fairs")</li>
                 </ul>
             </div>
         </div>
     </div>
 </div>
+<div class="fairs-page">
+    <section class="container my-5">
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-end gap-3 mb-4 fairs-header">
+            <h2 class="m-0 order-1 order-md-0">@Html.Localize(key: "pages.layout.fairs")</h2>
 
-<section class="container my-5">
-    <div class="d-flex justify-content-between align-items-end mb-4">
-        <h2 class="m-0">@Html.Localize(key:"pages.layout.fairs")</h2>
-        <form method="get" class="d-flex gap-2">
-            <select name="year" class="form-select" style="width:160px">
-                <option value="">@Local("All Years")</option>
-                @foreach (var y in Model.Years)
-                {
-                    <option value="@y" selected="@(Model.Year == y ? "selected" : null)">@y</option>
-                }
-            </select>
+            <form method="get" class="d-flex flex-column flex-md-row gap-2 w-100 w-md-auto">
+                <select name="year" class="form-select w-100 w-md-auto">
+                    <option value="">@Local("All Years")</option>
+                    @foreach (var y in Model.Years)
+                    {
+                        <option value="@y" selected="@(Model.Year == y ? "selected" : null)">@y</option>
+                    }
+                </select>
 
-            <select name="country" class="form-select" style="width:220px">
-                <option value="">@Local("All Countries")</option>
-                @foreach (var c in Model.Countries)
-                {
-                    <option value="@c" selected="@(Model.Country == c ? "selected" : null)">@c</option>
-                }
-            </select>
+                <select name="country" class="form-select form-select-sm w-100 w-md-auto">
+                    <option value="">@Local("All Countries")</option>
+                    @foreach (var c in Model.Countries)
+                    {
+                        <option value="@c" selected="@(Model.Country == c ? "selected" : null)">@c</option>
+                    }
+                </select>
 
-            <button class="btn btn-primary">@Local("Filter")</button>
-        </form>
-    </div>
+                <button class="btn btn-primary btn-sm w-100 w-md-auto">@Local("Filter")</button>
+            </form>
+        </div>
 
-    <div class="row row-cols-1 row-cols-md-3 g-4">
-        @foreach (var card in Model.Cards)
-        {
-            <div class="col">
-                <div class="card fair-card rounded-0">
-                    <img src="@card.CoverUrl" class="card-img-top fair-card-img-top rounded-0" alt="@card.Title" />
-                    <div class="card-body fair-card-body">
-                        <h5 class="card-title fair-name">@Html.Localize($"fairs.{card.Title}")</h5>
-                        <p class="card-text fair-place">@Html.Localize(key:"pages.fair.fairName")@Html.Localize($"fairs.{card.Title}")</p>
-                        <p class="card-text fair-date">@Html.Localize(key:"pages.fair.date") @card.DateRange</p>
-                        <p class="card-text fair-place">@Html.Localize(key:"pages.fair.place") @card.Venue / @card.City / @card.Country</p>
+        <div class="row row-cols-1 row-cols-md-3 g-4">
+            @foreach (var card in Model.Cards)
+            {
+                <div class="col">
+                    <div class="card fair-card rounded-0">
+                        <img src="@card.CoverUrl" class="card-img-top fair-card-img-top rounded-0" alt="@card.Title" />
+                        <div class="card-body fair-card-body">
+                            <h5 class="card-title fair-name">@Html.Localize($"fairs.{card.Title}")</h5>
+                            <p class="card-text fair-place">
+                                @Html.Localize(key: "pages.fair.fairName")@Html.Localize($"fairs.{card.Title}")</p>
+                            <p class="card-text fair-date">@Html.Localize(key: "pages.fair.date") @card.DateRange</p>
+                            <p class="card-text fair-place">@Html.Localize(key: "pages.fair.place") @card.Venue / @card.City
+                                / @card.Country</p>
+                        </div>
                     </div>
                 </div>
-            </div>
-        }
-    </div>
-</section>
-
-@* 
-<!--
-@{
-    ViewData["Title"] = "FUAR";
-    Layout = "/Views/Shared/_Layout.cshtml";
-
-}
-<!--
-==============================
-    Breadcumb
-============================== -->
-<div class="breadcumb-area ">
-    <div class="breadcumb-wrapper" data-bg-src="/img/bg/breadcumb-bg.jpg">
-        <div class="container">
-            <div class="breadcumb-content">
-                <h1 class="breadcumb-title">FUAR</h1>
-                <ul class="breadcumb-menu">
-                    <li><a href="/">ANASAYFA</a></li>
-                    <li>Fuar</li>
-                </ul>
-            </div>
+            }
         </div>
-    </div>
+    </section>
 </div>
-
-
-<!--==============================
-Gallery Area  
-==============================-->
-<div class="container my-5">
-    <div class="row row-cols-1 row-cols-md-3 g-4">
-
-        <div class="col">
-            <div class="card fair-card rounded-0">
-                <img src="/img/project/project-inner4.jpg" class="card-img-top fair-card-img-top rounded-0" alt="...">
-                <div class="card-body fair-card-body">
-                    <h5 class="card-title fair-name">ILDEX / INDONESIA</h5>
-                    <p class="card-text fair-place">Fair Name: ILDEX Indonesia</p>
-                    <p class="card-text fair-date">Date: 17-18 September 2025</p>
-                    <p class="card-text fair-place">Place: Indonesia Convention Exhibition (ICE) Jakarta / Indonesia</p>
-                </div>
-            </div>
-        </div>
-
-        <div class="col">
-            <div class="card fair-card rounded-0">
-                <img src="/img/project/project-inner4.jpg" class="card-img-top fair-card-img-top rounded-0" alt="...">
-                <div class="card-body fair-card-body">
-                    <h5 class="card-title fair-name">Iran PLEX</h5>
-                    <p class="card-text fair-place">Fair Name: IRAN PLEX</p>
-                    <p class="card-text fair-date">Date: 13-16 October 2025</p>
-                    <p class="card-text fair-place">Place: Tahran International Permanent Fairground / Iran</p>
-                </div>
-            </div>
-        </div>
-
-        <div class="col">
-            <div class="card fair-card rounded-0">
-                <img src="/img/project/project-inner4.jpg" class="card-img-top fair-card-img-top rounded-0" alt="...">
-                <div class="card-body fair-card-body">
-                    <h5 class="card-title fair-name">Abu Dhabi / UAE</h5>
-                    <p class="card-text fair-place">Fair Name: VIV MEA Abu Dhabi</p>
-                    <p class="card-text fair-date">Date: 25-27 November 2025</p>
-                    <p class="card-text fair-place">Place: Abu Dhabi / U.A.E.</p>
-                </div>
-            </div>
-        </div>
-
-    </div>
-</div>
---> *@

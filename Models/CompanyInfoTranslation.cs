@@ -7,7 +7,7 @@ namespace kayialp.Models
         public int Id { get; set; }
         public int CompanyInfoId { get; set; }
         public int LangCodeId { get; set; }
-
+        public string WorkingDays { get; set; } = "";
         public string AboutHtml { get; set; } = "";
         public string MissionHtml { get; set; } = "";
         public string VisionHtml { get; set; } = "";

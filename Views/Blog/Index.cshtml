@@ -1,0 +1,29 @@
+@using kayialp.ViewModels
+@model IEnumerable<BlogListItemViewModel>
+
+<div class="container py-5">
+    <div class="row">
+        @foreach (var blog in Model)
+        {
+            <div class="col-md-4 mb-4">
+                <div class="card h-100">
+                    <img src="@blog.ImageUrl" class=" card-img-top" alt="@blog.ImageAlt" />
+                    <div class="card-body">
+                        <h5 class="card-title">@blog.Title</h5>
+                        @* Özet (summary) 40 karakterden sonra kesiliyor *@
+                        <p class="card-text">
+                            @(blog.Summary?.Length > 50 
+                                ? blog.Summary.Substring(0, 50) + "..." 
+                                : blog.Summary)
+                        </p>
+                    </div>
+                    <div class="card-footer text-end">
+                        <a href="/@ViewData["Culture"]/blog/@blog.Id/@blog.Slug" class="btn btn-sm btn-primary">
+                            Devamını Oku
+                        </a>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</div>

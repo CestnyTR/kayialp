@@ -27334,8 +27334,11 @@ Last Update: 20-07-2025
 
 .about-contact-grid.inner-style .about-contact-details-text {
   font-weight: 500;
-  font-size: 24px;
+  white-space: normal;
+  word-wrap: break-word;
+  font-size: 1rem;
   color: var(--title-color);
+  max-width: 30vh;
   /* Extra small devices */
 }
 
@@ -43974,7 +43977,6 @@ Last Update: 20-07-2025
 
 .faq4-form .sec-title {
   font-size: 24px;
-  width: 600px;
 }
 
 .faq4-form .contact-form {

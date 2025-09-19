@@ -1898,60 +1898,6 @@ namespace kayialp.Controllers
             }
         }
 
-        /* === Helpers === */
-
-        // EN’den kısa, camelCase key üret; boşsa fallback
-        private async Task<string> BuildCanonicalKeyNameForCategoryAsync(string trName, int idForFallback, CancellationToken ct)
-        {
-            string enName;
-            try { enName = await _translator.TranslateAsync(trName ?? "", "TR", "EN"); }
-            catch { enName = trName ?? ""; }
-
-            var key = TextCaseHelper.ToCamelCaseKey(enName);
-            if (string.IsNullOrWhiteSpace(key)) key = $"blogCategory{idForFallback}";
-            if (key.Length > 60) key = key.Substring(0, 60);
-            return key;
-        }
-
-        // Slug dil bazında benzersiz; çakışırsa ValidationException fırlatır
-        private async Task UpsertBlogCategoryTranslationAsync(
-            int categoryId, int langId,
-            string keyName, string name, string? slugOrTitle,
-            CancellationToken ct)
-        {
-            // slug normalize (boşsa name’den)
-            var slug = ToLocalizedSlugSafe(string.IsNullOrWhiteSpace(slugOrTitle) ? name : slugOrTitle!);
-
-            // benzersizlik kontrolü (dil bazında)
-            var taken = await _context.BlogCategoriesTranslations
-                .AnyAsync(x => x.LangCodeId == langId && x.Slug == slug && x.BlogCategoryId != categoryId, ct);
-            if (taken)
-                throw new ValidationException($"Slug zaten kullanılıyor: '{slug}' (langId={langId})");
-
-            var tr = await _context.BlogCategoriesTranslations
-                .FirstOrDefaultAsync(x => x.BlogCategoryId == categoryId && x.LangCodeId == langId, ct);
-
-            if (tr == null)
-            {
-                _context.BlogCategoriesTranslations.Add(new BlogCategoriesTranslations
-                {
-                    BlogCategoryId = categoryId,
-                    LangCodeId = langId,
-                    KeyName = keyName,
-                    ValueText = name,
-                    Slug = slug
-                });
-            }
-            else
-            {
-                if (string.IsNullOrWhiteSpace(tr.KeyName))
-                    tr.KeyName = keyName; // ilk boşsa doldur, sonrasında sabit bırak
-
-                tr.ValueText = name;
-                tr.Slug = slug;
-            }
-        }
-
         #endregion
         // AdminController.cs (ilgili using'ler mevcut olmalı)
 
@@ -2230,54 +2176,6 @@ namespace kayialp.Controllers
             public List<int> Ids { get; set; } = new();
         }
 
-        // --- Helpers: KeyName ve Translation upsert ---
-
-        // EN başlıktan camelCase key üret (boş ise yedek)
-        private async Task<string> BuildCanonicalKeyForFairAsync(string trTitle, int fairId, CancellationToken ct)
-        {
-            string enTitle;
-            try { enTitle = await _translator.TranslateAsync(trTitle ?? "", "TR", "EN"); }
-            catch { enTitle = trTitle ?? ""; }
-
-            var key = TextCaseHelper.ToCamelCaseKey(enTitle);
-            if (string.IsNullOrWhiteSpace(key)) key = $"fair{fairId}";
-            if (key.Length > 60) key = key[..60];
-            return key;
-        }
-
-        // Dil bazında slug benzersiz olacak şekilde çeviri kaydı güncelle/ekle
-        private async Task UpsertFairTranslationAsync(
-            int fairId, int langId, string keyName, string title, string? slug, CancellationToken ct)
-        {
-            var normSlug = ToLocalizedSlugSafe(string.IsNullOrWhiteSpace(slug) ? title : slug);
-
-            bool taken = await _context.FairTranslations
-                .AnyAsync(x => x.LangCodeId == langId && x.Slug == normSlug && x.FairId != fairId, ct);
-            if (taken) throw new ValidationException($"Slug zaten kullanılıyor: {normSlug}");
-
-            var tr = await _context.FairTranslations
-                .FirstOrDefaultAsync(x => x.FairId == fairId && x.LangCodeId == langId, ct);
-
-            if (tr == null)
-            {
-                _context.FairTranslations.Add(new FairTranslations
-                {
-                    FairId = fairId,
-                    LangCodeId = langId,
-                    KeyName = keyName,
-                    Title = title,
-                    Slug = normSlug
-                });
-            }
-            else
-            {
-                if (string.IsNullOrWhiteSpace(tr.KeyName))
-                    tr.KeyName = keyName;
-
-                tr.Title = title;
-                tr.Slug = normSlug;
-            }
-        }
 
         // ========== LIST (Admin) ==========
         [HttpGet("fairs")]
@@ -2625,7 +2523,8 @@ namespace kayialp.Controllers
                         LangCode = l.LangCode,
                         AboutHtml = tr?.AboutHtml,
                         MissionHtml = tr?.MissionHtml,
-                        VisionHtml = tr?.VisionHtml
+                        VisionHtml = tr?.VisionHtml,
+                        WorkingDays = tr?.WorkingDays
                     });
                 }
             }
@@ -2704,6 +2603,7 @@ namespace kayialp.Controllers
             var srcAbout = Norm(trVm?.AboutHtml);
             var srcMission = Norm(trVm?.MissionHtml);
             var srcVision = Norm(trVm?.VisionHtml);
+            var srcWorkingDays = Norm(trVm?.WorkingDays);
 
             var langs = await _context.Langs.AsNoTracking().ToListAsync(ct);
 
@@ -2743,12 +2643,14 @@ namespace kayialp.Controllers
                     row.AboutHtml = srcAbout;
                     row.MissionHtml = srcMission;
                     row.VisionHtml = srcVision;
+                    row.WorkingDays = srcWorkingDays;
                 }
                 else
                 {
                     row.AboutHtml = await FromTrIfEmptyAsync(vmLang?.AboutHtml, srcAbout, l.LangCode);
                     row.MissionHtml = await FromTrIfEmptyAsync(vmLang?.MissionHtml, srcMission, l.LangCode);
                     row.VisionHtml = await FromTrIfEmptyAsync(vmLang?.VisionHtml, srcVision, l.LangCode);
+                    row.WorkingDays = await FromTrIfEmptyAsync(vmLang?.WorkingDays, srcWorkingDays, l.LangCode);
                 }
             }
 
@@ -3344,6 +3246,54 @@ namespace kayialp.Controllers
         #endregion
 
 
+        // --- Helpers: KeyName ve Translation upsert ---
+
+        // EN başlıktan camelCase key üret (boş ise yedek)
+        private async Task<string> BuildCanonicalKeyForFairAsync(string trTitle, int fairId, CancellationToken ct)
+        {
+            string enTitle;
+            try { enTitle = await _translator.TranslateAsync(trTitle ?? "", "TR", "EN"); }
+            catch { enTitle = trTitle ?? ""; }
+
+            var key = TextCaseHelper.ToCamelCaseKey(enTitle);
+            if (string.IsNullOrWhiteSpace(key)) key = $"fair{fairId}";
+            if (key.Length > 60) key = key[..60];
+            return key;
+        }
+
+        // Dil bazında slug benzersiz olacak şekilde çeviri kaydı güncelle/ekle
+        private async Task UpsertFairTranslationAsync(
+            int fairId, int langId, string keyName, string title, string? slug, CancellationToken ct)
+        {
+            var normSlug = ToLocalizedSlugSafe(string.IsNullOrWhiteSpace(slug) ? title : slug);
+
+            bool taken = await _context.FairTranslations
+                .AnyAsync(x => x.LangCodeId == langId && x.Slug == normSlug && x.FairId != fairId, ct);
+            if (taken) throw new ValidationException($"Slug zaten kullanılıyor: {normSlug}");
+
+            var tr = await _context.FairTranslations
+                .FirstOrDefaultAsync(x => x.FairId == fairId && x.LangCodeId == langId, ct);
+
+            if (tr == null)
+            {
+                _context.FairTranslations.Add(new FairTranslations
+                {
+                    FairId = fairId,
+                    LangCodeId = langId,
+                    KeyName = keyName,
+                    Title = title,
+                    Slug = normSlug
+                });
+            }
+            else
+            {
+                if (string.IsNullOrWhiteSpace(tr.KeyName))
+                    tr.KeyName = keyName;
+
+                tr.Title = title;
+                tr.Slug = normSlug;
+            }
+        }
 
         #region helpers
         // ===== Helpers =====
@@ -3988,6 +3938,60 @@ namespace kayialp.Controllers
         }
 
         #endregion
+
+        /* === Helpers === */
+
+        // EN’den kısa, camelCase key üret; boşsa fallback
+        private async Task<string> BuildCanonicalKeyNameForCategoryAsync(string trName, int idForFallback, CancellationToken ct)
+        {
+            string enName;
+            try { enName = await _translator.TranslateAsync(trName ?? "", "TR", "EN"); }
+            catch { enName = trName ?? ""; }
+
+            var key = TextCaseHelper.ToCamelCaseKey(enName);
+            if (string.IsNullOrWhiteSpace(key)) key = $"blogCategory{idForFallback}";
+            if (key.Length > 60) key = key.Substring(0, 60);
+            return key;
+        }
+
+        // Slug dil bazında benzersiz; çakışırsa ValidationException fırlatır
+        private async Task UpsertBlogCategoryTranslationAsync(
+            int categoryId, int langId,
+            string keyName, string name, string? slugOrTitle,
+            CancellationToken ct)
+        {
+            // slug normalize (boşsa name’den)
+            var slug = ToLocalizedSlugSafe(string.IsNullOrWhiteSpace(slugOrTitle) ? name : slugOrTitle!);
+
+            // benzersizlik kontrolü (dil bazında)
+            var taken = await _context.BlogCategoriesTranslations
+                .AnyAsync(x => x.LangCodeId == langId && x.Slug == slug && x.BlogCategoryId != categoryId, ct);
+            if (taken)
+                throw new ValidationException($"Slug zaten kullanılıyor: '{slug}' (langId={langId})");
+
+            var tr = await _context.BlogCategoriesTranslations
+                .FirstOrDefaultAsync(x => x.BlogCategoryId == categoryId && x.LangCodeId == langId, ct);
+
+            if (tr == null)
+            {
+                _context.BlogCategoriesTranslations.Add(new BlogCategoriesTranslations
+                {
+                    BlogCategoryId = categoryId,
+                    LangCodeId = langId,
+                    KeyName = keyName,
+                    ValueText = name,
+                    Slug = slug
+                });
+            }
+            else
+            {
+                if (string.IsNullOrWhiteSpace(tr.KeyName))
+                    tr.KeyName = keyName; // ilk boşsa doldur, sonrasında sabit bırak
+
+                tr.ValueText = name;
+                tr.Slug = slug;
+            }
+        }
 
 
         #endregion
