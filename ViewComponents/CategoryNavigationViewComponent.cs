@@ -19,10 +19,12 @@ namespace kayialp.ViewModels
 
         public async Task<IViewComponentResult> InvokeAsync()
         {
-            var trLangId = await _context.Langs
-                .Where(l => l.LangCode == "tr")
-                .Select(l => l.Id)
-                .FirstOrDefaultAsync();
+            var culture = System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName;
+
+            var langId = await _context.Langs
+                   .Where(l => l.LangCode == culture)
+                   .Select(l => l.Id)
+                   .FirstOrDefaultAsync();
 
             var categories = await _context.Categories
                 .OrderBy(c => c.Order)
@@ -32,11 +34,12 @@ namespace kayialp.ViewModels
                     translation => translation.CategoriesId,
                     (category, translation) => new { Category = category, Translation = translation }
                 )
-                .Where(joined => joined.Translation.LangCodeId == trLangId)
+                .Where(joined => joined.Translation.LangCodeId == langId)
                 .Select(joined => new CategoryViewModel
                 {
                     Id = joined.Category.Id,
-                    Name = joined.Translation.KeyName
+                    Name = joined.Translation.KeyName,
+                    Slug = joined.Translation.Slug
                 })
                 .ToListAsync();
 

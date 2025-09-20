@@ -64,19 +64,23 @@ namespace kayialp.ViewComponents
                 var ctAll = _db.CategoriesTranslations
                                .AsNoTracking()
                                .Where(t => catIds.Contains(t.CategoriesId) && t.LangCodeId == langId)
+                               .Select(t => new { t.CategoriesId, t.ValueText, t.Slug })   // ✅ Slug da alınıyor
+
                                .ToList();
 
                 foreach (var it in items)
                 {
                     // Ürün adı & slug (pref: "title" ya da "name")
                     var pref = ptAll.FirstOrDefault(x => x.ProductId == it.Id && (x.KeyName == "title" || x.KeyName == "name"));
-                    var any  = ptAll.FirstOrDefault(x => x.ProductId == it.Id);
+                    var any = ptAll.FirstOrDefault(x => x.ProductId == it.Id);
 
                     it.Name = pref?.ValueText ?? any?.ValueText ?? "Unnamed Product";
-                    it.Slug = pref?.Slug      ?? any?.Slug      ?? it.Id.ToString();
+                    it.Slug = pref?.Slug ?? any?.Slug ?? it.Id.ToString();
 
                     // Kategori adı etiketi
                     it.CategoryName = ctAll.FirstOrDefault(x => x.CategoriesId == it.CategoryId)?.ValueText ?? "Kategori";
+                    it.CategorySlug = ctAll?.FirstOrDefault(x => x.CategoriesId == it.CategoryId)?.Slug ?? ""; ;                            // ✅ DOLDURULDU
+
                 }
             }
 
@@ -103,6 +107,8 @@ namespace kayialp.ViewComponents
         public string ImageUrl { get; set; } = "/img/product/product_1_1.png";
         public string Name { get; set; } = "";
         public string Slug { get; set; } = "";
+        public string CategorySlug { get; set; } = "";   // ✅ EKLENDİ
+
         public string CategoryName { get; set; } = "";
     }
 
@@ -114,7 +120,7 @@ namespace kayialp.ViewComponents
         public int TotalCount { get; set; }
         public string Culture { get; set; } = "tr";
         public int? CategoryId { get; set; }
-        public string? CategorySlug { get; set; }
+        public string CategorySlug { get; set; } = "";   // ✅ EKLENDİ
 
         public int TotalPages => (int)System.Math.Ceiling((double)TotalCount / System.Math.Max(1, PageSize));
     }

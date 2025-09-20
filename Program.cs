@@ -25,8 +25,8 @@ builder.Services.AddScoped<ILangResolver, LangResolver>();
 builder.Services.AddControllersWithViews()
     .AddRazorOptions(options =>
     {
-        options.ViewLocationFormats.Add("/Views/Admin/{1}/{0}.cshtml");
-        options.ViewLocationFormats.Add("/Views/Admin/Shared/{0}.cshtml");
+      options.ViewLocationFormats.Add("/Views/Admin/{1}/{0}.cshtml");
+      options.ViewLocationFormats.Add("/Views/Admin/Shared/{0}.cshtml");
     });
 builder.Services.AddScoped<AdminHelper>();
 

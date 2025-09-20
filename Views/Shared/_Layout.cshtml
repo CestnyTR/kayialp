@@ -79,17 +79,21 @@
                     <li><a class="@(currentController == "Home" ? "active" : "")"
                             href="/">@Html.Localize("pages.layout.index")</a></li>
                     <li><a asp-controller="About" asp-action="Index" asp-route-culture="@ViewData["Culture"]"
+                            asp-route-slug="@Html.Localize("pages.layout.about.slug")"
                             class="@(currentController == "About" ? "active" : "")">
                             @Html.Localize("pages.layout.about")
                         </a>
                     </li>
                     @await Component.InvokeAsync("CategoryNavigation")
                     <li><a asp-controller="Fair" asp-action="Index" asp-route-culture="@ViewData["Culture"]"
+                            asp-route-slug="@Html.Localize("pages.layout.fairs.slug")"
                             class="@(currentController == "Fair" ? "active" : "")">@Html.Localize("pages.layout.fairs")</a>
                     <li><a asp-controller="Blog" asp-action="Index" asp-route-culture="@ViewData["Culture"]"
+                            asp-route-slug="@Html.Localize("pages.layout.blog.slug")"
                             class="@(currentController == "Blog" ? "active" : "")">@Html.Localize("pages.layout.blog")</a>
                     </li>
                     <li><a asp-controller="Contact" asp-action="Index" asp-route-culture="@ViewData["Culture"]"
+                            asp-route-slug="@Html.Localize("pages.layout.communication.slug")"
                             class="@(currentController == "Contact" ? "active" : "")">@Html.Localize(key:
                                                         "pages.layout.communication")</a>
                     </li>
@@ -152,13 +156,14 @@
                                                                                         new { Code = "ar", Name = "العربية", FlagUrl = "/img/flags/ar.svg" }
                                                                                         })
                                             {
-                                                <button type="submit" name="culture" class="language-option @if(currentCulture == lang.Code) {
-                                                                                                        <text>selected</text>
-                                                }
-" value="@lang.Code" id="@lang.Code">
-                                                <img src="@lang.FlagUrl" alt="@lang.Name" class="flag-img" />
-                                            </button>
-                                                                                        }
+                                                <button type="submit" name="culture" class="language-option @if(currentCulture == lang.Code) 
+                                                        {
+                                                                    <text>selected</text>
+                                                        }
+        " value="@lang.Code" id="@lang.Code">
+                                                    <img src="@lang.FlagUrl" alt="@lang.Name" class="flag-img" />
+                                                </button>
+                                            }
                                         </div>
                                         <input type="hidden" name="returnUrl" value="@Context.Request.Path" />
                                     </form>
@@ -168,10 +173,15 @@
                             </div>
                             <div class="header-links">
                                 <ul>
-                                    <li class="d-none d-md-inline-block"><a
-                                            href="/sss">@Html.Localize("pages.layout.faq")</a></li>
-                                    <li class="d-none d-md-inline-block"><a
-                                            href="/contact">@Html.Localize("pages.layout.communication")</a></li>
+                                    <li class="d-none d-md-inline-block"><a asp-controller="About" asp-action="Index"
+                                            asp-route-culture="@ViewData["Culture"]"
+                                            asp-route-slug="@Html.Localize("pages.layout.about.slug")">@Html.Localize("pages.layout.faq")</a>
+                                    </li>
+                                    <li class="d-none d-md-inline-block">
+                                        <a asp-controller="Contact" asp-action="Index"
+                                            asp-route-culture="@ViewData["Culture"]"
+                                            asp-route-slug="@Html.Localize("pages.layout.communication.slug")">@Html.Localize("pages.layout.communication")</a>
+                                    </li>
                                 </ul>
                             </div>
                         </div>
@@ -199,6 +209,7 @@
                                             href="/">@Html.Localize("pages.layout.index")</a></li>
                                     <li><a asp-controller="About" asp-action="Index"
                                             asp-route-culture="@ViewData["Culture"]"
+                                            asp-route-slug="@Html.Localize("pages.layout.about.slug")"
                                             class="@(currentController == "About" ? "active" : "")">
                                             @Html.Localize("pages.layout.about")
                                         </a>
@@ -207,14 +218,17 @@
 
                                     <li><a asp-controller="Fair" asp-action="Index"
                                             asp-route-culture="@ViewData["Culture"]"
+                                            asp-route-slug="@Html.Localize("pages.layout.fairs.slug")"
                                             class="@(currentController == "Fair" ? "active" : "")">@Html.Localize("pages.layout.fairs")</a>
                                     </li>
                                     <li><a asp-controller="Blog" asp-action="Index"
                                             asp-route-culture="@ViewData["Culture"]"
+                                            asp-route-slug="@Html.Localize("pages.layout.blog.slug")"
                                             class="@(currentController == "Blog" ? "active" : "")">@Html.Localize("pages.layout.blog")</a>
                                     </li>
                                     <li><a asp-controller="Contact" asp-action="Index"
                                             asp-route-culture="@ViewData["Culture"]"
+                                            asp-route-slug="@Html.Localize("pages.layout.communication.slug")"
                                             class="@(currentController == "Contact" ? "active" : "")">@Html.Localize("pages.layout.communication")</a>
                                     </li>
                                 </ul>
@@ -230,6 +244,7 @@
                                     <img src="~/img/icon/search.svg" alt="icon">
                                 </button>
                                 <a asp-controller="Contact" asp-action="Index" asp-route-culture="@ViewData["Culture"]"
+                                    asp-route-slug="@Html.Localize("pages.layout.communication.slug")"
                                     class="th-btn th-icon">
                                     @Html.Localize("pages.layout.contact_us") <i
                                         class="fa-light fa-arrow-right-long"></i></a>

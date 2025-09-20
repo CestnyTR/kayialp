@@ -1,27 +1,34 @@
 @{
-    var culture = (string?)ViewData["Culture"] ?? "tr";
-    int page = 1; int.TryParse(Context.Request.Query["page"], out page);
-    int pageSize = 9; int.TryParse(Context.Request.Query["pageSize"], out pageSize);
+  var culture = (string?)ViewData["Culture"] ?? "tr";
 
-    int? categoryId = null;
-    if (int.TryParse(Context.Request.Query["id"], out var cid)) categoryId = cid;
-    var slug = (string?)Context.Request.Query["slug"];
+  // route'tan oku (Query yerine!)
+  var pCSlug = (string?)ViewContext.RouteData.Values["pCSlug"]
+  ?? (string?)ViewData["ProductsCategorySlug"];
+  var cSlug = (string?)ViewContext.RouteData.Values["cSlug"]
+  ?? (string?)ViewData["CategorySlug"];
+
+  // sayfalama (route'tan ViewData'ya koyduk, Query gelirse yine çalışır)
+  int page = 1; int.TryParse((string?)ViewData["Page"]?.ToString() ?? Context.Request.Query["page"], out page);
+  int pageSize = 9; int.TryParse((string?)ViewData["PageSize"]?.ToString() ?? Context.Request.Query["pageSize"], out
+  pageSize);
 }
+
 
 <!-- … breadcumb kısmın aynı … -->
 <div class="breadcumb-area ">
-    <div class="breadcumb-wrapper" data-bg-src="/img/bg/breadcumb-bg.jpg">
-        <div class="container">
-            <div class="breadcumb-content">
-                <h1 class="breadcumb-title">@Html.Localize(key:"pages.layout.products")</h1>
-                <ul class="breadcumb-menu">
-                    <li><a href="/">@Html.Localize("pages.layout.index")</a></li>
-                    <li><a asp-controller="Products" asp-action="Index" asp-route-culture="@ViewData["Culture"]">@Html.Localize(key:"pages.layout.productCategory")</a></li>
-                    <li>@Html.Localize(key:"pages.layout.products")</li>
-                </ul>
-            </div>
-        </div>
+  <div class="breadcumb-wrapper" data-bg-src="/img/bg/breadcumb-bg.jpg">
+    <div class="container">
+      <div class="breadcumb-content">
+        <h1 class="breadcumb-title">@Html.Localize(key: "pages.layout.products")</h1>
+        <ul class="breadcumb-menu">
+          <li><a href="/">@Html.Localize("pages.layout.index")</a></li>
+          <li><a asp-controller="Products" asp-action="Index"
+              asp-route-culture="@ViewData["Culture"]">@Html.Localize(key: "pages.layout.productCategory")</a></li>
+          <li>@Html.Localize(key: "pages.layout.products")</li>
+        </ul>
+      </div>
     </div>
+  </div>
 </div>
 
 <section class="space-top space-extra-bottom">
@@ -31,8 +38,7 @@
         <div class="tab-pane fade active show" id="tab-grid" role="tabpanel" aria-labelledby="tab-shop-grid">
 
           @await Component.InvokeAsync("ProductGrid",
-              new { categoryId = categoryId, slug = slug, page = page, pageSize = pageSize })
-
+          new { categoryId = (int?)null, slug = cSlug, page = page, pageSize = pageSize })
         </div>
       </div>
     </div>

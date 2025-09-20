@@ -1,19 +1,20 @@
 using kayialp.Context;
+using kayialp.Controllers;
 using kayialp.Models;
+using kayialp.Services;
 using kayialp.ViewModels;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
-public class BlogController : Controller
+public class BlogController : BaseController
 {
     private readonly kayialpDbContext _context;
 
-    public BlogController(kayialpDbContext ctx)
+    public BlogController(kayialpDbContext ctx, ContentService contentService) : base(contentService)
     {
         _context = ctx;
     }
-
-    [HttpGet("{culture}/blog")]
+    [HttpGet("{culture}/b/{slug}")]
     public async Task<IActionResult> Index(string culture, CancellationToken ct)
     {
         // aktif dil Id’si
@@ -59,7 +60,7 @@ public class BlogController : Controller
         .ToListAsync(ct);
         return View(blogs);
     }
-    [HttpGet("{culture}/blog/{id:int}/{slug}")]
+    [HttpGet("{culture}/blog/{id}/{slug}")]
     public async Task<IActionResult> Detail(string culture, int id, string slug, CancellationToken ct)
     {
         var langId = await _context.Langs

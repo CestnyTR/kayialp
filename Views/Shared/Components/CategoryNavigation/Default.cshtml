@@ -1,17 +1,25 @@
 @model IEnumerable<kayialp.ViewModels.CategoryViewModel>
 
 <li class="menu-item-has-children">
+    <!-- /{culture}/p/{slug} -->
     <a asp-controller="Products" asp-action="Index" asp-route-culture="@ViewData["Culture"]"
-        class="@(ViewContext.RouteData.Values["controller"]?.ToString() == "Products" ? "active" : "")">
+        asp-route-slug='@Html.Localize("pages.layout.productCategory.slug")' 
+        class="@(ViewContext.RouteData.Values["controller"]?.ToString() == "Products" 
+        && ViewContext.RouteData.Values["action"]?.ToString() == "Index" ? "active" : "")">
         @Html.Localize("pages.layout.products")
     </a>
+
     <ul class="sub-menu">
         @foreach (var category in Model)
         {
+            <!-- /{culture}/{pCSlug}/{cSlug} -->
             <li>
                 <a asp-controller="Products" asp-action="CategoryProducts" asp-route-culture="@ViewData["Culture"]"
-                    asp-route-categoryId="@category.Id"
-                    class="@(ViewContext.RouteData.Values["controller"]?.ToString() == "Products" ? "active" : "")">
+                    asp-route-pCSlug='@Html.Localize("pages.layout.productCategory.slug")' asp-route-cSlug="@category.Slug"
+                    class="@(ViewContext.RouteData.Values["controller"]?.ToString() == "Products"
+                                    && ViewContext.RouteData.Values["action"]?.ToString() == "CategoryProducts"
+                                    && (ViewContext.RouteData.Values["cSlug"]?.ToString() == category.Slug)
+                                    ? "active" : "")">
                     @Html.Localize($"Categories.{category.Name}")
                 </a>
             </li>

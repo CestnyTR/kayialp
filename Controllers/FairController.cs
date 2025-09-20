@@ -1,21 +1,23 @@
 // Controllers/FairController.cs  (public site)
 using kayialp.Context;
+using kayialp.Controllers;
+using kayialp.Services;
 using kayialp.ViewModels;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Globalization;
 using System.Security.Cryptography.Xml;
 
-public class FairController : Controller
+public class FairController : BaseController
 {
     private readonly kayialpDbContext _context;
 
-    public FairController(kayialpDbContext context)
+    public FairController(kayialpDbContext context,ContentService contentService) : base(contentService)
     {
         _context = context;
     }
 
-    [HttpGet("{culture}/fairs")]
+        [HttpGet("{culture}/f/{slug}")]
     public async Task<IActionResult> Index(int? year, string? country, CancellationToken ct)
     {
         // 1) Dil id’si (querystring culture varsa onu kullan; yoksa tr)

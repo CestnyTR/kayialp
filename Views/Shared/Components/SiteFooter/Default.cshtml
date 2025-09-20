@@ -55,16 +55,19 @@
                                         asp-route-culture="@ViewData["Culture"]">@Html.Localize("pages.layout.index")</a>
                                 </li>
                                 <li><a asp-controller="About" asp-action="Index"
-                                        asp-route-culture="@ViewData["Culture"]">@Html.Localize("pages.layout.about")</a>
+                                        asp-route-culture="@ViewData["Culture"]"
+                                        asp-route-slug="@Html.Localize("pages.layout.about.slug")">@Html.Localize("pages.layout.about")</a>
                                 </li>
-                                <li><a asp-controller="Fair" asp-action="Index"
-                                        asp-route-culture="@ViewData["Culture"]">@Html.Localize("pages.layout.products")</a>
+                                <li><a asp-controller="Blog" asp-action="Index" asp-route-culture="@ViewData["Culture"]"
+                                        asp-route-slug="@Html.Localize("pages.layout.blog.slug")">@Html.Localize("pages.layout.products")</a>
                                 </li>
-                                <li><a asp-controller="Products" asp-action="CategoryProducts"
-                                        asp-route-culture="@ViewData["Culture"]">@Html.Localize("pages.layout.fairs")</a>
+                                <li><a asp-controller="Products" asp-action="Index"
+                                        asp-route-culture="@ViewData["Culture"]"
+                                        asp-route-slug='@Html.Localize("pages.layout.productCategory.slug")'>@Html.Localize("pages.layout.fairs")</a>
                                 </li>
                                 <li><a asp-controller="Contact" asp-action="Index"
-                                        asp-route-culture="@ViewData["Culture"]">@Html.Localize("pages.layout.communication")</a>
+                                        asp-route-culture="@ViewData["Culture"]"
+                                        asp-route-slug="@Html.Localize("pages.layout.communication.slug")">@Html.Localize("pages.layout.communication")</a>
                                 </li>
                             </ul>
                         </div>

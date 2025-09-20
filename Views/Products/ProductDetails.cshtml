@@ -1,9 +1,15 @@
 @{
     var culture = (string?)ViewData["Culture"] ?? "tr";
+
+    var rd = ViewContext.RouteData.Values;
+    // Route'tan oku
+    var productSlug = rd["productSlug"]?.ToString();
     int? id = null;
-    if (int.TryParse(Context.Request.Query["id"], out var pid)) id = pid;
-    var slug = (string?)Context.Request.Query["slug"];
-    
+    if (int.TryParse(rd["id"]?.ToString(), out var tmpId)) id = tmpId;
+
+    // (geri uyumluluk: query'den gelirse yine de al)
+    if (productSlug is null) productSlug = (string?)Context.Request.Query["slug"];
+    if (id is null && int.TryParse(Context.Request.Query["id"], out var qid)) id = qid;
 }
 
 
@@ -26,4 +32,4 @@
 
 
 @* === DETAY === *@
-@await Component.InvokeAsync(name: "ProductDetails", new { id = id, slug = slug })
+@await Component.InvokeAsync("ProductDetails", new { id = id, slug = productSlug })

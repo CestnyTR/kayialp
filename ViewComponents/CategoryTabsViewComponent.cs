@@ -4,6 +4,7 @@ using kayialp.Services;
 using kayialp.ViewModels.Categories;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Net;
 
 namespace kayialp.ViewComponents
 {
@@ -35,6 +36,9 @@ namespace kayialp.ViewComponents
                 SectionTitle    = _content.GetText("pages.home.case_section_title")    ?? "İleri Teknoloji ve Mühendislik: Kayıalp Makineleri"
             };
 
+            // pCSlug → üst segment (örn: urun-kategorileri / product-categories)
+            var pCSlug = _content.GetText("pages.layout.productCategory.slug") ?? "products";
+
             // 1) Kategoriler (vitrin görseli + sıralama)
             var categories = await _context.Categories
                 .OrderBy(c => c.Order)
@@ -46,7 +50,7 @@ namespace kayialp.ViewComponents
 
             var ids = categories.Select(c => c.Id).ToList();
 
-            // 2) Çevirileri tek seferde çek: aktif dil + fallback dil
+            // 2) Çeviriler (aktif dil + fallback dil)
             var curTrs = await _context.CategoriesTranslations
                 .Where(t => ids.Contains(t.CategoriesId) && t.LangCodeId == langId)
                 .ToListAsync();
@@ -57,7 +61,7 @@ namespace kayialp.ViewComponents
                     .ToListAsync()
                 : new List<Models.CategoriesTranslations>();
 
-            // Yardımcılar (öncelik sırası ile)
+            // Yardımcılar
             string? BestName(int id)
             {
                 string? pick(IEnumerable<Models.CategoriesTranslations> set, params string[] keys)
@@ -87,15 +91,18 @@ namespace kayialp.ViewComponents
                     ?? pick(defTrs, "subtitle")   ?? pick(defTrs, "desc");
             }
 
-            // 3) Kart listesi (doğru ad/alt yazı/link)
+            // 3) Kart listesi
             var cards = new List<CategoryTabsItemVM>();
             foreach (var c in categories)
             {
-                var title = BestName(c.Id) ?? "";           // <-- ID fallback KALDIRILDI
-                var slug  = BestSlug(c.Id);
+                var title = BestName(c.Id) ?? "";
+                var slug  = BestSlug(c.Id)?.Trim().Trim('/');
+                if (!string.IsNullOrWhiteSpace(slug))
+                    slug = WebUtility.UrlEncode(slug.ToLowerInvariant());
+
                 var link  = !string.IsNullOrWhiteSpace(slug)
-                    ? $"/{culture}/products/category/{slug}"
-                    : $"/{culture}/products?c={c.Id}";
+                    ? $"/{culture}/{pCSlug}/{slug}"     // ✅ yeni rota formatı
+                    : $"/{culture}/{pCSlug}";
 
                 cards.Add(new CategoryTabsItemVM
                 {
@@ -109,7 +116,7 @@ namespace kayialp.ViewComponents
                 });
             }
 
-            // 4) Sekmeler – sekme başlığı doğrudan kategori adı
+            // 4) Sekmeler
             for (int i = 0; i < cards.Count; i++)
             {
                 var tabId = $"nav-step{i + 1}";

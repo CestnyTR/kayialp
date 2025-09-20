@@ -1,5 +1,13 @@
 @model List<kayialp.ViewComponents.CategoryVM>
 
+@{
+    var culture = (string?)ViewData["Culture"] ?? 
+                  (ViewContext.RouteData.Values["culture"]?.ToString() ?? "tr");
+
+    // Üst segment: products category slug (örn: urun-kategorileri / product-categories)
+    var pCSlug = Html.Localize("pages.layout.productCategory.slug");
+}
+
 <div class="service-area">
     <div class="row gy-30 justify-content-center">
         @foreach (var c in Model)
@@ -9,29 +17,30 @@
                     <div class="service-img">
                         <a asp-controller="Products"
                            asp-action="CategoryProducts"
-                           asp-route-culture="@ViewData["Culture"]"
-                           asp-route-slug="@c.Slug"
-                           asp-route-id="@c.Id">
-                            <img src=@c.ImageUrl alt="@c.Name" />
+                           asp-route-culture="@culture"
+                           asp-route-pCSlug="@pCSlug"
+                           asp-route-cSlug="@c.Slug">
+                            <img src="@Url.Content(c.ImageUrl)" alt="@c.Name" />
                         </a>
                     </div>
                     <div class="service-content">
                         <h3 class="box-title">
                             <a asp-controller="Products"
                                asp-action="CategoryProducts"
-                               asp-route-culture="@ViewData["Culture"]"
-                               asp-route-slug="@c.Slug"
-                               asp-route-id="@c.Id">
+                               asp-route-culture="@culture"
+                               asp-route-pCSlug="@pCSlug"
+                               asp-route-cSlug="@c.Slug">
                                 @c.Name
                             </a>
                         </h3>
                         <a class="th-btn style4"
                            asp-controller="Products"
                            asp-action="CategoryProducts"
-                           asp-route-culture="@ViewData["Culture"]"
-                           asp-route-slug="@c.Slug"
-                           asp-route-id="@c.Id">
-                             @Html.Localize($"pages.product.load_more")<i class="fa-light fa-arrow-right-long"></i>
+                           asp-route-culture="@culture"
+                           asp-route-pCSlug="@pCSlug"
+                           asp-route-cSlug="@c.Slug">
+                            @Html.Localize("pages.product.load_more")
+                            <i class="fa-light fa-arrow-right-long"></i>
                         </a>
                     </div>
                 </div>

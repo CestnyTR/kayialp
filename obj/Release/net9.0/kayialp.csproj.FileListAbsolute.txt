@@ -1003,7 +1003,6 @@ D:\iş\sipariş-işleri\Kayıalp\kayialp\obj\Release\net9.0\compressed\03fe2xsri
 D:\iş\sipariş-işleri\Kayıalp\kayialp\obj\Release\net9.0\compressed\ot5atqymzy-uycvkzzoji.gz
 D:\iş\sipariş-işleri\Kayıalp\kayialp\obj\Release\net9.0\compressed\a05tc1ex8l-r3unjvhb45.gz
 D:\iş\sipariş-işleri\Kayıalp\kayialp\obj\Release\net9.0\compressed\sv5xvd0bf2-02037ac2e4.gz
-D:\iş\sipariş-işleri\Kayıalp\kayialp\obj\Release\net9.0\compressed\d4m8pw9kwi-hm9ywbb0zc.gz
 D:\iş\sipariş-işleri\Kayıalp\kayialp\obj\Release\net9.0\compressed\tyx1wr8vjo-w9gruc5uo1.gz
 D:\iş\sipariş-işleri\Kayıalp\kayialp\obj\Release\net9.0\compressed\efp4li5i5x-w9gruc5uo1.gz
 D:\iş\sipariş-işleri\Kayıalp\kayialp\obj\Release\net9.0\compressed\4q2j1mjmhi-l9m6i47t5v.gz
@@ -1021,4 +1020,5 @@ D:\iş\sipariş-işleri\Kayıalp\kayialp\obj\Release\net9.0\compressed\2edfziav4
 D:\iş\sipariş-işleri\Kayıalp\kayialp\obj\Release\net9.0\compressed\e5ymsivtr2-76fc95iv2n.gz
 D:\iş\sipariş-işleri\Kayıalp\kayialp\obj\Release\net9.0\compressed\1zjg8ldfal-nkp52n8u7q.gz
 D:\iş\sipariş-işleri\Kayıalp\kayialp\obj\Release\net9.0\compressed\wxxsiaj66s-5n6xhusdby.gz
-D:\iş\sipariş-işleri\Kayıalp\kayialp\obj\Release\net9.0\compressed\6bapuqzc78-l7ujkd4epg.gz
+D:\iş\sipariş-işleri\Kayıalp\kayialp\obj\Release\net9.0\compressed\d4m8pw9kwi-rvv4f4afr6.gz
+D:\iş\sipariş-işleri\Kayıalp\kayialp\obj\Release\net9.0\compressed\6bapuqzc78-5kjlxap3u9.gz

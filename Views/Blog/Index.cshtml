@@ -1,25 +1,36 @@
 @using kayialp.ViewModels
 @model IEnumerable<BlogListItemViewModel>
 
+@{
+    var culture = (string?)ViewData["Culture"] ?? "tr";
+
+    string Trim(string? s, int len) =>
+        string.IsNullOrWhiteSpace(s) ? "" :
+        (s!.Length > len ? s.Substring(0, len) + "..." : s);
+}
+
 <div class="container py-5">
     <div class="row">
-        @foreach (var blog in Model)
+        @foreach (var blog in Model ?? Enumerable.Empty<BlogListItemViewModel>())
         {
             <div class="col-md-4 mb-4">
                 <div class="card h-100">
-                    <img src="@blog.ImageUrl" class=" card-img-top" alt="@blog.ImageAlt" />
+                    <img src="@Url.Content(blog.ImageUrl ?? "/img/blog/placeholder.webp")"
+                         alt="@(string.IsNullOrWhiteSpace(blog.ImageAlt) ? blog.Title : blog.ImageAlt)"
+                         class="card-img-top"
+                         loading="lazy" decoding="async" />
                     <div class="card-body">
                         <h5 class="card-title">@blog.Title</h5>
-                        @* Özet (summary) 40 karakterden sonra kesiliyor *@
-                        <p class="card-text">
-                            @(blog.Summary?.Length > 50 
-                                ? blog.Summary.Substring(0, 50) + "..." 
-                                : blog.Summary)
-                        </p>
+                        <p class="card-text">@Trim(blog.Summary, 50)</p>
                     </div>
                     <div class="card-footer text-end">
-                        <a href="/@ViewData["Culture"]/blog/@blog.Id/@blog.Slug" class="btn btn-sm btn-primary">
-                            Devamını Oku
+                        <a asp-controller="Blog"
+                           asp-action="Detail"
+                           asp-route-culture="@culture"
+                           asp-route-id="@blog.Id"
+                           asp-route-slug="@blog.Slug"
+                           class="btn btn-sm btn-primary">
+                            @Html.Localize("pages.blog.read_more")
                         </a>
                     </div>
                 </div>

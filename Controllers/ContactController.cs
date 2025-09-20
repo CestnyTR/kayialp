@@ -3,11 +3,13 @@ using Microsoft.AspNetCore.Mvc;
 using System.Globalization;
 
 namespace kayialp.Controllers
-{    public class ContactController : BaseController
+{
+    public class ContactController : BaseController
     {
         public ContactController(ContentService contentService) : base(contentService) { }
-
-        [HttpGet("{culture}/Contact")]
+        // [HttpGet("{culture}/Contact")]
+        
+        [HttpGet("{culture}/c/{slug}")]
         public IActionResult Index()
         {
             var culture = CultureInfo.CurrentCulture.TwoLetterISOLanguageName;

@@ -36,15 +36,15 @@ namespace kayialp.ViewComponents
         public async Task<IViewComponentResult> InvokeAsync()
         {
             var culture = CultureInfo.CurrentUICulture.TwoLetterISOLanguageName;
-            var langId  = GetLangId(culture) ?? GetLangId("en");
+            var langId = GetLangId(culture) ?? GetLangId("en");
 
             var vm = new BlogShowcaseViewModel
             {
-                SubTitle  = _content.GetText("pages.home.blog_subtitle")  ?? "Neler sunuyoruz.",
-                Title     = _content.GetText("pages.home.blog_title")     ?? "Tahıl ve Bakliyat Sektörüne Profesyonel Çözümler",
+                SubTitle = _content.GetText("pages.home.blog_subtitle") ?? "Neler sunuyoruz.",
+                Title = _content.GetText("pages.home.blog_title") ?? "Tahıl ve Bakliyat Sektörüne Profesyonel Çözümler",
                 Paragraph = _content.GetText("pages.home.blog_paragraph") ??
                             "Kayıalp Makine, tahıl işleme tesislerinin tüm ihtiyaçlarına yönelik, operasyonları kolaylaştıran ve verimliliği artıran geniş bir ürün yelpazesi sunar.",
-                ReadMore  = _content.GetText("pages.home.blog_read_more") ?? "Daha Fazla Oku"
+                ReadMore = _content.GetText("pages.home.blog_read_more") ?? "Daha Fazla Oku"
             };
 
             // 1) Son 6 aktif yazı
@@ -91,14 +91,14 @@ namespace kayialp.ViewComponents
 
                 vm.Items.Add(new BlogCardVM
                 {
-                    Id       = p.Id,
+                    Id = p.Id,
                     ImageUrl = string.IsNullOrWhiteSpace(p.Cover312x240) ? "/img/service/service_img_1.jpg" : p.Cover312x240!,
                     ImageAlt = tr?.ImageAltCover ?? "blog",
-                    Title    = tr?.ValueTitle ?? "",
-                    Excerpt  = Truncate(StripHtml(summary), 220),
-                    LinkUrl  = !string.IsNullOrWhiteSpace(tr?.Slug)
-                        ? $"/{culture}/blog/{tr.Slug}"
-                        : $"/{culture}/blog/{p.Id}"
+                    Title = tr?.ValueTitle ?? "",
+                    Excerpt = Truncate(StripHtml(summary), 220),
+                    LinkUrl = !string.IsNullOrWhiteSpace(tr?.Slug)
+                    ? $"/{culture}/blog/{p.Id}/{tr.Slug}"   // ✅ burada düzeltildi
+                    : $"/{culture}/blog/{p.Id}"
                 });
             }
 

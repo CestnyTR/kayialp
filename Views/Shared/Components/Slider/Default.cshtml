@@ -40,11 +40,16 @@
 
                       <div class="btn-group" data-ani="slideinup" data-ani-delay="0.8s">
                         
-                          <a asp-controller="Category" asp-action="Index" asp-route-culture="@ViewData["Culture"]" class="th-btn style7 th-icon">
+                          <a asp-controller="Products" asp-action="Index" asp-route-culture="@ViewData["Culture"]"
+                  asp-route-slug='@Html.Localize("pages.layout.productCategory.slug")' 
+                    class="th-btn style7 th-icon">
                            @Html.Localize("pages.layout.products") <i class="fa-light fa-arrow-right-long"></i>
                           </a>
                         
-                          <a asp-controller="Contact" asp-action="Index" asp-route-culture="@ViewData["Culture"]" class="th-btn style2 th-icon">
+                          <a asp-controller="Contact" asp-action="Index" 
+                                            asp-route-culture="@ViewData["Culture"]"
+                                            asp-route-slug="@Html.Localize("pages.layout.communication.slug")"
+                                            class="th-btn style2 th-icon">
                           @Html.Localize("pages.layout.communication")<i class="fa-light fa-arrow-right-long"></i>
                           </a>
                         

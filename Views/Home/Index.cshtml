@@ -1,17 +1,14 @@
 ﻿@{
     ViewData["Title"] = "Home Page";
 }
+<!--======== / Hero Section ========-->
 @await Component.InvokeAsync("Slider")
 
-<!--======== / Hero Section ========-->
 <!--==============================
 Feature Area
 ==============================-->
 <section class="">
     <div class="feature-list-wrap">
-        <!--==============================
-        feature Area
-        ==============================-->
         <div class="feature-area overflow-hidden " id="feature-area">
             <div class="row gx-0 justify-content-center">
                 <div class="col-xl-4 col-lg-6">
@@ -124,7 +121,9 @@ About Area
                         </div>
                     </div>
                     <div class="mt-35 wow fadeInUp">
-                        <a href="about.html" class="th-btn th-icon">@Html.Localize("pages.home.about_cta_text") <i
+                        <a asp-controller="About" asp-action="Index" asp-route-culture="@ViewData["Culture"]"
+                            asp-route-slug="@Html.Localize("pages.layout.about.slug")"
+                            class="th-btn th-icon">@Html.Localize("pages.home.about_cta_text") <i
                                 class="fa-light fa-arrow-right-long"></i></a>
                     </div>
                 </div>

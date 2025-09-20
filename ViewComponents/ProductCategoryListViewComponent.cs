@@ -1,8 +1,7 @@
+using System.Globalization;
 using kayialp.Context;
 using Microsoft.AspNetCore.Mvc;
-using System.Globalization;
-using System.IO.Compression;
-using System.Linq;
+using Microsoft.EntityFrameworkCore;
 
 namespace kayialp.ViewComponents
 {
@@ -18,30 +17,38 @@ namespace kayialp.ViewComponents
         public IViewComponentResult Invoke()
         {
             var culture = CultureInfo.CurrentCulture.TwoLetterISOLanguageName;
-            var langId = _context.Langs.FirstOrDefault(l => l.LangCode == culture)?.Id;
+            var langId = _context.Langs.AsNoTracking()
+                          .Where(l => l.LangCode == culture)
+                          .Select(l => (int?)l.Id)
+                          .FirstOrDefault()
+                       ?? _context.Langs.AsNoTracking().Select(l => (int?)l.Id).FirstOrDefault()
+                       ?? 1;
+
+            // Tek join ile Name + Slug çek
             var categories = _context.Categories
-                   .OrderBy(c => c.Order)
-                   .Select(c => new CategoryVM
-                   {
-                       Id = c.Id,
-                       // Category’de tanımlı ImageCard312x240 alanı var
-                       ImageUrl = !string.IsNullOrEmpty(c.ImageCard312x240)
-                                   ? c.ImageCard312x240
-                                   : "/img/service/sv-1.jpg",
+                .AsNoTracking()
+                .OrderBy(c => c.Order)
+                .GroupJoin(
+                    _context.CategoriesTranslations.AsNoTracking()
+                        .Where(t => t.LangCodeId == langId),
+                    c => c.Id,
+                    t => t.CategoriesId,
+                    (c, trs) => new { c, tr = trs.FirstOrDefault() }
+                )
+                .Select(x => new CategoryVM
+                {
+                    Id = x.c.Id,
+                    ImageUrl = string.IsNullOrWhiteSpace(x.c.ImageCard312x240)
+                               ? "/img/service/sv-1.jpg"
+                               : x.c.ImageCard312x240!,
+                    Name = x.tr != null && !string.IsNullOrWhiteSpace(x.tr.ValueText)
+                               ? x.tr.ValueText
+                               : "NoName",
+                    Slug = x.tr != null ? (x.tr.Slug ?? "") : ""
+                })
+                .ToList();
 
-                       Name = _context.CategoriesTranslations
-                           .Where(t => t.CategoriesId == c.Id && t.LangCodeId == langId)
-                           .Select(t => t.ValueText)
-                           .FirstOrDefault() ?? "NoName",
-
-                       Slug = _context.CategoriesTranslations
-                           .Where(t => t.CategoriesId == c.Id && t.LangCodeId == langId)
-                           .Select(t => t.Slug)
-                           .FirstOrDefault() ?? ""
-                   })
-                   .ToList();
-
-            return View(categories);
+            return View(categories); // Views/Shared/Components/CategoryList/Default.cshtml
         }
     }
 

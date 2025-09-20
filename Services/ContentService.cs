@@ -14,39 +14,52 @@ namespace kayialp.Services
             _context = context;
         }
 
-        // Aktif dilin Langs.Id’sini getir
+        // Aktif UI culture'a göre Langs.Id
         private int? GetCurrentLangId()
         {
             var culture = CultureInfo.CurrentUICulture.TwoLetterISOLanguageName;
             return _context.Langs.FirstOrDefault(l => l.LangCode == culture)?.Id;
         }
 
-        // Verilen culture için Langs.Id
+        // İstenen two-letter culture'a göre Langs.Id
         private int? GetLangIdFor(string twoLetter)
         {
             return _context.Langs.FirstOrDefault(l => l.LangCode == twoLetter)?.Id;
         }
 
-        // Genel metin çözümleyici: pages.*, categories.*, fairs.*, homeslide.* ...
+        /// <summary>
+        /// Genel metin/alan çözümleyici.
+        /// Desteklenen kalıplar:
+        ///  - pages.{pageName}.{keyName}
+        ///  - pages.{pageName}.{keyName}.slug
+        ///  - categories.{keyName}
+        ///  - fairs.{keyName}
+        ///  - homeslide.{slideId}.{field}
+        ///  - advantages.{advantageId}.{field}
+        ///  - companyinfo.{field}
+        /// </summary>
         public string GetText(string compoundKey)
         {
             var langId = GetCurrentLangId();
             if (string.IsNullOrWhiteSpace(compoundKey) || langId == null)
                 return $"[[{compoundKey}]]";
 
-            var parts = compoundKey.Split('.');
+            var parts = compoundKey.Split('.', StringSplitOptions.RemoveEmptyEntries);
             if (parts.Length < 2)
                 return $"[[{compoundKey}]]";
 
             var tableKey = parts[0].ToLowerInvariant();
-            string result = null;
+            string? result = null;
 
             switch (tableKey)
             {
                 case "pages":
-                    // "pages.pageName.keyName"
+                    // "pages.pageName.keyName" veya "pages.pageName.keyName.slug"
                     if (parts.Length < 3) return $"[[{compoundKey}]]";
-                    result = GetPageText(parts[1], parts[2], langId.Value);
+                    var pageName = parts[1];
+                    var keyName = parts[2];
+                    var field = parts.Length >= 4 ? parts[3] : null; // örn: "slug"
+                    result = GetPageText(pageName, keyName, langId.Value, field);
                     break;
 
                 case "categories":
@@ -55,7 +68,7 @@ namespace kayialp.Services
                     break;
 
                 case "fairs":
-                    // "fairs.keyName"  -> Title alanını döndürüyoruz
+                    // "fairs.keyName" -> Title
                     result = GetFairTitle(parts[1], langId.Value);
                     break;
 
@@ -63,19 +76,20 @@ namespace kayialp.Services
                     // "homeslide.{slideId}.{field}"  field: slogan|title|content|cta1text|cta1url|cta2text|cta2url
                     if (parts.Length < 3) return $"[[{compoundKey}]]";
                     if (!int.TryParse(parts[1], out var slideId)) return $"[[{compoundKey}]]";
-                    var field = parts[2].ToLowerInvariant();
-                    result = GetHomeSlideField(slideId, field, langId.Value);
+                    var hsField = parts[2].ToLowerInvariant();
+                    result = GetHomeSlideField(slideId, hsField, langId.Value);
                     break;
+
                 case "advantages":
-                    // "advantages.{advantageId}.{field}"  field: title | desc | linktext (opsiyonel)
+                    // "advantages.{advantageId}.{field}"  field: title | desc
                     if (parts.Length < 3) return $"[[{compoundKey}]]";
                     if (!int.TryParse(parts[1], out var advId)) return $"[[{compoundKey}]]";
-                    var advantagesFields = parts[2].ToLowerInvariant();
-                    result = GetAdvantageField(advId, advantagesFields, langId.Value);
+                    var advField = parts[2].ToLowerInvariant();
+                    result = GetAdvantageField(advId, advField, langId.Value);
                     break;
 
                 case "companyinfo":
-                    // "companyinfo.about" | "companyinfo.mission" | "companyinfo.vision"
+                    // "companyinfo.about" | "companyinfo.mission" | "companyinfo.vision" | "companyinfo.address" | "companyinfo.mapurl"
                     if (parts.Length < 2) return $"[[{compoundKey}]]";
                     result = GetCompanyInfoField(parts[1].ToLowerInvariant(), langId.Value);
                     break;
@@ -92,50 +106,80 @@ namespace kayialp.Services
             if (defaultLangId == null || defaultLangId == langId)
                 return $"[[{compoundKey}]]";
 
-            // Aynı anahtarı default dilde tekrar çöz
+            // Aynı anahtarı fallback dilde çöz
             switch (tableKey)
             {
                 case "pages":
-                    return GetPageText(parts[1], parts[2], defaultLangId.Value) ?? $"[[{compoundKey}]]";
+                    var fbField = parts.Length >= 4 ? parts[3] : null;
+                    return GetPageText(parts[1], parts[2], defaultLangId.Value, fbField) ?? $"[[{compoundKey}]]";
+
                 case "categories":
                     return GetCategoryText(parts[1], defaultLangId.Value) ?? $"[[{compoundKey}]]";
+
                 case "fairs":
                     return GetFairTitle(parts[1], defaultLangId.Value) ?? $"[[{compoundKey}]]";
+
                 case "homeslide":
-                    return GetHomeSlideField(int.Parse(parts[1]), parts[2], defaultLangId.Value) ?? $"[[{compoundKey}]]";
+                    if (!int.TryParse(parts[1], out var slideId2)) return $"[[{compoundKey}]]";
+                    return GetHomeSlideField(slideId2, parts[2], defaultLangId.Value) ?? $"[[{compoundKey}]]";
+
+                case "advantages":
+                    if (!int.TryParse(parts[1], out var advId2)) return $"[[{compoundKey}]]";
+                    return GetAdvantageField(advId2, parts[2], defaultLangId.Value) ?? $"[[{compoundKey}]]";
+
+                case "companyinfo":
+                    return GetCompanyInfoField(parts[1].ToLowerInvariant(), defaultLangId.Value) ?? $"[[{compoundKey}]]";
 
                 default:
                     return $"[[{compoundKey}]]";
             }
         }
 
-        private string GetPageText(string pageName, string keyName, int langId)
+        /// <summary>
+        /// Sayfa içeriği/slug çözümü.
+        /// field == "slug" ise PageTranslations.Slug döner; aksi halde ValueText.
+        /// </summary>
+        private string? GetPageText(string pageName, string keyName, int langId, string? field = null)
         {
-            var page = _context.Pages.FirstOrDefault(p => p.PageName.ToLower() == pageName.ToLower());
+            if (string.IsNullOrWhiteSpace(pageName) || string.IsNullOrWhiteSpace(keyName))
+                return null;
+
+            var normalized = pageName.ToLowerInvariant();
+
+            var page = _context.Pages.FirstOrDefault(p => p.PageName.ToLower() == normalized);
             if (page == null) return null;
 
             var t = _context.PageTranslations
-                .FirstOrDefault(x => x.PageId == page.Id && x.LangCodeId == langId && x.KeyName == keyName);
-            return t?.ValueText;
+                .FirstOrDefault(x =>
+                    x.PageId == page.Id &&
+                    x.LangCodeId == langId &&
+                    x.KeyName == keyName
+                );
+
+            if (t == null) return null;
+
+            if (!string.IsNullOrEmpty(field) && field.Equals("slug", StringComparison.OrdinalIgnoreCase))
+                return t.Slug;
+
+            return t.ValueText;
         }
 
-        private string GetCategoryText(string keyName, int langId)
+        private string? GetCategoryText(string keyName, int langId)
         {
             var t = _context.CategoriesTranslations
                 .FirstOrDefault(x => x.KeyName == keyName && x.LangCodeId == langId);
             return t?.ValueText;
         }
 
-        private string GetFairTitle(string keyName, int langId)
+        private string? GetFairTitle(string keyName, int langId)
         {
             var t = _context.FairTranslations
                 .FirstOrDefault(x => x.KeyName == keyName && x.LangCodeId == langId);
             return t?.Title;
         }
 
-        private string GetHomeSlideField(int slideId, string field, int langId)
+        private string? GetHomeSlideField(int slideId, string field, int langId)
         {
-            // Translation tablosunda ilgili kaydı bul
             var t = _context.HomeSlideTranslations
                 .FirstOrDefault(x => x.HomeSlideId == slideId && x.LangCodeId == langId);
 
@@ -146,17 +190,12 @@ namespace kayialp.Services
                 "slogan" => t.Slogan,
                 "title" => t.Title,
                 "content" => t.Content,
-                "cta1text" => t.Cta1Text,
-                "cta1url" => t.Cta1Url,
-                "cta2text" => t.Cta2Text,
-                "cta2url" => t.Cta2Url,
                 _ => null
             };
         }
 
-        private string GetAdvantageField(int advantageId, string field, int langId)
+        private string? GetAdvantageField(int advantageId, string field, int langId)
         {
-            // Varsayım: AdvantageTranslations tablosu: AdvantageId, LangCodeId, Title, Description, LinkText (ops)
             var t = _context.AdvantageTranslations
                 .FirstOrDefault(x => x.AdvantageId == advantageId && x.LangCodeId == langId);
 
@@ -170,16 +209,15 @@ namespace kayialp.Services
             };
         }
 
-        private string GetCompanyInfoField(string field, int langId)
+        private string? GetCompanyInfoField(string field, int langId)
         {
             var info = _context.CompanyInfos.FirstOrDefault();
             if (info == null) return null;
 
-            // Translation tablosu
+            // Önce translation üzerinde dene
             var t = _context.CompanyInfoTranslations
                 .FirstOrDefault(x => x.CompanyInfoId == info.Id && x.LangCodeId == langId);
 
-            // Önce translation üzerinde dene
             var transProp = typeof(CompanyInfoTranslation).GetProperty(
                 CultureInfo.CurrentCulture.TextInfo.ToTitleCase(field),
                 BindingFlags.Public | BindingFlags.Instance | BindingFlags.IgnoreCase
@@ -191,7 +229,7 @@ namespace kayialp.Services
 
             if (field.Equals("address", StringComparison.OrdinalIgnoreCase))
             {
-                // Adresi formatlıyoruz
+                // Formatlı adres
                 var parts = new List<string>();
                 if (!string.IsNullOrWhiteSpace(info.AddressLine)) parts.Add(info.AddressLine);
                 if (!string.IsNullOrWhiteSpace(info.District)) parts.Add(info.District);
@@ -201,7 +239,8 @@ namespace kayialp.Services
 
                 return string.Join(", ", parts);
             }
-            // Eğer translation'da yoksa CompanyInfo üzerinde dene
+
+            // CompanyInfo üzerinde dene
             var infoProp = typeof(CompanyInfo).GetProperty(
                 CultureInfo.CurrentCulture.TextInfo.ToTitleCase(field),
                 BindingFlags.Public | BindingFlags.Instance | BindingFlags.IgnoreCase
@@ -210,24 +249,23 @@ namespace kayialp.Services
             {
                 return infoProp.GetValue(info)?.ToString();
             }
+
             if (field.Equals("mapurl", StringComparison.OrdinalIgnoreCase))
             {
                 if (!string.IsNullOrWhiteSpace(info.MapEmbedUrl))
                 {
-                    // Admin'in girdiği hazır embed linki
-                    return info.MapEmbedUrl;
+                    return info.MapEmbedUrl; // Admin’in girdiği hazır embed
                 }
                 else
                 {
-                    // Adresten otomatik Google Maps linki üret
+                    // Adresten otomatik Google Maps embed linki üret
                     var address = GetCompanyInfoField("address", langId);
                     if (string.IsNullOrWhiteSpace(address)) return null;
                     return $"https://www.google.com/maps?q={Uri.EscapeDataString(address)}&output=embed";
                 }
             }
+
             return null;
         }
-
-
     }
 }

@@ -1,83 +1,83 @@
 ﻿.sticky-bottom {
-    position: sticky;
-    bottom: 0;
-    width: 100%;
-    background-color: #fff;
-    /* Zemin rengi */
-    padding: 10px 0;
-    /* İçerik etrafında boşluk */
-    z-index: 1050;
-    /* Diğer öğelerin üstünde görünmesi için */
+  position: sticky;
+  bottom: 0;
+  width: 100%;
+  background-color: #fff;
+  /* Zemin rengi */
+  padding: 10px 0;
+  /* İçerik etrafında boşluk */
+  z-index: 1050;
+  /* Diğer öğelerin üstünde görünmesi için */
 }
 
 .th-mobile-menu {
-    max-height: calc(100vh - 50px);
-    /* Menü boyutunu, ekran yüksekliğine göre sınırla */
-    overflow-y: auto;
-    /* Menü taşarsa kaydırma çubuğu ekle */
+  max-height: calc(100vh - 50px);
+  /* Menü boyutunu, ekran yüksekliğine göre sınırla */
+  overflow-y: auto;
+  /* Menü taşarsa kaydırma çubuğu ekle */
 }
 
 .language-selector {
-    display: flex;
-    flex-direction: row;
-    gap: 10px;
-    position: relative;
-    /* To control the position of the selected flag */
-    justify-content: flex-end;
-    /* Align the selected flag to the right */
+  display: flex;
+  flex-direction: row;
+  gap: 10px;
+  position: relative;
+  /* To control the position of the selected flag */
+  justify-content: flex-end;
+  /* Align the selected flag to the right */
 }
 
 .language-selector button {
-    background-color: transparent;
-    border: none;
-    cursor: pointer;
-    padding: 5px;
-    font-size: 16px;
-    opacity: 0;
-    /* Initially hide all buttons */
-    transition: opacity 0.3s ease, transform 0.3s ease;
-    position: relative;
-    /* Enable positioning for the flags */
+  background-color: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 5px;
+  font-size: 16px;
+  opacity: 0;
+  /* Initially hide all buttons */
+  transition: opacity 0.3s ease, transform 0.3s ease;
+  position: relative;
+  /* Enable positioning for the flags */
 }
 
 .language-selector button.selected {
-    opacity: 1;
-    /* Show the selected flag */
-    z-index: 10;
-    /* Ensure it stays on top */
-    position: absolute;
-    /* Position selected flag at the right */
-    right: 0;
-    /* Align to the right corner */
+  opacity: 1;
+  /* Show the selected flag */
+  z-index: 10;
+  /* Ensure it stays on top */
+  position: absolute;
+  /* Position selected flag at the right */
+  right: 0;
+  /* Align to the right corner */
 }
 
 .language-selector button:hover {
-    background-color: #f0f0f0;
+  background-color: #f0f0f0;
 }
 
 .language-selector img {
-    width: 20px;
-    /* Bayrak boyutunu ayarlayın */
-    height: 20px;
-    border-radius: 50%;
-    /* Yuvarlak yapma */
-    margin-right: 8px;
-    transition: transform 0.3s ease-in-out;
+  width: 20px;
+  /* Bayrak boyutunu ayarlayın */
+  height: 20px;
+  border-radius: 50%;
+  /* Yuvarlak yapma */
+  margin-right: 8px;
+  transition: transform 0.3s ease-in-out;
 }
 
 /* Mouse üzerine gelindiğinde tüm bayrakları göster */
 .language-selector:hover button {
-    opacity: 1;
+  opacity: 1;
 }
 
 .language-selector button:not(.selected) {
-    transform: translateX(-100%);
-    /* Position them off-screen initially */
+  transform: translateX(-100%);
+  /* Position them off-screen initially */
 }
 
 /* Bayrağın üzerine gelindiğinde büyütme */
 .language-selector button:hover img {
-    transform: scale(1.2);
+  transform: scale(1.2);
 }
 
 
@@ -85,44 +85,44 @@
 
 /*Fairs start*/
 .fair-card {
-    min-height: 700px;
-    max-height: 700px;
-    /* Optional: Sets a maximum height */
-    /* Other card styles */
-    background-color: #f8f9fa;
-    color: #212529;
-    border: 1px solid #dee2e6;
-    overflow: hidden;
-    margin-bottom: 1.5rem;
+  min-height: 700px;
+  max-height: 700px;
+  /* Optional: Sets a maximum height */
+  /* Other card styles */
+  background-color: #f8f9fa;
+  color: #212529;
+  border: 1px solid #dee2e6;
+  overflow: hidden;
+  margin-bottom: 1.5rem;
 }
 
 .fair-card-img-top {
-    width: 100%;
-    height: 250px;
-    /* Set a fixed height for the image */
-    object-fit: cover;
-    /* This makes sure the image covers the entire area without distortion */
+  width: 100%;
+  height: 250px;
+  /* Set a fixed height for the image */
+  object-fit: cover;
+  /* This makes sure the image covers the entire area without distortion */
 }
 
 .fair-card-body {
-    padding: 1.25rem;
-    display: flex;
-    /* Made the card body a flex container */
-    flex-direction: column;
-    /* Stacks the content vertically */
-    justify-content: space-between;
-    /* Pushes the last item to the bottom if needed */
+  padding: 1.25rem;
+  display: flex;
+  /* Made the card body a flex container */
+  flex-direction: column;
+  /* Stacks the content vertically */
+  justify-content: space-between;
+  /* Pushes the last item to the bottom if needed */
 }
 
 .fair-name {
-    font-size: 1.2rem;
-    font-weight: bold;
+  font-size: 1.2rem;
+  font-weight: bold;
 }
 
 .fair-place,
 .fair-date {
-    font-size: 0.9rem;
-    color: #6c757d;
+  font-size: 0.9rem;
+  color: #6c757d;
 }
 
 /*Fairs end*/
@@ -131,12 +131,157 @@
 /*ar lang start*/
 /* Tüm dillerde genel ayar */
 body {
-    direction: ltr; /* Varsayılan sola akış */
+  direction: ltr;
+  /* Varsayılan sola akış */
 }
 
 /* Sadece Arapça için yazılar soldan sağa (yani direction yine LTR) */
 body.lang-ar {
-    direction: rtl !important;
-    text-align: right !important; /* sağdan hizalı ama yazı akışı sola doğru */
+  direction: rtl !important;
+  text-align: right !important;
+  /* sağdan hizalı ama yazı akışı sola doğru */
 }
+
 /*ar lang end*/
+
+
+
+
+
+
+/* Vitrin kategori Başlangıç*/
+.case-box .case-img:before {
+  background: none;
+}
+
+.case-box .box-title {
+  color: white;
+  text-shadow: 0px 0px 4px #000000;
+}
+
+/* Vitrin kategori son*/
+
+/* === HERO - sade & stabil yapı ================================ */
+/* --- HERO boşluk düzeltmeleri --- */
+
+/* 1) Hero kendi yüksekliğini alsın; swiper katmanları şişirmesin */
+#hero .swiper,
+#hero .swiper-wrapper,
+#hero .swiper-slide {
+  height: auto !important;
+}
+
+#hero .swiper-wrapper {
+  align-items: stretch !important;
+}
+
+#hero .swiper-slide {
+  display: flex;
+}
+
+/* 2) Hero içi tek kaynak: min-height burada; alt padding/margin sıfır */
+#hero .hero-inner {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  width: 100%;
+  min-height: clamp(520px, 70vh, 860px);
+  padding: clamp(140px, 20vh, 220px) 0 clamp(110px, 16vh, 180px);
+  margin: 0 !important;
+}
+
+#hero .hero-style1 {
+  width: 100%;
+  padding: 0 !important;
+}
+
+#hero .hero-style1 .btn-group {
+  gap: 18px;
+  margin-top: clamp(24px, 5vh, 40px);
+  flex-wrap: wrap;
+}
+
+/* 3) Arka plan tam otursun */
+#hero .th-hero-bg {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background-size: cover !important;
+  background-position: center center !important;
+  background-repeat: no-repeat !important;
+}
+
+/* 4) Hero ile sonraki bölüm arasındaki fazladan boşluğu kapat */
+.th-hero-wrapper.hero-1 {
+  margin-bottom: 0 !important;
+}
+
+#hero+section,
+#hero+.space,
+#hero+.category-area,
+#hero+.position-relative {
+  margin-top: 0 !important;
+  /* padding-top: min(40px, 4vh) !important; istersen 0 yapabilirsin */
+}
+
+/* 5) Temadaki .space sınıfı çok boşluk veriyorsa, sadece hero’dan sonra azalt */
+#hero+.space {
+  padding-top: 40px !important;
+}
+
+/* 6) Fazla dekoratif şekli gizle */
+#hero .hero-1-shape {
+  display: none !important;
+}
+
+@media (max-width: 1199px) {
+  #hero .hero-inner {
+    padding: clamp(120px, 24vh, 190px) 0 clamp(90px, 16vh, 150px);
+  }
+}
+
+@media (max-width: 991px) {
+  #hero .hero-inner {
+    align-items: center;
+    text-align: center;
+    padding: clamp(110px, 28vh, 170px) 0 clamp(80px, 18vh, 140px);
+  }
+
+  #hero .hero-style1 .btn-group {
+    justify-content: center;
+  }
+}
+
+@media (max-width: 575px) {
+  #hero .hero-inner {
+    min-height: clamp(420px, 78vh, 540px);
+    padding: clamp(90px, 34vh, 140px) 0 clamp(60px, 20vh, 110px);
+  }
+}
+
+/*Fairs page*/
+/* Sadece fuarlar sayfası */
+/* Sadece fuarlar sayfası */
+.fairs-page .fairs-header form .form-select,
+.fairs-page .fairs-header form .btn {
+  width: 100%;
+}
+
+@media (min-width: 768px) {
+  .fairs-page .fairs-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: .75rem;
+  }
+  .fairs-page .fairs-header form {
+    display: flex;
+    gap: .5rem;
+    width: auto;
+  }
+  .fairs-page .fairs-header form .form-select,
+  .fairs-page .fairs-header form .btn {
+    width: auto;
+  }
+}
